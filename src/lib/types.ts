@@ -9,8 +9,9 @@ export interface StudentData {
   mobileNumber: string;
   prnNumber: string; // Should be unique
   rollNumber: string;
-  yearOfJoining: string;
+  yearOfJoining: string; // e.g., "FIRST", "SECOND", or "2023"
   courseName: string;
+  bloodGroup?: string; // New field
   registrationDate: Date; // Always ensure this is a JS Date object in the application
 }
 

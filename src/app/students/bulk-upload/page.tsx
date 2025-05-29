@@ -26,69 +26,71 @@ function BulkUploadContent() {
   const { toast } = useToast();
 
   const csvHeaders = [
-    "fullName", "address", "dateOfBirth", "mobileNumber", 
-    "prnNumber", "rollNumber", "yearOfJoining", "courseName", "photographUrl"
+    "fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth", 
+    "bloodGroup", "mobileNumber", "address", "photographUrl"
   ];
   const csvTemplateString = csvHeaders.join(',') + '\n' +
-    "\"John Doe\",\"123 Main St, Anytown\",\"2003-05-15\",\"555-1234\",\"PRN1001\",\"R101\",\"2021\",\"B.Sc. Computers\",\"https://placehold.co/100x120.png\"\n" +
-    "\"Jane Smith\",\"456 Oak Ave, Otherville\",\"2002-11-20\",\"555-5678\",\"PRN1002\",\"R102\",\"2020\",\"B.Com. Finance\",\"\"\n";
+    "\"John Doe\",\"PRN1001\",\"R101\",\"B.Sc. Computers\",\"FIRST\",\"2003-05-15\",\"O+\",\"555-1234\",\"123 Main St, Anytown\",\"https://placehold.co/100x120.png\"\n" +
+    "\"Jane Smith\",\"PRN1002\",\"R102\",\"B.Com. Finance\",\"SECOND\",\"2002-11-20\",\"A-\",\"555-5678\",\"456 Oak Ave, Otherville\",\"\"\n";
 
   const parseCSV = (csvText: string): Partial<StudentData>[] => {
     const students: Partial<StudentData>[] = [];
     const lines = csvText.trim().split('\n');
-    const currentUploadErrors: string[] = [];
+    const currentParsingErrors: string[] = []; // Renamed to avoid conflict with state setter
     
     if (lines.length < 2) {
-        currentUploadErrors.push("CSV file must contain headers and at least one data row.");
-        setUploadErrors(currentUploadErrors);
+        currentParsingErrors.push("CSV file must contain headers and at least one data row.");
+        setUploadErrors(currentParsingErrors); // Update state
         toast({ title: "Invalid CSV", description: "CSV file must contain headers and at least one data row.", variant: "destructive" });
         return [];
     }
 
     const headersFromFile = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
     
+    // Updated required headers
     const requiredHeadersForParsing = ["fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth"];
     for (const reqHeader of requiredHeadersForParsing) {
         if (!headersFromFile.includes(reqHeader)) {
-            currentUploadErrors.push(`Missing required header: ${reqHeader}. Please use the template.`);
-            setUploadErrors(currentUploadErrors);
-            toast({ title: "Invalid CSV Headers", description: `Missing required header: ${reqHeader}. Please use the template.`, variant: "destructive" });
-            return [];
+            currentParsingErrors.push(`Missing required header: ${reqHeader}. Please use the template.`);
         }
     }
+    if (currentParsingErrors.length > 0) {
+        setUploadErrors(currentParsingErrors); // Update state
+        toast({ title: "Invalid CSV Headers", description: currentParsingErrors.join(' '), variant: "destructive" });
+        return [];
+    }
+
 
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
       if (!line.trim()) continue; 
 
-      // Basic CSV splitting, may need improvement for robust handling of quotes and commas within fields
-      const data = line.split(',').map(d => d.trim().replace(/^"|"$/g, '')); // Remove surrounding quotes
+      const data = line.split(',').map(d => d.trim().replace(/^"|"$/g, '')); 
       
       const student: Partial<StudentData> = {};
       let prnFound = false;
       let dobValid = false;
+      let rowError = false; // Flag for errors in the current row
 
       headersFromFile.forEach((header, index) => {
         const key = header as keyof StudentData; 
         let value: any = data[index] || '';
 
         if (key === 'dateOfBirth') {
-          // Try to parse YYYY-MM-DD or other common formats if parseISO fails
           let parsedDate = parseISO(value); 
           if (!isValid(parsedDate)) {
-            // Attempt parsing with common formats if ISO fails, e.g., MM/DD/YYYY or DD/MM/YYYY
              parsedDate = parse(value, 'MM/dd/yyyy', new Date());
              if (!isValid(parsedDate)) {
                 parsedDate = parse(value, 'dd/MM/yyyy', new Date());
              }
           }
-
           if (isValid(parsedDate)) {
-            value = parsedDate;
+            value = parsedDate; // Keep as Date object
             dobValid = true;
           } else {
-            currentUploadErrors.push(`Invalid Date Format for row ${i+1}, value '${data[index]}'. Use YYYY-MM-DD. Record will be skipped.`);
+            currentParsingErrors.push(`Row ${i+1} (PRN: ${data[headersFromFile.indexOf("prnNumber")] || 'N/A'}): Invalid Date Format '${data[index]}'. Use YYYY-MM-DD, MM/DD/YYYY, or DD/MM/YYYY. Skipping record.`);
             value = undefined; 
+            rowError = true;
           }
         } else if (key === 'photographUrl' && !value) {
           value = "https://placehold.co/100x120.png"; 
@@ -96,29 +98,41 @@ function BulkUploadContent() {
           prnFound = true;
         }
         
-        if (key === 'yearOfJoining' || key === 'rollNumber') {
+        if (key === 'yearOfJoining' || key === 'rollNumber' || key === 'bloodGroup') {
             value = String(value);
         }
         (student as any)[key] = value;
       });
 
+      if (rowError) continue; // Skip this student if there was a row-specific error like invalid date
+
       if (!prnFound || !student.prnNumber) {
-        currentUploadErrors.push(`PRN number is missing for a student at row ${i + 1}. Skipping this record.`);
+        currentParsingErrors.push(`PRN number is missing for a student at row ${i + 1}. Skipping this record.`);
         continue; 
       }
-      if (!dobValid && requiredHeadersForParsing.includes('dateOfBirth')) { // Only critical if DOB is strictly required
-         currentUploadErrors.push(`Date of Birth is invalid or missing for student with PRN ${student.prnNumber} at row ${i + 1}. Skipping this record.`);
+      if (!dobValid && requiredHeadersForParsing.includes('dateOfBirth')) {
+         currentParsingErrors.push(`Date of Birth is invalid or missing for student with PRN ${student.prnNumber} at row ${i + 1}. Skipping this record.`);
         continue;
       }
+      // Add more checks for other required fields
+      for(const reqHeader of requiredHeadersForParsing) {
+        if (!student[reqHeader as keyof StudentData]) {
+            currentParsingErrors.push(`Missing required field '${reqHeader}' for student with PRN ${student.prnNumber} at row ${i+1}. Skipping record.`);
+            rowError = true;
+            break;
+        }
+      }
+      if(rowError) continue;
+
       students.push(student);
     }
-    setUploadErrors(currentUploadErrors); // Set errors found during parsing
+    setUploadErrors(currentParsingErrors); // Set errors found during parsing
     return students;
   };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setUploadErrors([]); // Clear previous submission errors
-    setParsedStudents([]); // Clear previous parsed data
+    setUploadErrors([]); 
+    setParsedStudents([]); 
 
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
@@ -128,14 +142,16 @@ function BulkUploadContent() {
         reader.onload = async (event) => {
           const text = event.target?.result as string;
           if (text) {
-            const jsonData = parseCSV(text); // This now sets parsing errors to uploadErrors state
-            setParsedStudents(jsonData); // Keep parsed students regardless of parsing errors for review
-            if (jsonData.length > 0 && uploadErrors.length === 0) { // Success if data parsed AND no parsing errors
+            const jsonData = parseCSV(text); 
+            setParsedStudents(jsonData); 
+            if (jsonData.length > 0 && uploadErrors.length === 0) { 
                  toast({ title: "CSV Parsed Successfully", description: `${jsonData.length} student records ready for review.` });
-            } else if (jsonData.length === 0 && uploadErrors.length === 0){ // No data, no errors (empty file?)
+            } else if (jsonData.length === 0 && uploadErrors.length === 0){
                  toast({ title: "No Data Found", description: "The CSV file seems empty or incorrectly formatted.", variant: "warning" });
-            } else if (uploadErrors.length > 0) { // Errors during parsing
-                 toast({ title: "Parsing Issues Found", description: `CSV parsed with ${uploadErrors.length} issues. Review messages and data.`, variant: "warning" });
+            } else if (uploadErrors.length > 0 && jsonData.length > 0) { 
+                 toast({ title: "Parsing Issues Found", description: `CSV parsed with ${uploadErrors.length} issues. ${jsonData.length} valid records found. Review messages and data.`, variant: "warning" });
+            } else if (uploadErrors.length > 0 && jsonData.length === 0) {
+                 toast({ title: "Parsing Failed", description: `CSV could not be parsed due to ${uploadErrors.length} critical issues. No valid records found.`, variant: "destructive" });
             }
           }
         };
@@ -164,28 +180,28 @@ function BulkUploadContent() {
     }
 
     setIsUploading(true);
-    setUploadErrors([]); // Clear previous errors before new submission attempt
+    // Keep existing parsing errors, add submission errors
+    // setUploadErrors([]); 
 
     try {
-      // Filter out students that might have had critical parsing errors but were still in parsedStudents for review
       const studentsToRegister = parsedStudents.filter(p => 
         p.prnNumber && p.fullName && p.rollNumber && p.courseName && p.yearOfJoining && p.dateOfBirth && isValid(new Date(p.dateOfBirth))
       ).map(p => ({
         ...p,
-        // Ensure all fields for StudentData are present, even if with defaults
         fullName: p.fullName!,
         prnNumber: p.prnNumber!, 
         rollNumber: p.rollNumber!,
         courseName: p.courseName!,
         yearOfJoining: p.yearOfJoining!,
         dateOfBirth: new Date(p.dateOfBirth!), 
+        bloodGroup: p.bloodGroup || undefined,
         address: p.address || "N/A",
         mobileNumber: p.mobileNumber || "N/A",
         photographUrl: p.photographUrl || "https://placehold.co/100x120.png",
       })) as StudentData[];
 
       if (studentsToRegister.length === 0) {
-        toast({ title: "No Valid Students to Register", description: "All parsed records had critical missing information or errors.", variant: "warning"});
+        toast({ title: "No Valid Students to Register", description: "All parsed records had critical missing information or errors. Please check parsing messages.", variant: "warning"});
         setIsUploading(false);
         return;
       }
@@ -194,27 +210,26 @@ function BulkUploadContent() {
       
       let toastTitle = "Bulk Upload Processed";
       let toastVariant: "default" | "warning" | "destructive" = "default";
+      const submissionErrors = result.errors; // Errors from Firestore service
 
-      if (result.errors.length > 0 && result.successCount === 0) {
+      if (submissionErrors.length > 0 && result.successCount === 0) {
         toastTitle = "Bulk Upload Failed";
         toastVariant = "destructive";
-      } else if (result.errors.length > 0) {
+      } else if (submissionErrors.length > 0) {
         toastTitle = "Bulk Upload Partially Successful";
         toastVariant = "warning";
       }
 
       toast({
         title: toastTitle,
-        description: `${result.successCount} student(s) registered. ${result.errors.length} error(s) encountered.`,
+        description: `${result.successCount} student(s) registered. ${submissionErrors.length} error(s) encountered during Firestore saving.`,
         variant: toastVariant,
-        duration: result.errors.length > 0 ? 9000 : 5000,
+        duration: submissionErrors.length > 0 ? 9000 : 5000,
       });
 
-      if (result.errors.length > 0) {
-        setUploadErrors(result.errors);
-      }
+      // Combine parsing errors with submission errors
+      setUploadErrors(prev => [...prev, ...submissionErrors]);
       
-      // Reset if fully or partially successful
       if(result.successCount > 0) {
         setFile(null);
         setParsedStudents([]);
@@ -222,6 +237,8 @@ function BulkUploadContent() {
         form.reset(); 
         const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement | null;
         if (fileInput) fileInput.value = '';
+        // Clear only parsing errors if successful, keep submission errors if any
+        if (submissionErrors.length === 0) setUploadErrors([]);
       }
 
     } catch (error) {
@@ -258,7 +275,7 @@ function BulkUploadContent() {
           <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
             <UploadCloud size={28} /> Bulk Student Upload
           </CardTitle>
-          <CardDescription>Upload a CSV file to register multiple students. Review parsed data before final submission. Ensure PRN numbers are unique.</CardDescription>
+          <CardDescription>Upload a CSV file to register multiple students. Review parsed data before final submission. Ensure PRN numbers are unique. Dates can be YYYY-MM-DD, MM/DD/YYYY, or DD/MM/YYYY.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -286,7 +303,7 @@ function BulkUploadContent() {
           </form>
 
           {uploadErrors.length > 0 && (
-            <Alert variant="destructive" className="mt-4">
+            <Alert variant={parsedStudents.length > 0 && uploadErrors.some(e => !e.startsWith("Row")) ? "warning" : "destructive"} className="mt-4">
               <AlertTriangle className="h-4 w-4" />
               <ShadcnAlertTitle>Upload Issues</ShadcnAlertTitle>
               <ShadcnAlertDescription>
@@ -300,8 +317,8 @@ function BulkUploadContent() {
           {parsedStudents.length > 0 && (
             <Card className="mt-6">
               <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2"><TableIcon /> Parsed Student Data for Review</CardTitle>
-                <CardDescription>Verify the student data below. Students with unique PRNs will be registered. Required fields are marked with an asterisk in instructions. Invalid records may be skipped.</CardDescription>
+                <CardTitle className="text-xl flex items-center gap-2"><TableIcon /> Parsed Student Data for Review ({parsedStudents.length} records)</CardTitle>
+                <CardDescription>Verify the student data below. Students with unique PRNs will be registered. Required fields are marked with an asterisk in instructions. Invalid records may be skipped (check messages above).</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="max-h-96 overflow-auto">
@@ -310,10 +327,10 @@ function BulkUploadContent() {
                       <TableRow>
                         <TableHead>Full Name</TableHead>
                         <TableHead>PRN</TableHead>
-                        <TableHead>Roll No.</TableHead>
                         <TableHead>Course</TableHead>
-                        <TableHead>DOB (YYYY-MM-DD)</TableHead>
-                        <TableHead>Mobile</TableHead>
+                        <TableHead>Year</TableHead>
+                        <TableHead>DOB</TableHead>
+                        <TableHead>Blood Group</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -324,10 +341,10 @@ function BulkUploadContent() {
                             {student.fullName || <span className="text-destructive">N/A</span>}
                           </TableCell>
                           <TableCell>{student.prnNumber || <span className="text-destructive">N/A</span>}</TableCell>
-                          <TableCell>{student.rollNumber || 'N/A'}</TableCell>
                           <TableCell>{student.courseName || <span className="text-destructive">N/A</span>}</TableCell>
-                          <TableCell>{student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'yyyy-MM-dd') : <span className="text-destructive">Invalid/Missing</span>}</TableCell>
-                          <TableCell>{student.mobileNumber || 'N/A'}</TableCell>
+                          <TableCell>{student.yearOfJoining || <span className="text-destructive">N/A</span>}</TableCell>
+                          <TableCell>{student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'dd/MM/yyyy') : <span className="text-destructive">Invalid/Missing</span>}</TableCell>
+                          <TableCell>{student.bloodGroup || 'N/A'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -345,14 +362,14 @@ function BulkUploadContent() {
               <p>Ensure your CSV file has the following columns (matching the template):</p>
               <ul className="list-disc list-inside pl-4 columns-2">
                 {csvHeaders.map(header => {
-                  const isRequired = ["fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth"].includes(header);
+                  const isRequired = requiredHeadersForParsing.includes(header);
                   return (
-                    <li key={header}><code className="font-mono bg-gray-200 dark:bg-gray-700 px-1 rounded">{header}</code>{isRequired ? <span className="text-destructive">*</span> : ""} ({header === 'dateOfBirth' ? 'YYYY-MM-DD' : header === 'yearOfJoining' ? 'YYYY' : header === 'photographUrl' ? 'Optional URL' : 'Text'})</li>
+                    <li key={header}><code className="font-mono bg-gray-200 dark:bg-gray-700 px-1 rounded">{header}</code>{isRequired ? <span className="text-destructive">*</span> : ""} ({header === 'dateOfBirth' ? 'Date' : header === 'yearOfJoining' ? 'Text (e.g. FIRST)' : header === 'photographUrl' ? 'Optional URL' : 'Text'})</li>
                   );
                 })}
               </ul>
               <p className="mt-2"><span className="text-destructive">*</span>Required fields. PRN Number must be unique. Invalid dates or missing required fields will cause records to be skipped.</p>
-              <p>The template includes example data.</p>
+              <p>The template includes example data. Date formats: YYYY-MM-DD, MM/DD/YYYY, or DD/MM/YYYY.</p>
             </CardContent>
           </Card>
         </CardContent>

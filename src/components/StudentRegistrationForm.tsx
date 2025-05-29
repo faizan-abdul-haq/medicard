@@ -2,7 +2,7 @@
 'use client';
 
 import type { ChangeEvent, FormEvent } from 'react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { StudentData } from '@/lib/types';
 import StudentIdCard from './StudentIdCard';
 import { Button } from '@/components/ui/button';
@@ -12,11 +12,18 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CalendarIcon, UserPlus } from 'lucide-react';
+import { CalendarIcon, UserPlus, Droplets } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
 import { registerStudent } from '@/services/studentService'; // Import the service
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export default function StudentRegistrationForm() {
   const [formData, setFormData] = useState<Partial<Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl'>> & { photograph?: File | null, dateOfBirth?: Date }>({
@@ -26,9 +33,10 @@ export default function StudentRegistrationForm() {
     mobileNumber: '',
     prnNumber: '',
     rollNumber: '',
-    yearOfJoining: '',
+    yearOfJoining: 'FIRST', // Default to FIRST as per example
     courseName: '',
     photograph: null,
+    bloodGroup: '',
   });
   const [photographPreview, setPhotographPreview] = useState<string | null>(null);
   const [submittedStudent, setSubmittedStudent] = useState<StudentData | null>(null);
@@ -41,6 +49,10 @@ export default function StudentRegistrationForm() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleDateChange = (date: Date | undefined) => {
     setFormData(prev => ({ ...prev, dateOfBirth: date }));
   };
@@ -48,6 +60,25 @@ export default function StudentRegistrationForm() {
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      const validImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (!validImageTypes.includes(file.type)) {
+        toast({
+          title: "Invalid File Type",
+          description: "Please upload a valid image file (JPEG, PNG, GIF).",
+          variant: "destructive",
+        });
+        e.target.value = ''; // Clear the input
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        toast({
+          title: "File Too Large",
+          description: "Image size should not exceed 2MB.",
+          variant: "destructive",
+        });
+        e.target.value = ''; // Clear the input
+        return;
+      }
       setFormData(prev => ({ ...prev, photograph: file }));
       setPhotographPreview(URL.createObjectURL(file));
     } else {
@@ -87,12 +118,12 @@ export default function StudentRegistrationForm() {
         rollNumber: formData.rollNumber,
         yearOfJoining: formData.yearOfJoining,
         courseName: formData.courseName,
+        bloodGroup: formData.bloodGroup,
         photograph: formData.photograph,
       };
 
       const newStudent = await registerStudent(studentToRegister);
       
-      // For preview, ensure photographUrl is set if a file was selected
       const previewStudent = {
         ...newStudent,
         photographUrl: photographPreview || newStudent.photographUrl,
@@ -101,21 +132,40 @@ export default function StudentRegistrationForm() {
       
       toast({
         title: "Registration Successful!",
-        description: `${newStudent.fullName}'s ID card has been generated (simulated).`,
+        description: `${newStudent.fullName}'s ID card has been generated.`,
       });
-      // Optionally reset form
-      // setFormData({ fullName: '', ... }); setPhotographPreview(null);
+      // Reset form after successful submission for new entry
+      setFormData({
+        fullName: '', address: '', dateOfBirth: undefined, mobileNumber: '',
+        prnNumber: '', rollNumber: '', yearOfJoining: 'FIRST', courseName: '', 
+        bloodGroup: '', photograph: null,
+      });
+      setPhotographPreview(null);
+      const form = e.target as HTMLFormElement;
+      if (form) form.reset();
+      const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement | null;
+      if (fileInput) fileInput.value = '';
+
+
     } catch (error) {
       console.error("Registration failed:", error);
+      let errorMessage = "Could not register student. Please try again.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
       toast({
         title: "Registration Failed",
-        description: "Could not register student. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  const yearsOfStudy = ["FIRST", "SECOND", "THIRD", "FOURTH", "FINAL"];
+
 
   return (
     <div className="space-y-8">
@@ -134,16 +184,42 @@ export default function StudentRegistrationForm() {
                 <Input id="fullName" name="fullName" value={formData.fullName || ''} onChange={handleChange} required />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="prnNumber">PRN Number <span className="text-destructive">*</span></Label>
+                <Input id="prnNumber" name="prnNumber" value={formData.prnNumber || ''} onChange={handleChange} required />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="rollNumber">Roll Number <span className="text-destructive">*</span></Label>
+                <Input id="rollNumber" name="rollNumber" value={formData.rollNumber || ''} onChange={handleChange} required />
+              </div>
+               <div className="space-y-2">
                 <Label htmlFor="mobileNumber">Mobile Number</Label>
                 <Input id="mobileNumber" name="mobileNumber" type="tel" value={formData.mobileNumber || ''} onChange={handleChange} />
               </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Textarea id="address" name="address" value={formData.address || ''} onChange={handleChange} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="courseName">Course Name <span className="text-destructive">*</span></Label>
+                <Input id="courseName" name="courseName" value={formData.courseName || ''} onChange={handleChange} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="yearOfJoining">Year of Study <span className="text-destructive">*</span></Label>
+                 <Select value={formData.yearOfJoining || 'FIRST'} onValueChange={(value) => handleSelectChange('yearOfJoining', value)} required>
+                  <SelectTrigger id="yearOfJoining">
+                    <SelectValue placeholder="Select year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {yearsOfStudy.map(year => (
+                      <SelectItem key={year} value={year}>{year}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="dateOfBirth">Date of Birth <span className="text-destructive">*</span></Label>
@@ -154,7 +230,7 @@ export default function StudentRegistrationForm() {
                       className={`w-full justify-start text-left font-normal ${!formData.dateOfBirth && "text-muted-foreground"}`}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.dateOfBirth ? format(formData.dateOfBirth, "PPP") : <span>Pick a date</span>}
+                      {formData.dateOfBirth ? format(formData.dateOfBirth, "dd/MM/yyyy") : <span>Pick a date</span>}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
@@ -172,36 +248,33 @@ export default function StudentRegistrationForm() {
                 </Popover>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="photograph">Student Photograph</Label>
-                <Input id="photograph" name="photograph" type="file" accept="image/*" onChange={handlePhotoChange} className="file:text-primary file:font-semibold"/>
-                {photographPreview && (
-                  <div className="mt-2">
-                     <Image src={photographPreview} alt="Photograph preview" width={100} height={120} className="rounded-md border object-cover" data-ai-hint="student portrait"/>
-                  </div>
-                )}
+                <Label htmlFor="bloodGroup">Blood Group</Label>
+                <Select value={formData.bloodGroup || ''} onValueChange={(value) => handleSelectChange('bloodGroup', value)}>
+                  <SelectTrigger id="bloodGroup" className="w-full">
+                    <SelectValue placeholder="Select blood group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bloodGroups.map((group) => (
+                      <SelectItem key={group} value={group}> <Droplets size={14} className="inline mr-2 text-red-500"/> {group}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="prnNumber">PRN Number <span className="text-destructive">*</span></Label>
-                <Input id="prnNumber" name="prnNumber" value={formData.prnNumber || ''} onChange={handleChange} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="rollNumber">Roll Number <span className="text-destructive">*</span></Label>
-                <Input id="rollNumber" name="rollNumber" value={formData.rollNumber || ''} onChange={handleChange} required />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="address">Address</Label>
+              <Textarea id="address" name="address" value={formData.address || ''} onChange={handleChange} />
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="yearOfJoining">Year of Joining (YYYY) <span className="text-destructive">*</span></Label>
-                <Input id="yearOfJoining" name="yearOfJoining" type="number" placeholder="YYYY" value={formData.yearOfJoining || ''} onChange={handleChange} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="courseName">Course Name <span className="text-destructive">*</span></Label>
-                <Input id="courseName" name="courseName" value={formData.courseName || ''} onChange={handleChange} required />
-              </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="photograph">Student Photograph (Max 2MB, JPEG/PNG)</Label>
+              <Input id="photograph" name="photograph" type="file" accept="image/jpeg, image/png, image/gif" onChange={handlePhotoChange} className="file:text-primary file:font-semibold"/>
+              {photographPreview && (
+                <div className="mt-2">
+                    <Image src={photographPreview} alt="Photograph preview" width={100} height={120} className="rounded-md border object-cover" data-ai-hint="student portrait"/>
+                </div>
+              )}
             </div>
             
             <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isSubmitting}>
@@ -218,14 +291,6 @@ export default function StudentRegistrationForm() {
           <div className="text-center mt-4">
             <Button variant="outline" onClick={() => {
               setSubmittedStudent(null);
-              // Optionally reset form fields:
-              setFormData({
-                fullName: '', address: '', dateOfBirth: undefined, mobileNumber: '',
-                prnNumber: '', rollNumber: '', yearOfJoining: '', courseName: '', photograph: null,
-              });
-              setPhotographPreview(null);
-              const form = document.querySelector('form');
-              if (form) form.reset(); // Clears file input if form is querySelectable
             }}>
               Register Another Student
             </Button>
