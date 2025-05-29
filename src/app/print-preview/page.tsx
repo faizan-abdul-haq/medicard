@@ -18,8 +18,20 @@ function PrintPreviewContent() {
   const [studentsToPrint, setStudentsToPrint] = useState<StudentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated, isLoading: authIsLoading } = useAuth(); // Get auth state
 
   useEffect(() => {
+    // Only proceed if authenticated and auth check is complete
+    if (authIsLoading || !isAuthenticated) {
+        // If auth is still loading, or user is not authenticated, don't fetch yet.
+        // ProtectedRoute should handle redirection if not authenticated after loading.
+        if (!authIsLoading && !isAuthenticated) {
+            setError("Authentication required to view print preview.");
+            setIsLoading(false);
+        }
+        return;
+    }
+
     async function fetchStudentsAndRecordPrint() {
       if (!studentIdsParam) {
         setError("No student IDs provided for printing.");
@@ -54,7 +66,6 @@ function PrintPreviewContent() {
       try {
         await Promise.all(printRecordingPromises);
       } catch (recordError) {
-        // Log this error but don't necessarily block printing
         console.error("Error during print recording:", recordError);
         // Optionally, add a non-critical error message to `errorsAcc`
         // errorsAcc.push("There was an issue logging all print events.");
@@ -68,17 +79,19 @@ function PrintPreviewContent() {
     }
 
     fetchStudentsAndRecordPrint();
-  }, [studentIdsParam]);
+  }, [studentIdsParam, isAuthenticated, authIsLoading]); // Add isAuthenticated and authIsLoading as dependencies
 
   const handlePrint = () => {
     window.print();
   };
 
-  if (isLoading) {
+  if (authIsLoading || isLoading) { // Check both auth loading and data loading
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 print:hidden">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-lg text-muted-foreground">Loading student cards for printing...</p>
+        <p className="text-lg text-muted-foreground">
+          {authIsLoading ? "Verifying authentication..." : "Loading student cards for printing..."}
+        </p>
       </div>
     );
   }
@@ -94,7 +107,7 @@ function PrintPreviewContent() {
     );
   }
 
-  if (studentsToPrint.length === 0) {
+  if (studentsToPrint.length === 0 && !isLoading) { // Ensure not to show this while still loading
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 print:hidden text-center">
         <AlertTriangle className="h-12 w-12 text-yellow-500 mb-4" />
@@ -135,19 +148,30 @@ function PrintPreviewContent() {
 
 // Suspense Boundary for useSearchParams
 function PrintPreviewPageWrapper() {
-  const { isLoading: authIsLoading } = useAuth();
+  const { isLoading: authIsLoadingFromContext } = useAuth(); // Renamed to avoid conflict
 
-  if (authIsLoading) {
-    return <div className="flex justify-center items-center min-h-screen"><p>Loading authentication...</p></div>;
+  // This initial loading state is for the AuthProvider itself,
+  // `PrintPreviewContent` will handle its internal loading and auth checks
+  if (authIsLoadingFromContext) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" /> 
+        <p className="ml-2 text-muted-foreground">Initializing...</p>
+      </div>
+    );
   }
 
   return (
     <ProtectedRoute>
-      <Suspense fallback={<div className="flex justify-center items-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin" /> <p>Loading preview...</p></div>}>
+      <Suspense fallback={
+          <div className="flex justify-center items-center min-h-screen">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" /> 
+            <p className="ml-2 text-muted-foreground">Loading preview...</p>
+          </div>
+        }>
         <PrintPreviewContent />
       </Suspense>
     </ProtectedRoute>
   );
 }
 export default PrintPreviewPageWrapper;
-
