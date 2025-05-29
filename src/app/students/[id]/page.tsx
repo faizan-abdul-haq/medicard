@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History, Mail, Phone, Home, CalendarDays, Droplets, HeartPulse, Users as UsersIcon, HelpCircle } from "lucide-react";
+import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History, Mail, Phone, Home, CalendarDays, Droplets, HeartPulse, Users as UsersIcon, HelpCircle, PhoneCall } from "lucide-react";
 import Image from "next/image";
 import type { StudentData } from '@/lib/types';
 import { format, isValid } from 'date-fns';
