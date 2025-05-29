@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { StudentData } from '@/lib/types';
 import { format } from 'date-fns';
-import { Users, Eye, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Eye, Search, ChevronLeft, ChevronRight, Printer } from 'lucide-react';
 import { getStudents } from '@/services/studentService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,16 +22,16 @@ function StudentListContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function fetchStudents() {
       setIsLoading(true);
       try {
         const data = await getStudents();
-        setStudents(data);
+        setStudents(data.sort((a,b) => new Date(b.registrationDate).getTime() - new Date(a.registrationDate).getTime()));
       } catch (error) {
         console.error("Failed to fetch students:", error);
-        // Handle error (e.g., show toast)
       } finally {
         setIsLoading(false);
       }
@@ -54,8 +55,33 @@ function StudentListContent() {
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
-    setCurrentPage(1); // Reset to first page on new search
+    setCurrentPage(1); 
   };
+
+  const handleSelectStudent = (prnNumber: string, checked: boolean | 'indeterminate') => {
+    setSelectedStudents(prev => {
+      const newSelected = new Set(prev);
+      if (checked === true) {
+        newSelected.add(prnNumber);
+      } else {
+        newSelected.delete(prnNumber);
+      }
+      return newSelected;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      const allPrns = new Set(paginatedStudents.map(s => s.prnNumber));
+      setSelectedStudents(allPrns);
+    } else {
+      setSelectedStudents(new Set());
+    }
+  };
+  
+  const isAllSelectedOnPage = paginatedStudents.length > 0 && paginatedStudents.every(s => selectedStudents.has(s.prnNumber));
+  const isSomeSelectedOnPage = paginatedStudents.some(s => selectedStudents.has(s.prnNumber)) && !isAllSelectedOnPage;
+
 
   if (isLoading) {
     return <p className="text-center py-4">Loading students...</p>;
@@ -70,17 +96,26 @@ function StudentListContent() {
               <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
                 <Users size={28} /> Student Roster
               </CardTitle>
-              <CardDescription>Browse all registered students in the system. Found {filteredStudents.length} students.</CardDescription>
+              <CardDescription>Browse all registered students. Found {filteredStudents.length} students.</CardDescription>
             </div>
-            <div className="relative w-full sm:w-auto">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search by name or PRN..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="pl-10 w-full sm:w-64"
-              />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="relative flex-grow sm:flex-grow-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search by name or PRN..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="pl-10 w-full sm:w-64"
+                />
+              </div>
+              {selectedStudents.size > 0 && (
+                <Button asChild>
+                  <Link href={`/print-preview?studentIds=${Array.from(selectedStudents).join(',')}`} target="_blank">
+                    <Printer size={16} className="mr-2" /> Print ({selectedStudents.size})
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -90,6 +125,13 @@ function StudentListContent() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[50px]">
+                      <Checkbox 
+                        checked={isAllSelectedOnPage ? true : (isSomeSelectedOnPage ? 'indeterminate' : false)}
+                        onCheckedChange={handleSelectAll}
+                        aria-label="Select all students on this page"
+                      />
+                    </TableHead>
                     <TableHead>PRN Number</TableHead>
                     <TableHead>Full Name</TableHead>
                     <TableHead>Course</TableHead>
@@ -99,7 +141,14 @@ function StudentListContent() {
                 </TableHeader>
                 <TableBody>
                   {paginatedStudents.map((student) => (
-                    <TableRow key={student.id}>
+                    <TableRow key={student.id} data-state={selectedStudents.has(student.prnNumber) ? "selected" : undefined}>
+                      <TableCell>
+                        <Checkbox 
+                          checked={selectedStudents.has(student.prnNumber)}
+                          onCheckedChange={(checked) => handleSelectStudent(student.prnNumber, checked)}
+                          aria-label={`Select student ${student.fullName}`}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{student.prnNumber}</TableCell>
                       <TableCell>{student.fullName}</TableCell>
                       <TableCell>{student.courseName}</TableCell>

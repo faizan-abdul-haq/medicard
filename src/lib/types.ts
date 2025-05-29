@@ -11,7 +11,7 @@ export interface StudentData {
   rollNumber: string;
   yearOfJoining: string; // e.g., "FIRST", "SECOND", or "2023"
   courseName: string;
-  bloodGroup?: string; // New field
+  bloodGroup?: string; 
   registrationDate: Date; // Always ensure this is a JS Date object in the application
 }
 
@@ -20,4 +20,9 @@ export interface RecentRegistration {
   date: string; // Formatted date string
   profileLink: string;
   photographUrl?: string;
+}
+
+// Used for print preview page query parameters
+export interface PrintPreviewParams {
+  studentIds?: string; // Comma-separated string of PRN numbers
 }

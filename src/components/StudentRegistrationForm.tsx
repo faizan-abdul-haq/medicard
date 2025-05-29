@@ -12,11 +12,12 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CalendarIcon, UserPlus, Droplets } from 'lucide-react';
+import { CalendarIcon, UserPlus, Droplets, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useToast } from "@/hooks/use-toast";
-import { registerStudent } from '@/services/studentService'; // Import the service
+import { registerStudent } from '@/services/studentService'; 
 import {
   Select,
   SelectContent,
@@ -33,7 +34,7 @@ export default function StudentRegistrationForm() {
     mobileNumber: '',
     prnNumber: '',
     rollNumber: '',
-    yearOfJoining: 'FIRST', // Default to FIRST as per example
+    yearOfJoining: 'FIRST', 
     courseName: '',
     photograph: null,
     bloodGroup: '',
@@ -67,7 +68,7 @@ export default function StudentRegistrationForm() {
           description: "Please upload a valid image file (JPEG, PNG, GIF).",
           variant: "destructive",
         });
-        e.target.value = ''; // Clear the input
+        e.target.value = ''; 
         return;
       }
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
@@ -76,7 +77,7 @@ export default function StudentRegistrationForm() {
           description: "Image size should not exceed 2MB.",
           variant: "destructive",
         });
-        e.target.value = ''; // Clear the input
+        e.target.value = ''; 
         return;
       }
       setFormData(prev => ({ ...prev, photograph: file }));
@@ -108,7 +109,6 @@ export default function StudentRegistrationForm() {
 
     setIsSubmitting(true);
     try {
-      // Prepare data for the service
       const studentToRegister = {
         fullName: formData.fullName,
         address: formData.address || 'N/A',
@@ -126,7 +126,7 @@ export default function StudentRegistrationForm() {
       
       const previewStudent = {
         ...newStudent,
-        photographUrl: photographPreview || newStudent.photographUrl,
+        photographUrl: photographPreview || newStudent.photographUrl, // Use local preview if available
       };
       setSubmittedStudent(previewStudent);
       
@@ -134,7 +134,7 @@ export default function StudentRegistrationForm() {
         title: "Registration Successful!",
         description: `${newStudent.fullName}'s ID card has been generated.`,
       });
-      // Reset form after successful submission for new entry
+      
       setFormData({
         fullName: '', address: '', dateOfBirth: undefined, mobileNumber: '',
         prnNumber: '', rollNumber: '', yearOfJoining: 'FIRST', courseName: '', 
@@ -241,7 +241,7 @@ export default function StudentRegistrationForm() {
                       initialFocus
                       captionLayout="dropdown-buttons"
                       fromYear={1950}
-                      toYear={new Date().getFullYear() - 10} // Student must be at least 10
+                      toYear={new Date().getFullYear() - 10} 
                       required
                     />
                   </PopoverContent>
@@ -272,7 +272,7 @@ export default function StudentRegistrationForm() {
               <Input id="photograph" name="photograph" type="file" accept="image/jpeg, image/png, image/gif" onChange={handlePhotoChange} className="file:text-primary file:font-semibold"/>
               {photographPreview && (
                 <div className="mt-2">
-                    <Image src={photographPreview} alt="Photograph preview" width={100} height={120} className="rounded-md border object-cover" data-ai-hint="student portrait"/>
+                    <Image src={photographPreview} alt="Photograph preview" width={100} height={120} className="rounded-md border object-cover" data-ai-hint="student portrait" unoptimized/>
                 </div>
               )}
             </div>
@@ -288,12 +288,17 @@ export default function StudentRegistrationForm() {
         <div className="mt-12">
           <h2 className="text-2xl font-semibold text-center mb-6 text-primary">Generated ID Card Preview</h2>
           <StudentIdCard student={submittedStudent} />
-          <div className="text-center mt-4">
+          <div className="text-center mt-4 space-x-2">
             <Button variant="outline" onClick={() => {
               setSubmittedStudent(null);
             }}>
               Register Another Student
             </Button>
+             <Button asChild>
+                <Link href={`/print-preview?studentIds=${submittedStudent.prnNumber}`} target="_blank">
+                  <Printer className="mr-2 h-4 w-4" /> Print This Card
+                </Link>
+              </Button>
           </div>
         </div>
       )}
