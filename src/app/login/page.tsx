@@ -10,17 +10,19 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { LogIn } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState(''); // Changed from username to email
   const [password, setPassword] = useState('');
   const { login, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.push('/'); // Redirect if already authenticated
+      router.push('/'); 
     }
   }, [isAuthenticated, isLoading, router]);
 
@@ -28,16 +30,17 @@ export default function LoginPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await login(username, password);
-      // Login function handles redirection on success
+      await login(email, password);
+      // AuthContext login handles redirection on success
     } catch (error) {
-      console.error("Login failed:", error);
-      // Handle login errors, e.g., show a toast message
+      // Error is already toasted by AuthContext, but can add more specific UI feedback here if needed
+      console.error("Login page caught error:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Show loading or redirect if already authenticated or initial auth check is in progress
   if (isLoading || (!isLoading && isAuthenticated)) {
       return <div className="flex justify-center items-center min-h-screen"><p>Loading...</p></div>;
   }
@@ -54,13 +57,13 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email (Username)</Label>
               <Input 
-                id="username" 
-                type="text" // Changed from email for generic username
-                placeholder="Enter your username" 
-                value={username}
-                onChange={(e) => setUsername(e.target.value)} 
+                id="email" 
+                type="email" 
+                placeholder="Enter your email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)} 
                 required 
               />
             </div>

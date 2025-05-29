@@ -21,14 +21,36 @@ const STUDENTS_COLLECTION = 'students';
 // Helper to convert Firestore Timestamps to JS Date objects
 const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => {
   const data = docData as Omit<StudentData, 'id' | 'dateOfBirth' | 'registrationDate'> & {
-    dateOfBirth: Timestamp | Date; // Firestore might return Timestamp or already converted Date by SDK in some cases
-    registrationDate: Timestamp | Date;
+    dateOfBirth: Timestamp | Date | string; // Firestore might return Timestamp or already converted Date by SDK in some cases, or string if manually inserted
+    registrationDate: Timestamp | Date | string;
   };
+  
+  let dob: Date;
+  if (data.dateOfBirth instanceof Timestamp) {
+    dob = data.dateOfBirth.toDate();
+  } else if (data.dateOfBirth instanceof Date) {
+    dob = data.dateOfBirth;
+  } else {
+    dob = new Date(data.dateOfBirth); // Attempt to parse if it's a string
+  }
+
+  let regDate: Date;
+  if (data.registrationDate instanceof Timestamp) {
+    regDate = data.registrationDate.toDate();
+  } else if (data.registrationDate instanceof Date) {
+    regDate = data.registrationDate;
+  } else {
+     // For serverTimestamp, it might not be immediately available as Date after write,
+     // so on read, it will be Timestamp. If it's somehow a string, parse.
+    regDate = new Date(data.registrationDate);
+  }
+
   return {
     ...data,
     id,
-    dateOfBirth: data.dateOfBirth instanceof Timestamp ? data.dateOfBirth.toDate() : new Date(data.dateOfBirth),
-    registrationDate: data.registrationDate instanceof Timestamp ? data.registrationDate.toDate() : new Date(data.registrationDate),
+    dateOfBirth: dob,
+    registrationDate: regDate,
+    photographUrl: data.photographUrl || "https://placehold.co/100x120.png", // Ensure placeholder if missing
   };
 };
 
@@ -69,7 +91,7 @@ export async function getStudentById(id: string): Promise<StudentData | null> {
 }
 
 export async function registerStudent(
-  studentData: Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl'> & { photograph?: File | null, dateOfBirth: Date }
+  studentData: Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl'> & { photograph?: File | null, dateOfBirth: Date, photographUrl?: string }
 ): Promise<StudentData> {
   try {
     // Check if student with this PRN already exists
@@ -79,31 +101,27 @@ export async function registerStudent(
       throw new Error(`Student with PRN number ${studentData.prnNumber} already exists.`);
     }
 
-    const studentToSave = {
-      ...studentData,
-      registrationDate: serverTimestamp(), // Use server timestamp for registration
-      photographUrl: studentData.photograph ? "https://placehold.co/100x120.png" : (studentData.photographUrl || "https://placehold.co/100x120.png"), // Simulate photo URL
-      photograph: undefined, // Remove File object before saving
-    };
-    
-    // Type assertion to ensure correct fields are passed to addDoc
-    const docDataToSave = {
-      fullName: studentToSave.fullName,
-      address: studentToSave.address,
-      dateOfBirth: studentToSave.dateOfBirth, // JS Date object is fine, Firestore converts it
-      mobileNumber: studentToSave.mobileNumber,
-      prnNumber: studentToSave.prnNumber,
-      rollNumber: studentToSave.rollNumber,
-      yearOfJoining: studentToSave.yearOfJoining,
-      courseName: studentToSave.courseName,
-      photographUrl: studentToSave.photographUrl,
-      registrationDate: studentToSave.registrationDate,
-    };
+    // In a real app, if studentData.photograph (File object) exists,
+    // you would upload it to Firebase Storage here and get the downloadURL.
+    // For now, we'll use the provided photographUrl or a placeholder.
+    const finalPhotographUrl = studentData.photographUrl || (studentData.photograph ? "https://placehold.co/100x120.png" : "https://placehold.co/100x120.png");
 
+
+    const docDataToSave = {
+      fullName: studentData.fullName,
+      address: studentData.address,
+      dateOfBirth: Timestamp.fromDate(studentData.dateOfBirth), // Convert JS Date to Firestore Timestamp
+      mobileNumber: studentData.mobileNumber,
+      prnNumber: studentData.prnNumber,
+      rollNumber: studentData.rollNumber,
+      yearOfJoining: studentData.yearOfJoining,
+      courseName: studentData.courseName,
+      photographUrl: finalPhotographUrl,
+      registrationDate: serverTimestamp(), // Use server timestamp
+    };
 
     const docRef = await addDoc(collection(db, STUDENTS_COLLECTION), docDataToSave);
     
-    // Fetch the just-added document to get its actual data including the server-generated timestamp
     const newDocSnap = await getDoc(docRef);
     if (!newDocSnap.exists()) {
         throw new Error("Failed to retrieve newly created student document.");
@@ -114,76 +132,72 @@ export async function registerStudent(
   } catch (error) {
     console.error("Error registering student: ", error);
     if (error instanceof Error) {
-        throw error; // Rethrow known errors (like PRN exists)
+        throw error; 
     }
     throw new Error("Failed to register student in Firestore.");
   }
 }
 
-
 export async function bulkRegisterStudents(studentsData: Partial<StudentData>[]): Promise<{ successCount: number; newStudents: StudentData[], errors: string[] }> {
   const batch = writeBatch(db);
-  const newStudents: StudentData[] = [];
+  const newStudentsPlaceholder: StudentData[] = []; // For optimistic return
   const errors: string[] = [];
   let successCount = 0;
+
+  const prnsInBatch = new Set<string>();
 
   for (const data of studentsData) {
     if (!data.prnNumber) {
       errors.push(`Skipping student with missing PRN: ${data.fullName || 'Unknown Name'}`);
       continue;
     }
+    if (prnsInBatch.has(data.prnNumber)) {
+      errors.push(`Duplicate PRN ${data.prnNumber} within this batch for ${data.fullName}. Skipped.`);
+      continue;
+    }
 
-    // Basic check for existing PRN to avoid duplicates in this batch operation
-    // For a large-scale app, more sophisticated duplicate checking or upsert logic might be needed.
     const q = query(collection(db, STUDENTS_COLLECTION), where("prnNumber", "==", data.prnNumber));
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await getDocs(q); // Check existing PRNs in DB
     if (!querySnapshot.empty) {
-      errors.push(`Student with PRN ${data.prnNumber} (${data.fullName}) already exists. Skipped.`);
+      errors.push(`Student with PRN ${data.prnNumber} (${data.fullName || 'N/A'}) already exists in database. Skipped.`);
       continue;
     }
     
-    const studentDocRef = doc(collection(db, STUDENTS_COLLECTION)); // Auto-generate ID
+    const studentDocRef = doc(collection(db, STUDENTS_COLLECTION)); 
 
     const studentToSave = {
       fullName: data.fullName || 'N/A',
       address: data.address || 'N/A',
-      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : new Date('2000-01-01'),
+      dateOfBirth: data.dateOfBirth ? Timestamp.fromDate(new Date(data.dateOfBirth)) : Timestamp.fromDate(new Date('2000-01-01')),
       mobileNumber: data.mobileNumber || 'N/A',
       prnNumber: data.prnNumber,
       rollNumber: data.rollNumber || 'N/A_ROLL',
       yearOfJoining: data.yearOfJoining || new Date().getFullYear().toString(),
       courseName: data.courseName || 'N/A Course',
       photographUrl: data.photographUrl || "https://placehold.co/100x120.png",
-      registrationDate: serverTimestamp(), // Use server timestamp
+      registrationDate: serverTimestamp(),
     };
     batch.set(studentDocRef, studentToSave);
+    prnsInBatch.add(data.prnNumber);
     
-    // We can't easily get the server-generated timestamp back from a batch write
-    // So, we'll construct a local version for the return, knowing registrationDate will be a server value.
-    // For a more accurate return, you might re-fetch these after the batch commit.
-    newStudents.push({
+    newStudentsPlaceholder.push({
         ...studentToSave,
-        id: studentDocRef.id, // The auto-generated ID
+        id: studentDocRef.id, 
         registrationDate: new Date(), // Placeholder, actual will be server time
-        dateOfBirth: studentToSave.dateOfBirth instanceof Date ? studentToSave.dateOfBirth : new Date(studentToSave.dateOfBirth),
+        dateOfBirth: studentToSave.dateOfBirth.toDate(),
     });
     successCount++;
   }
 
   try {
     await batch.commit();
-    console.log(`Bulk registered ${successCount} students into Firestore.`);
-    // To return accurate data with server timestamps, you might need to re-fetch them
-    // For simplicity now, we return the locally constructed objects
-    return { successCount, newStudents, errors };
+    // Note: To get accurate server timestamps for newStudents, a re-fetch would be needed.
+    // For simplicity, newStudentsPlaceholder provides an optimistic preview.
+    return { successCount, newStudents: newStudentsPlaceholder, errors };
   } catch (error) {
     console.error("Error committing bulk student registration: ", error);
-    // If batch fails, none are written.
-    throw new Error("Failed to bulk register students in Firestore.");
+    // Add a general error if batch commit fails
+    errors.push(`Batch commit failed: ${error instanceof Error ? error.message : String(error)}`);
+    return { successCount: 0, newStudents: [], errors }; // Return 0 success if batch fails
   }
 }
-
-
-// Note: The resetMockStudents function is no longer relevant as we're using Firestore.
-// If you need to clear the Firestore collection for testing, you'd do that manually via Firebase console
-// or write a separate admin script.
