@@ -1,7 +1,7 @@
 
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase'; // Added storage
 import type { StudentData } from '@/lib/types';
 import { 
   collection, 
@@ -17,10 +17,24 @@ import {
   updateDoc,
   arrayUnion
 } from 'firebase/firestore';
-// When using Firebase Storage, you would import:
-// import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage"; // Firebase Storage imports
 
 const STUDENTS_COLLECTION = 'students';
+
+// Helper function to upload photograph to Firebase Storage
+async function uploadPhotograph(file: File, prnNumber: string): Promise<string> {
+  const filePath = `student_photos/${prnNumber}/${Date.now()}_${file.name}`; // Add timestamp to filename for uniqueness
+  const storageRef = ref(storage, filePath);
+  try {
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    return downloadURL;
+  } catch (error) {
+    console.error(`Error uploading photograph for PRN ${prnNumber}: `, error);
+    throw new Error(`Failed to upload photograph. ${error instanceof Error ? error.message : ''}`);
+  }
+}
+
 
 // Helper to convert Firestore Timestamps to JS Date objects
 const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => {
@@ -62,9 +76,13 @@ const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => 
     id,
     dateOfBirth: dob,
     registrationDate: regDate,
-    bloodGroup: data.bloodGroup || undefined, // Handle optional bloodGroup
+    bloodGroup: data.bloodGroup || undefined,
     photographUrl: data.photographUrl || "https://placehold.co/120x150.png",
     printHistory: printHistoryDates,
+    emergencyContactName: data.emergencyContactName || undefined,
+    emergencyContactPhone: data.emergencyContactPhone || undefined,
+    allergies: data.allergies || undefined,
+    medicalConditions: data.medicalConditions || undefined,
   };
 };
 
@@ -82,14 +100,12 @@ export async function getStudents(): Promise<StudentData[]> {
 
 export async function getStudentById(id: string): Promise<StudentData | null> {
   try {
-    // First try to get by document ID
     const studentDocRefById = doc(db, STUDENTS_COLLECTION, id);
     let studentSnap = await getDoc(studentDocRefById);
 
     if (studentSnap.exists()) {
       return mapFirestoreDocToStudentData(studentSnap.data(), studentSnap.id);
     } else {
-      // If not found by ID, try to find by PRN number
       const q = query(collection(db, STUDENTS_COLLECTION), where("prnNumber", "==", id));
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
@@ -97,7 +113,7 @@ export async function getStudentById(id: string): Promise<StudentData | null> {
         return mapFirestoreDocToStudentData(studentDoc.data(), studentDoc.id);
       }
     }
-    return null; // Not found by ID or PRN
+    return null;
   } catch (error) {
     console.error(`Error fetching student by ID/PRN ${id}: `, error);
     throw new Error("Failed to fetch student data from Firestore.");
@@ -111,7 +127,7 @@ export async function recordCardPrint(studentPrn: string): Promise<void> {
 
     if (querySnapshot.empty) {
       console.warn(`Student with PRN ${studentPrn} not found. Cannot record print event.`);
-      return; // Or throw new Error(`Student with PRN ${studentPrn} not found.`);
+      return;
     }
     
     const studentDoc = querySnapshot.docs[0];
@@ -123,23 +139,11 @@ export async function recordCardPrint(studentPrn: string): Promise<void> {
     console.log(`Print recorded for student PRN ${studentPrn}`);
   } catch (error) {
     console.error(`Error recording card print for PRN ${studentPrn}: `, error);
-    // Not throwing an error here to prevent print preview from failing if logging fails
-    // In a production app, you might want more robust error handling or logging.
   }
 }
 
-
-// Function to upload image to Firebase Storage (example, not fully integrated in this step for brevity)
-// async function uploadPhotograph(file: File, prnNumber: string): Promise<string> {
-//   const storage = getStorage();
-//   const storageRef = ref(storage, `student_photos/${prnNumber}/${file.name}`);
-//   await uploadBytes(storageRef, file);
-//   const downloadURL = await getDownloadURL(storageRef);
-//   return downloadURL;
-// }
-
 export async function registerStudent(
-  studentData: Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl' | 'printHistory'> & { photograph?: File | null, dateOfBirth: Date, photographUrl?: string }
+  studentData: Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl' | 'printHistory'> & { photograph?: File | null, dateOfBirth: Date }
 ): Promise<StudentData> {
   try {
     const q = query(collection(db, STUDENTS_COLLECTION), where("prnNumber", "==", studentData.prnNumber));
@@ -148,20 +152,18 @@ export async function registerStudent(
       throw new Error(`Student with PRN number ${studentData.prnNumber} already exists.`);
     }
 
-    let finalPhotographUrl = studentData.photographUrl || "https://placehold.co/120x150.png";
+    let finalPhotographUrl = "https://placehold.co/120x150.png";
     
-    // // Example: If a photograph file is provided, upload it
-    // if (studentData.photograph) {
-    //   try {
-    //     finalPhotographUrl = await uploadPhotograph(studentData.photograph, studentData.prnNumber);
-    //   } catch (uploadError) {
-    //     console.error("Photograph upload failed: ", uploadError);
-    //     // Decide if registration should proceed with a placeholder or fail
-    //     // For now, it proceeds with the default placeholder set above
-    //     throw new Error("Photograph upload failed. Cannot register student.");
-    //   }
-    // }
-
+    if (studentData.photograph) {
+      try {
+        finalPhotographUrl = await uploadPhotograph(studentData.photograph, studentData.prnNumber);
+      } catch (uploadError) {
+        console.error("Photograph upload failed: ", uploadError);
+        // Decide if registration should proceed with a placeholder or fail
+        // For now, it proceeds with the default placeholder set above, but throws error to inform user
+        throw new Error(`Photograph upload failed. Student not registered. ${uploadError instanceof Error ? uploadError.message : ''}`);
+      }
+    }
 
     const docDataToSave: any = {
       fullName: studentData.fullName,
@@ -174,7 +176,11 @@ export async function registerStudent(
       courseName: studentData.courseName,
       photographUrl: finalPhotographUrl,
       registrationDate: serverTimestamp(),
-      printHistory: [], // Initialize with empty print history
+      printHistory: [],
+      emergencyContactName: studentData.emergencyContactName || null,
+      emergencyContactPhone: studentData.emergencyContactPhone || null,
+      allergies: studentData.allergies || null,
+      medicalConditions: studentData.medicalConditions || null,
     };
 
     if (studentData.bloodGroup) {
@@ -235,9 +241,13 @@ export async function bulkRegisterStudents(studentsData: StudentData[]): Promise
       rollNumber: data.rollNumber || 'N/A_ROLL',
       yearOfJoining: data.yearOfJoining || new Date().getFullYear().toString(),
       courseName: data.courseName || 'N/A Course',
-      photographUrl: data.photographUrl || "https://placehold.co/120x150.png",
+      photographUrl: data.photographUrl || "https://placehold.co/120x150.png", // Bulk upload assumes URL is provided or uses placeholder
       registrationDate: serverTimestamp(),
-      printHistory: [], // Initialize with empty print history
+      printHistory: [],
+      emergencyContactName: data.emergencyContactName || null,
+      emergencyContactPhone: data.emergencyContactPhone || null,
+      allergies: data.allergies || null,
+      medicalConditions: data.medicalConditions || null,
     };
 
     if (data.bloodGroup) {
@@ -247,25 +257,38 @@ export async function bulkRegisterStudents(studentsData: StudentData[]): Promise
     batch.set(studentDocRef, studentToSave);
     prnsInBatch.add(data.prnNumber);
     
+    // For the return, simulate the full object structure
+    const { photograph, ...restOfStudentToSave } = studentToSave; // remove photograph if it was accidentally passed
     newStudentsPlaceholder.push({
-        ...studentToSave,
+        ...restOfStudentToSave,
         id: studentDocRef.id, 
-        registrationDate: new Date(), 
+        registrationDate: new Date(), // This will be replaced by serverTimestamp effect
         dateOfBirth: studentToSave.dateOfBirth.toDate(),
         bloodGroup: studentToSave.bloodGroup,
         printHistory: [],
+        // ensure all fields are present even if null
+        emergencyContactName: studentToSave.emergencyContactName,
+        emergencyContactPhone: studentToSave.emergencyContactPhone,
+        allergies: studentToSave.allergies,
+        medicalConditions: studentToSave.medicalConditions,
     });
     successCount++;
   }
 
   try {
     await batch.commit();
-    return { successCount, newStudents: newStudentsPlaceholder, errors };
+    // Fetch the actual newly created students to return correct data with server timestamps
+    const actualNewStudents: StudentData[] = [];
+    for (const placeholder of newStudentsPlaceholder) {
+        const newDocSnap = await getDoc(doc(db, STUDENTS_COLLECTION, placeholder.id));
+        if (newDocSnap.exists()) {
+            actualNewStudents.push(mapFirestoreDocToStudentData(newDocSnap.data(), newDocSnap.id));
+        }
+    }
+    return { successCount, newStudents: actualNewStudents, errors };
   } catch (error) {
     console.error("Error committing bulk student registration: ", error);
     errors.push(`Batch commit failed: ${error instanceof Error ? error.message : String(error)}`);
-    // If batch commit fails, no students were successfully added in this batch
     return { successCount: 0, newStudents: [], errors }; 
   }
 }
-

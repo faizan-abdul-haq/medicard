@@ -11,8 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CalendarIcon, UserPlus, Droplets, Printer } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { CalendarIcon, UserPlus, Droplets, Printer, AlertTriangle, ShieldCheck, HeartPulse, PhoneCall, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -24,21 +24,28 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
+import { Separator } from '@/components/ui/separator';
+
+const initialFormData: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl'>> & { photograph?: File | null, dateOfBirth?: Date } = {
+  fullName: '',
+  address: '',
+  dateOfBirth: undefined,
+  mobileNumber: '',
+  prnNumber: '',
+  rollNumber: '',
+  yearOfJoining: 'FIRST', 
+  courseName: '',
+  photograph: null,
+  bloodGroup: '',
+  emergencyContactName: '',
+  emergencyContactPhone: '',
+  allergies: '',
+  medicalConditions: '',
+};
 
 export default function StudentRegistrationForm() {
-  const [formData, setFormData] = useState<Partial<Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl'>> & { photograph?: File | null, dateOfBirth?: Date }>({
-    fullName: '',
-    address: '',
-    dateOfBirth: undefined,
-    mobileNumber: '',
-    prnNumber: '',
-    rollNumber: '',
-    yearOfJoining: 'FIRST', 
-    courseName: '',
-    photograph: null,
-    bloodGroup: '',
-  });
+  const [formData, setFormData] = useState(initialFormData);
   const [photographPreview, setPhotographPreview] = useState<string | null>(null);
   const [submittedStudent, setSubmittedStudent] = useState<StudentData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,7 +108,7 @@ export default function StudentRegistrationForm() {
     if (!formData.fullName || !formData.prnNumber || !formData.rollNumber || !formData.courseName || !formData.yearOfJoining) {
       toast({
         title: "Validation Error",
-        description: "Please fill all required fields.",
+        description: "Please fill all required personal and academic fields.",
         variant: "destructive",
       });
       return;
@@ -109,44 +116,39 @@ export default function StudentRegistrationForm() {
 
     setIsSubmitting(true);
     try {
+      // Ensure all required fields are present for the service call
       const studentToRegister = {
-        fullName: formData.fullName,
+        fullName: formData.fullName!,
         address: formData.address || 'N/A',
-        dateOfBirth: formData.dateOfBirth,
+        dateOfBirth: formData.dateOfBirth!,
         mobileNumber: formData.mobileNumber || 'N/A',
-        prnNumber: formData.prnNumber,
-        rollNumber: formData.rollNumber,
-        yearOfJoining: formData.yearOfJoining,
-        courseName: formData.courseName,
-        bloodGroup: formData.bloodGroup,
-        photograph: formData.photograph,
+        prnNumber: formData.prnNumber!,
+        rollNumber: formData.rollNumber!,
+        yearOfJoining: formData.yearOfJoining!,
+        courseName: formData.courseName!,
+        bloodGroup: formData.bloodGroup || undefined,
+        photograph: formData.photograph || null, // Pass the File object
+        emergencyContactName: formData.emergencyContactName || undefined,
+        emergencyContactPhone: formData.emergencyContactPhone || undefined,
+        allergies: formData.allergies || undefined,
+        medicalConditions: formData.medicalConditions || undefined,
       };
 
       const newStudent = await registerStudent(studentToRegister);
       
-      const previewStudent = {
-        ...newStudent,
-        photographUrl: photographPreview || newStudent.photographUrl, // Use local preview if available
-      };
-      setSubmittedStudent(previewStudent);
+      // The newStudent from service will have the photographUrl from storage
+      setSubmittedStudent(newStudent);
       
       toast({
         title: "Registration Successful!",
         description: `${newStudent.fullName}'s ID card has been generated.`,
       });
       
-      setFormData({
-        fullName: '', address: '', dateOfBirth: undefined, mobileNumber: '',
-        prnNumber: '', rollNumber: '', yearOfJoining: 'FIRST', courseName: '', 
-        bloodGroup: '', photograph: null,
-      });
+      setFormData(initialFormData); // Reset form to initial state
       setPhotographPreview(null);
       const form = e.target as HTMLFormElement;
-      if (form) form.reset();
-      const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement | null;
-      if (fileInput) fileInput.value = '';
-
-
+      if (form) form.reset(); // Resets native form elements like file input
+      
     } catch (error) {
       console.error("Registration failed:", error);
       let errorMessage = "Could not register student. Please try again.";
@@ -169,15 +171,21 @@ export default function StudentRegistrationForm() {
 
   return (
     <div className="space-y-8">
-      <Card className="max-w-2xl mx-auto shadow-lg">
+      <Card className="max-w-3xl mx-auto shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
             <UserPlus size={28} /> Student Registration
           </CardTitle>
-          <CardDescription>Fill in the details below to register a new student and generate their ID card.</CardDescription>
+          <CardDescription>Fill in the details below to register a new student and generate their ID card. Fields marked with <span className="text-destructive">*</span> are required.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            
+            {/* Personal Details Section */}
+            <div className="space-y-1">
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2"><Users size={20}/> Personal & Academic Details</h3>
+                <Separator />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name <span className="text-destructive">*</span></Label>
@@ -248,47 +256,79 @@ export default function StudentRegistrationForm() {
                 </Popover>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bloodGroup">Blood Group</Label>
-                <Select value={formData.bloodGroup || ''} onValueChange={(value) => handleSelectChange('bloodGroup', value)}>
-                  <SelectTrigger id="bloodGroup" className="w-full">
-                    <SelectValue placeholder="Select blood group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {bloodGroups.map((group) => (
-                      <SelectItem key={group} value={group}> <Droplets size={14} className="inline mr-2 text-red-500"/> {group}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="photograph">Student Photograph (Max 2MB)</Label>
+                <Input id="photograph" name="photograph" type="file" accept="image/jpeg, image/png, image/gif" onChange={handlePhotoChange} className="file:text-primary file:font-semibold"/>
+                {photographPreview && (
+                  <div className="mt-2">
+                      <Image src={photographPreview} alt="Photograph preview" width={100} height={120} className="rounded-md border object-cover" data-ai-hint="student portrait" unoptimized/>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="address">Address</Label>
-              <Textarea id="address" name="address" value={formData.address || ''} onChange={handleChange} />
+              <Textarea id="address" name="address" value={formData.address || ''} onChange={handleChange} placeholder="Enter full residential address"/>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="photograph">Student Photograph (Max 2MB, JPEG/PNG)</Label>
-              <Input id="photograph" name="photograph" type="file" accept="image/jpeg, image/png, image/gif" onChange={handlePhotoChange} className="file:text-primary file:font-semibold"/>
-              {photographPreview && (
-                <div className="mt-2">
-                    <Image src={photographPreview} alt="Photograph preview" width={100} height={120} className="rounded-md border object-cover" data-ai-hint="student portrait" unoptimized/>
+            {/* Medical Details Section */}
+            <div className="space-y-1 pt-4">
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2"><HeartPulse size={20}/> Medical Information</h3>
+                <Separator />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="bloodGroup">Blood Group</Label>
+                    <Select value={formData.bloodGroup || ''} onValueChange={(value) => handleSelectChange('bloodGroup', value)}>
+                    <SelectTrigger id="bloodGroup" className="w-full">
+                        <SelectValue placeholder="Select blood group" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {bloodGroups.map((group) => (
+                        <SelectItem key={group} value={group}> <Droplets size={14} className="inline mr-2 text-red-500"/> {group}</SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
                 </div>
-              )}
+                 <div className="space-y-2">
+                    <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>
+                    <Input id="emergencyContactName" name="emergencyContactName" value={formData.emergencyContactName || ''} onChange={handleChange} placeholder="e.g., Jane Doe"/>
+                </div>
+            </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label htmlFor="emergencyContactPhone">Emergency Contact Phone</Label>
+                    <Input id="emergencyContactPhone" name="emergencyContactPhone" type="tel" value={formData.emergencyContactPhone || ''} onChange={handleChange} placeholder="e.g., 555-123-4567"/>
+                </div>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="allergies">Allergies</Label>
+                <Textarea id="allergies" name="allergies" value={formData.allergies || ''} onChange={handleChange} placeholder="e.g., Peanuts, Penicillin"/>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="medicalConditions">Known Medical Conditions</Label>
+                <Textarea id="medicalConditions" name="medicalConditions" value={formData.medicalConditions || ''} onChange={handleChange} placeholder="e.g., Asthma, Diabetes"/>
             </div>
             
-            <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isSubmitting}>
-              {isSubmitting ? 'Registering...' : <><UserPlus className="mr-2 h-4 w-4" /> Register Student & Generate ID</>}
+            <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-base" disabled={isSubmitting}>
+              {isSubmitting ? 'Registering...' : <><UserPlus className="mr-2 h-5 w-5" /> Register Student & Generate ID</>}
             </Button>
           </form>
         </CardContent>
       </Card>
 
       {submittedStudent && (
-        <div className="mt-12">
-          <h2 className="text-2xl font-semibold text-center mb-6 text-primary">Generated ID Card Preview</h2>
-          <StudentIdCard student={submittedStudent} />
-          <div className="text-center mt-4 space-x-2">
+        <Card className="mt-12 max-w-3xl mx-auto shadow-lg">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-semibold text-green-600 flex items-center justify-center gap-2">
+                <ShieldCheck size={28}/> Registration Successful!
+            </CardTitle>
+            <CardDescription>Preview of the generated ID card for {submittedStudent.fullName}.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+             <StudentIdCard student={submittedStudent} showFlipButton={true} />
+          </CardContent>
+          <CardFooter className="flex flex-col sm:flex-row justify-center items-center gap-2">
             <Button variant="outline" onClick={() => {
               setSubmittedStudent(null);
             }}>
@@ -299,8 +339,8 @@ export default function StudentRegistrationForm() {
                   <Printer className="mr-2 h-4 w-4" /> Print This Card
                 </Link>
               </Button>
-          </div>
-        </div>
+          </CardFooter>
+        </Card>
       )}
     </div>
   );

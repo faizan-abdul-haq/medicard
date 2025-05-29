@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { UploadCloud, FileText, Download, TableIcon, UserCircle, AlertTriangle } from "lucide-react";
+import { UploadCloud, FileText, Download, TableIcon, UserCircle, AlertTriangle, HeartPulse } from "lucide-react";
 import type { StudentData } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, isValid, parseISO, parse } from 'date-fns';
@@ -16,7 +16,6 @@ import { bulkRegisterStudents } from '@/services/studentService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { Alert, AlertDescription as ShadcnAlertDescription, AlertTitle as ShadcnAlertTitle } from "@/components/ui/alert";
-
 
 function BulkUploadContent() {
   const [file, setFile] = useState<File | null>(null);
@@ -27,13 +26,13 @@ function BulkUploadContent() {
 
   const csvHeaders = [
     "fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth", 
-    "bloodGroup", "mobileNumber", "address", "photographUrl"
+    "bloodGroup", "mobileNumber", "address", "photographUrl",
+    "emergencyContactName", "emergencyContactPhone", "allergies", "medicalConditions"
   ];
   const csvTemplateString = csvHeaders.join(',') + '\n' +
-    "\"John Doe\",\"PRN1001\",\"R101\",\"B.Sc. Computers\",\"FIRST\",\"2003-05-15\",\"O+\",\"555-1234\",\"123 Main St, Anytown\",\"https://placehold.co/100x120.png\"\n" +
-    "\"Jane Smith\",\"PRN1002\",\"R102\",\"B.Com. Finance\",\"SECOND\",\"2002-11-20\",\"A-\",\"555-5678\",\"456 Oak Ave, Otherville\",\"\"\n";
+    "\"John Doe\",\"PRN1001\",\"R101\",\"B.Sc. Computers\",\"FIRST\",\"2003-05-15\",\"O+\",\"555-1234\",\"123 Main St, Anytown\",\"https://placehold.co/100x120.png\",\"Jane Doe\",\"555-4321\",\"Peanuts\",\"Asthma\"\n" +
+    "\"Jane Smith\",\"PRN1002\",\"R102\",\"B.Com. Finance\",\"SECOND\",\"2002-11-20\",\"A-\",\"555-5678\",\"456 Oak Ave, Otherville\",\"\",\"Robert Smith\",\"555-8765\",\"\",\"\"\n";
 
-  // Moved requiredHeadersForParsing here to be accessible by JSX
   const requiredHeadersForParsing = ["fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth"];
 
   const parseCSV = (csvText: string): Partial<StudentData>[] => {
@@ -60,7 +59,6 @@ function BulkUploadContent() {
         toast({ title: "Invalid CSV Headers", description: currentParsingErrors.join(' '), variant: "destructive" });
         return [];
     }
-
 
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
@@ -99,7 +97,7 @@ function BulkUploadContent() {
           prnFound = true;
         }
         
-        if (key === 'yearOfJoining' || key === 'rollNumber' || key === 'bloodGroup') {
+        if (['yearOfJoining', 'rollNumber', 'bloodGroup', 'emergencyContactName', 'emergencyContactPhone', 'allergies', 'medicalConditions'].includes(key)) {
             value = String(value);
         }
         (student as any)[key] = value;
@@ -197,6 +195,10 @@ function BulkUploadContent() {
         address: p.address || "N/A",
         mobileNumber: p.mobileNumber || "N/A",
         photographUrl: p.photographUrl || "https://placehold.co/100x120.png",
+        emergencyContactName: p.emergencyContactName || undefined,
+        emergencyContactPhone: p.emergencyContactPhone || undefined,
+        allergies: p.allergies || undefined,
+        medicalConditions: p.medicalConditions || undefined,
         // These will be set by Firestore service
         id: '', 
         registrationDate: new Date(),
@@ -271,7 +273,7 @@ function BulkUploadContent() {
   };
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
+    <div className="space-y-8 max-w-5xl mx-auto">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
@@ -305,7 +307,7 @@ function BulkUploadContent() {
           </form>
 
           {uploadErrors.length > 0 && (
-            <Alert variant={parsedStudents.length > 0 && uploadErrors.some(e => !e.startsWith("Row")) ? "warning" : "destructive"} className="mt-4">
+            <Alert variant={parsedStudents.length > 0 && uploadErrors.some(e => !e.startsWith("Row") && !e.startsWith("Student with PRN") && !e.startsWith("Duplicate PRN")) ? "warning" : "destructive"} className="mt-4">
               <AlertTriangle className="h-4 w-4" />
               <ShadcnAlertTitle>Upload Issues</ShadcnAlertTitle>
               <ShadcnAlertDescription>
@@ -330,9 +332,8 @@ function BulkUploadContent() {
                         <TableHead>Full Name</TableHead>
                         <TableHead>PRN</TableHead>
                         <TableHead>Course</TableHead>
-                        <TableHead>Year</TableHead>
                         <TableHead>DOB</TableHead>
-                        <TableHead>Blood Group</TableHead>
+                        <TableHead>Emergency Contact</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -344,9 +345,11 @@ function BulkUploadContent() {
                           </TableCell>
                           <TableCell>{student.prnNumber || <span className="text-destructive">N/A</span>}</TableCell>
                           <TableCell>{student.courseName || <span className="text-destructive">N/A</span>}</TableCell>
-                          <TableCell>{student.yearOfJoining || <span className="text-destructive">N/A</span>}</TableCell>
                           <TableCell>{student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'dd/MM/yyyy') : <span className="text-destructive">Invalid/Missing</span>}</TableCell>
-                          <TableCell>{student.bloodGroup || 'N/A'}</TableCell>
+                          <TableCell className="flex items-center gap-1">
+                            {student.emergencyContactName ? <HeartPulse size={16} className="text-green-600"/> : null}
+                            {student.emergencyContactName || 'N/A'}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -362,16 +365,21 @@ function BulkUploadContent() {
             </CardHeader>
             <CardContent className="p-0 text-sm text-muted-foreground space-y-1">
               <p>Ensure your CSV file has the following columns (matching the template):</p>
-              <ul className="list-disc list-inside pl-4 columns-2">
+              <ul className="list-disc list-inside pl-4 columns-2 sm:columns-3">
                 {csvHeaders.map(header => {
                   const isRequired = requiredHeadersForParsing.includes(header);
+                  let typeHint = 'Text';
+                  if (header === 'dateOfBirth') typeHint = 'Date';
+                  else if (header === 'yearOfJoining') typeHint = 'Text (e.g. FIRST)';
+                  else if (header === 'photographUrl') typeHint = 'Optional URL';
                   return (
-                    <li key={header}><code className="font-mono bg-gray-200 dark:bg-gray-700 px-1 rounded">{header}</code>{isRequired ? <span className="text-destructive">*</span> : ""} ({header === 'dateOfBirth' ? 'Date' : header === 'yearOfJoining' ? 'Text (e.g. FIRST)' : header === 'photographUrl' ? 'Optional URL' : 'Text'})</li>
+                    <li key={header}><code className="font-mono bg-gray-200 dark:bg-gray-700 px-1 rounded text-xs">{header}</code>{isRequired ? <span className="text-destructive">*</span> : ""} ({typeHint})</li>
                   );
                 })}
               </ul>
               <p className="mt-2"><span className="text-destructive">*</span>Required fields. PRN Number must be unique. Invalid dates or missing required fields will cause records to be skipped.</p>
               <p>The template includes example data. Date formats: YYYY-MM-DD, MM/DD/YYYY, or DD/MM/YYYY.</p>
+              <p>For `photographUrl`, provide a direct URL to an image, or leave blank to use a default placeholder.</p>
             </CardContent>
           </Card>
         </CardContent>
@@ -392,4 +400,3 @@ export default function BulkUploadPage() {
     </ProtectedRoute>
   );
 }
-

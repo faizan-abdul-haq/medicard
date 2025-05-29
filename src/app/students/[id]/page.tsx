@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History } from "lucide-react";
+import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History, Mail, Phone, Home, CalendarDays, Droplets, HeartPulse, Users as UsersIcon, HelpCircle } from "lucide-react";
 import Image from "next/image";
 import type { StudentData } from '@/lib/types';
 import { format, isValid } from 'date-fns';
@@ -14,12 +14,13 @@ import { getStudentById } from '@/services/studentService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import StudentIdCard from '@/components/StudentIdCard'; 
+import { Separator } from '@/components/ui/separator';
 
 function StudentProfileContent({ studentId }: { studentId: string }) {
   const [student, setStudent] = useState<StudentData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [qrCodeUrl, setQrCodeUrl] = useState<string>(''); // This QR code is for the profile page itself. Card has its own.
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
 
   useEffect(() => {
     async function fetchStudentData() {
@@ -30,8 +31,8 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
         if (data) {
           setStudent({
             ...data,
-            dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
-            registrationDate: data.registrationDate ? new Date(data.registrationDate) : new Date(), // Ensure it's a Date
+            dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined as any, // Keep as Date
+            registrationDate: data.registrationDate ? new Date(data.registrationDate) : new Date(),
             printHistory: data.printHistory ? data.printHistory.map(ph => new Date(ph)) : [],
           });
         } else {
@@ -49,7 +50,6 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
   
   useEffect(() => {
     if (typeof window !== 'undefined' && student) {
-      // QR Code for the student's profile page link
       const currentUrl = `${window.location.origin}/students/${student.prnNumber}`; 
       setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}`);
     }
@@ -57,7 +57,7 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
 
 
   if (isLoading) {
-    return <div className="flex justify-center items-center min-h-[300px]"><p>Loading student profile...</p></div>;
+    return <div className="flex justify-center items-center min-h-[300px]"><p className="text-lg font-semibold">Loading student profile...</p></div>;
   }
 
   if (error) {
@@ -101,90 +101,84 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
       expiryDate.setFullYear(expiryDate.getFullYear() + 1);
   }
 
+  const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value?: string | null }) => (
+    value ? (
+      <div className="flex items-start gap-2">
+        <span className="text-primary">{icon}</span>
+        <div>
+          <p className="text-sm font-semibold text-muted-foreground">{label}</p>
+          <p className="font-semibold text-foreground whitespace-pre-wrap">{value}</p>
+        </div>
+      </div>
+    ) : null
+  );
+
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      {/* Student ID Card Preview Section */}
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold">ID Card Preview</CardTitle>
-        </CardHeader>
-        <CardContent className="flex justify-center items-center p-4">
-          <StudentIdCard student={student} showFlipButton={true} initialSide="front" />
-        </CardContent>
-        <CardContent className="flex justify-center pb-6">
-           <Button asChild>
-            <Link href={`/print-preview?studentIds=${student.prnNumber}`} target="_blank">
-              <Printer className="mr-2 h-4 w-4" /> Print ID Card
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Student Details Section */}
+    <div className="max-w-5xl mx-auto space-y-8">
       <Card className="shadow-xl border-primary border-2 rounded-lg overflow-hidden">
         <CardHeader className="bg-primary text-primary-foreground p-4">
           <CardTitle className="flex items-center gap-2 text-xl font-semibold">
             <User size={24} /> Student Digital Profile
           </CardTitle>
+           <CardDescription className="text-primary-foreground/80 font-semibold">Comprehensive overview of student details and ID card status.</CardDescription>
         </CardHeader>
-        <CardContent className="p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-            <div className="flex-shrink-0">
-              <Avatar className="h-32 w-32 sm:h-40 sm:w-40 border-4 border-primary rounded-lg">
-                <AvatarImage src={student.photographUrl || "https://placehold.co/100x120.png"} alt={student.fullName} data-ai-hint="student portrait" className="object-cover"/>
+        <CardContent className="p-6 space-y-6">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+            <div className="flex-shrink-0 text-center">
+              <Avatar className="h-36 w-36 md:h-40 md:w-40 border-4 border-primary rounded-lg mx-auto">
+                <AvatarImage src={student.photographUrl || "https://placehold.co/160x160.png"} alt={student.fullName} data-ai-hint="student portrait" className="object-cover"/>
                 <AvatarFallback className="text-4xl">{student.fullName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
               </Avatar>
+              {qrCodeUrl && (
+                <div className="mt-4 p-3 bg-accent/10 rounded-md text-center">
+                  <QrCode className="mx-auto mb-1 text-accent" size={32} />
+                  <p className="text-xs font-bold text-accent-foreground">Profile QR</p>
+                  <Image 
+                    src={qrCodeUrl}
+                    alt={`QR Code for ${student.fullName}'s profile`} 
+                    width={80} 
+                    height={80} 
+                    className="rounded-md border-2 border-primary-foreground mx-auto mt-1" 
+                    data-ai-hint="qr code profile"
+                    unoptimized 
+                  />
+                </div>
+              )}
             </div>
-            <div className="flex-grow text-center sm:text-left">
-              <h2 className="text-3xl font-bold text-primary">{student.fullName}</h2>
-              <p className="text-lg text-muted-foreground font-semibold">{student.courseName}</p>
-              <div className="mt-4 space-y-1 text-sm">
-                <p><strong className="font-semibold">PRN Number:</strong> {student.prnNumber}</p>
-                <p><strong className="font-semibold">Roll Number:</strong> {student.rollNumber}</p>
-                {student.dateOfBirth && isValid(student.dateOfBirth) && <p><strong className="font-semibold">Date of Birth:</strong> {format(student.dateOfBirth, 'dd MMM, yyyy')}</p>}
-                <p><strong className="font-semibold">Mobile:</strong> {student.mobileNumber}</p>
-                <p className="whitespace-pre-wrap"><strong className="font-semibold">Address:</strong> {student.address}</p>
+
+            <div className="flex-grow space-y-4 w-full">
+              <h2 className="text-3xl font-bold text-primary text-center md:text-left">{student.fullName}</h2>
+              <p className="text-lg text-muted-foreground font-semibold text-center md:text-left">{student.courseName} ({student.yearOfJoining} Year)</p>
+              
+              <Separator/>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                <DetailItem icon={<User size={16}/>} label="PRN Number" value={student.prnNumber} />
+                <DetailItem icon={<User size={16}/>} label="Roll Number" value={student.rollNumber} />
+                {student.dateOfBirth && isValid(student.dateOfBirth) && 
+                  <DetailItem icon={<CalendarDays size={16}/>} label="Date of Birth" value={format(student.dateOfBirth, 'dd MMM, yyyy')} />}
+                <DetailItem icon={<Phone size={16}/>} label="Mobile" value={student.mobileNumber} />
+                <DetailItem icon={<Droplets size={16}/>} label="Blood Group" value={student.bloodGroup} />
+                <DetailItem icon={<CalendarDays size={16}/>} label="Registration Date" value={student.registrationDate ? format(student.registrationDate, 'dd MMM, yyyy HH:mm') : 'N/A'}/>
+                <DetailItem icon={<CalendarDays size={16}/>} label="ID Expiry Date" value={student.registrationDate ? format(expiryDate, 'dd MMM, yyyy') : 'N/A'} classNameText="font-bold text-destructive" />
               </div>
+               <DetailItem icon={<Home size={16}/>} label="Address" value={student.address} />
             </div>
           </div>
           
-          <div className="border-t border-border pt-4 mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="font-bold text-primary">Year of Joining:</p>
-              <p className="font-semibold">{student.yearOfJoining}</p>
+          <Separator/>
+          
+          <div>
+            <h3 className="text-lg font-semibold text-primary flex items-center gap-2 mb-2"><HeartPulse size={20}/> Medical Information</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                <DetailItem icon={<UsersIcon size={16}/>} label="Emergency Contact Name" value={student.emergencyContactName} />
+                <DetailItem icon={<Phone size={16}/>} label="Emergency Contact Phone" value={student.emergencyContactPhone} />
             </div>
-             <div>
-              <p className="font-bold text-primary">Blood Group:</p>
-              <p className="font-semibold">{student.bloodGroup || 'N/A'}</p>
-            </div>
-            <div>
-              <p className="font-bold text-primary">Registration Date:</p>
-              <p className="font-semibold">{student.registrationDate ? format(student.registrationDate, 'dd MMM, yyyy HH:mm') : 'N/A'}</p>
-            </div>
-            <div>
-              <p className="font-bold text-destructive">ID Expiry Date:</p>
-              <p className="font-semibold">{student.registrationDate ? format(expiryDate, 'dd MMM, yyyy') : 'N/A'}</p>
-            </div>
+            <DetailItem icon={<AlertTriangle size={16}/>} label="Allergies" value={student.allergies} />
+            <DetailItem icon={<HelpCircle size={16}/>} label="Known Medical Conditions" value={student.medicalConditions} />
           </div>
 
-          {qrCodeUrl && (
-            <div className="mt-6 p-4 bg-accent/10 rounded-md text-center">
-              <QrCode className="mx-auto mb-2 text-accent" size={48} />
-              <p className="text-sm font-bold text-accent-foreground">Digital Student Profile</p>
-              <p className="text-xs text-muted-foreground font-semibold">Student ID (PRN): {student.prnNumber}</p>
-              <Image 
-                src={qrCodeUrl}
-                alt={`QR Code for ${student.fullName}'s profile`} 
-                width={120} 
-                height={120} 
-                className="rounded-md border-2 border-primary-foreground mx-auto mt-2" 
-                data-ai-hint="qr code profile"
-                unoptimized 
-              />
-               <p className="text-xs text-muted-foreground mt-1 font-semibold">Scan to verify this profile online.</p>
-            </div>
-          )}
           <div className="flex items-center justify-center mt-4 text-green-600">
             <ShieldCheck size={20} className="mr-2"/>
             <p className="font-bold">Verified Student Record</p>
@@ -192,12 +186,29 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
         </CardContent>
       </Card>
 
-      {/* Print History Section */}
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold text-primary">ID Card Preview</CardTitle>
+          <CardDescription className="font-semibold">Interactive preview of the student's ID card.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center items-center p-4">
+          <StudentIdCard student={student} showFlipButton={true} initialSide="front" />
+        </CardContent>
+        <CardFooter className="flex justify-center pb-6">
+           <Button asChild className="bg-accent hover:bg-accent/80 text-accent-foreground">
+            <Link href={`/print-preview?studentIds=${student.prnNumber}`} target="_blank">
+              <Printer className="mr-2 h-4 w-4" /> Print ID Card
+            </Link>
+          </Button>
+        </CardFooter>
+      </Card>
+
+
       {student.printHistory && student.printHistory.length > 0 && (
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="text-xl font-semibold flex items-center gap-2"><History /> ID Card Print History</CardTitle>
-            <CardDescription className="font-semibold">This card was printed on the following dates:</CardDescription>
+            <CardTitle className="text-xl font-semibold flex items-center gap-2 text-primary"><History /> ID Card Print History</CardTitle>
+            <CardDescription className="font-semibold">This card was generated for printing on the following dates:</CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
@@ -209,9 +220,9 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
         </Card>
       )}
 
-      <div className="text-center">
+      <div className="text-center pt-4">
         <Link href="/students/list">
-            <Button variant="outline">
+            <Button variant="outline" size="lg">
               Back to Student List
             </Button>
           </Link>
@@ -221,12 +232,11 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
 }
 
 export default function StudentProfilePage({ params: paramsInput }: { params: { id: string } }) {
-  // The 'React.use' hook is essential for handling Promise-based params in Client Components
   const resolvedParams = React.use(paramsInput as unknown as Promise<{ id: string }>);
   const { isLoading: authIsLoading } = useAuth();
 
   if (authIsLoading) {
-    return <div className="flex justify-center items-center min-h-screen"><p>Loading authentication...</p></div>;
+    return <div className="flex justify-center items-center min-h-screen"><p className="text-lg font-semibold">Loading authentication...</p></div>;
   }
   
   return (
