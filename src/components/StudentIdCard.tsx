@@ -4,8 +4,9 @@ import type { StudentData } from '@/lib/types';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Stethoscope, QrCode, User, MapPin, Phone, Hash, CalendarDays, BookUser, Award } from 'lucide-react';
+import { Stethoscope, User, MapPin, Phone, Hash, CalendarDays, BookUser, Award } from 'lucide-react';
 import { format } from 'date-fns';
+import { useState, useEffect } from 'react';
 
 interface StudentIdCardProps {
   student: StudentData;
@@ -15,6 +16,18 @@ export default function StudentIdCard({ student }: StudentIdCardProps) {
   const expiryDate = new Date(student.registrationDate);
   expiryDate.setFullYear(expiryDate.getFullYear() + 1);
 
+  const [baseUrl, setBaseUrl] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setBaseUrl(window.location.origin);
+    }
+  }, []);
+  
+  const studentProfileUrl = baseUrl && student.prnNumber ? `${baseUrl}/students/${student.prnNumber}` : '';
+  const qrCodeApiUrl = studentProfileUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(studentProfileUrl)}` : "https://placehold.co/80x80.png";
+
+
   return (
     <Card className="w-full max-w-md mx-auto shadow-xl border-primary border-2 rounded-lg overflow-hidden bg-gradient-to-br from-primary/5 via-background to-background">
       <CardHeader className="bg-primary text-primary-foreground p-4 flex flex-row items-center justify-between">
@@ -22,7 +35,15 @@ export default function StudentIdCard({ student }: StudentIdCardProps) {
           <Stethoscope size={32} />
           <CardTitle className="text-2xl">Student ID Card</CardTitle>
         </div>
-         <Image src="https://placehold.co/80x80.png" alt="QR Code" width={60} height={60} className="rounded-md border-2 border-primary-foreground" data-ai-hint="qr code university" />
+         <Image 
+            src={qrCodeApiUrl} 
+            alt={`QR Code for ${student.fullName}`} 
+            width={60} 
+            height={60} 
+            className="rounded-md border-2 border-primary-foreground" 
+            data-ai-hint="qr code profile"
+            unoptimized={!!studentProfileUrl} // Prevents Next.js optimization for external dynamic URLs
+          />
       </CardHeader>
       <CardContent className="p-6 space-y-4">
         <div className="flex items-center space-x-4">
@@ -51,8 +72,8 @@ export default function StudentIdCard({ student }: StudentIdCardProps) {
         </div>
 
         <CardDescription className="text-xs text-center text-muted-foreground pt-2">
-          This card is valid for 1 year from the date of printing.
-          QR Code links to student's profile.
+          This card is valid for 1 year from the date of issue.
+          {studentProfileUrl ? " QR Code links to student's profile." : " Generating QR Code..."}
         </CardDescription>
       </CardContent>
     </Card>
@@ -72,7 +93,7 @@ function InfoItem({ icon, label, value, className }: InfoItemProps) {
       <span className="mt-0.5">{icon}</span>
       <div>
         <p className="font-semibold text-foreground">{label}:</p>
-        <p className="text-muted-foreground">{value}</p>
+        <p className="text-muted-foreground break-words">{value}</p>
       </div>
     </div>
   )

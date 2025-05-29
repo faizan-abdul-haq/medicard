@@ -1,7 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, BookOpenText, BadgeCheck } from "lucide-react";
+import { Users, BookOpenText, BadgeCheck, CalendarClock, ListChecks, UploadCloud, UserPlus, Link2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { mockStudents } from "@/lib/mockStudents";
+import type { RecentRegistration, StudentData } from "@/lib/types";
+import { format } from "date-fns";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface StatCardProps {
   title: string;
@@ -27,37 +31,50 @@ function StatCard({ title, value, description, icon, colorClass = "text-primary"
 }
 
 export default function DashboardPage() {
-  // Mock data for dashboard
+  const totalStudents = mockStudents.length;
+  const activeIDCards = Math.floor(totalStudents * 0.95); // Simulate 95% active
+  const expiringSoon = Math.floor(totalStudents * 0.05); // Simulate 5% expiring
+
   const stats = [
     {
       title: "Total Students Registered",
-      value: "1,234",
-      description: "+20% from last month",
+      value: totalStudents.toString(),
+      description: `Currently in system`,
       icon: <Users className="h-5 w-5" />,
       colorClass: "text-primary",
     },
     {
-      title: "Courses Offered",
+      title: "Active ID Cards",
+      value: activeIDCards.toString(),
+      description: "Valid and in circulation",
+      icon: <BadgeCheck className="h-5 w-5" />,
+      colorClass: "text-green-600", // Tailwind green
+    },
+    {
+      title: "Expiring Soon",
+      value: expiringSoon.toString(),
+      description: "Cards expiring next month",
+      icon: <CalendarClock className="h-5 w-5" />,
+      colorClass: "text-orange-500", // Tailwind orange
+    },
+    {
+      title: "Courses Offered", // Keeping this as a placeholder
       value: "15",
       description: "Across various departments",
       icon: <BookOpenText className="h-5 w-5" />,
       colorClass: "text-accent",
     },
-    {
-      title: "Active ID Cards",
-      value: "1,150",
-      description: "Valid and in circulation",
-      icon: <BadgeCheck className="h-5 w-5" />,
-      colorClass: "text-green-600",
-    },
-     {
-      title: "Expiring Soon",
-      value: "78",
-      description: "Cards expiring next month",
-      icon: <Users className="h-5 w-5" />, // Example icon, can be changed
-      colorClass: "text-orange-500",
-    },
   ];
+
+  const recentRegistrations: RecentRegistration[] = mockStudents
+    .sort((a, b) => b.registrationDate.getTime() - a.registrationDate.getTime())
+    .slice(0, 3)
+    .map(s => ({
+      name: s.fullName,
+      date: format(s.registrationDate, 'dd MMM, yyyy'),
+      profileLink: `/students/${s.prnNumber}`,
+      photographUrl: s.photographUrl
+    }));
 
   return (
     <div className="space-y-8">
@@ -79,10 +96,20 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="text-center mt-12">
-        <Link href="/register">
-          <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-            Register New Student
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mt-10">
+        <Link href="/register" legacyBehavior passHref>
+          <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-6 text-base">
+            <UserPlus className="mr-2" /> Register New Student
+          </Button>
+        </Link>
+        <Link href="/students/list" legacyBehavior passHref>
+           <Button size="lg" variant="outline" className="w-full py-6 text-base">
+            <ListChecks className="mr-2" /> View Student Roster
+          </Button>
+        </Link>
+        <Link href="/students/bulk-upload" legacyBehavior passHref>
+          <Button size="lg" variant="outline" className="w-full py-6 text-base">
+            <UploadCloud className="mr-2" /> Bulk Upload Students
           </Button>
         </Link>
       </div>
@@ -90,11 +117,32 @@ export default function DashboardPage() {
       <Card className="mt-10 shadow-lg">
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Placeholder for recent registrations or ID card events.</CardDescription>
+          <CardDescription>Latest student registrations.</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">No recent activity to display yet.</p>
-          {/* This area can be populated with a list or table of recent events in a future update. */}
+          {recentRegistrations.length > 0 ? (
+            <ul className="space-y-4">
+              {recentRegistrations.map((reg, index) => (
+                <li key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-md">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 border">
+                       <AvatarImage src={reg.photographUrl || 'https://placehold.co/40x40.png'} alt={reg.name} data-ai-hint="student avatar" />
+                       <AvatarFallback>{reg.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold text-foreground">{reg.name}</p>
+                      <p className="text-xs text-muted-foreground">Registered on: {reg.date}</p>
+                    </div>
+                  </div>
+                  <Button asChild variant="ghost" size="sm" className="text-primary hover:text-accent-foreground">
+                    <Link href={reg.profileLink}><Link2 size={14} className="mr-1" />Profile</Link>
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-muted-foreground">No recent activity to display yet.</p>
+          )}
         </CardContent>
       </Card>
 
