@@ -4,8 +4,8 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import StudentIdCard from '@/components/StudentIdCard';
-import type { StudentData, PrintPreviewParams } from '@/lib/types';
-import { getStudentById } from '@/services/studentService';
+import type { StudentData } from '@/lib/types';
+import { getStudentById, recordCardPrint } from '@/services/studentService';
 import { Button } from '@/components/ui/button';
 import { Printer, Loader2, AlertTriangle } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -20,7 +20,7 @@ function PrintPreviewContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchStudentsForPrint() {
+    async function fetchStudentsAndRecordPrint() {
       if (!studentIdsParam) {
         setError("No student IDs provided for printing.");
         setIsLoading(false);
@@ -31,30 +31,43 @@ function PrintPreviewContent() {
       setError(null);
       const ids = studentIdsParam.split(',');
       const fetchedStudents: StudentData[] = [];
-      const errors: string[] = [];
+      const errorsAcc: string[] = [];
+      const printRecordingPromises: Promise<void>[] = [];
 
       for (const id of ids) {
         try {
           const student = await getStudentById(id.trim()); // Use PRN as ID
           if (student) {
             fetchedStudents.push(student);
+            // Record print event for this student
+            printRecordingPromises.push(recordCardPrint(student.prnNumber));
           } else {
-            errors.push(`Student with PRN ${id} not found.`);
+            errorsAcc.push(`Student with PRN ${id} not found.`);
           }
         } catch (err) {
           console.error(`Failed to fetch student ${id}:`, err);
-          errors.push(`Failed to load data for student PRN ${id}.`);
+          errorsAcc.push(`Failed to load data for student PRN ${id}.`);
         }
       }
+
+      // Wait for all print recording events to complete (they run in parallel)
+      try {
+        await Promise.all(printRecordingPromises);
+      } catch (recordError) {
+        // Log this error but don't necessarily block printing
+        console.error("Error during print recording:", recordError);
+        // Optionally, add a non-critical error message to `errorsAcc`
+        // errorsAcc.push("There was an issue logging all print events.");
+      }
       
-      if (errors.length > 0) {
-        setError(errors.join(' '));
+      if (errorsAcc.length > 0) {
+        setError(errorsAcc.join(' '));
       }
       setStudentsToPrint(fetchedStudents);
       setIsLoading(false);
     }
 
-    fetchStudentsForPrint();
+    fetchStudentsAndRecordPrint();
   }, [studentIdsParam]);
 
   const handlePrint = () => {
@@ -102,7 +115,7 @@ function PrintPreviewContent() {
       
       <div className="grid grid-cols-1 gap-4 print:block">
         {studentsToPrint.map(student => (
-          <div key={student.id} className="card-pair-container p-2 bg-gray-100 print:bg-transparent print:p-0 print:m-0 print:break-after-page">
+          <div key={student.prnNumber} className="card-pair-container p-2 bg-gray-100 print:bg-transparent print:p-0 print:m-0 print:break-after-page">
             <h3 className="text-center font-semibold text-sm mb-2 print:hidden">{student.fullName} - {student.prnNumber}</h3>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center print:flex-row print:justify-around print:items-start">
               <div className="transform scale-95 print:scale-100">

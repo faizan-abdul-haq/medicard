@@ -13,6 +13,7 @@ export interface StudentData {
   courseName: string;
   bloodGroup?: string; 
   registrationDate: Date; // Always ensure this is a JS Date object in the application
+  printHistory?: Date[]; // Array of timestamps when the card was printed
 }
 
 export interface RecentRegistration {
@@ -26,3 +27,4 @@ export interface RecentRegistration {
 export interface PrintPreviewParams {
   studentIds?: string; // Comma-separated string of PRN numbers
 }
+

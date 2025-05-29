@@ -1,10 +1,10 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react'; // Import React
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, QrCode, ShieldCheck, AlertTriangle } from "lucide-react";
+import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History } from "lucide-react";
 import Image from "next/image";
 import type { StudentData } from '@/lib/types';
 import { format, isValid } from 'date-fns';
@@ -13,7 +13,7 @@ import Link from "next/link";
 import { getStudentById } from '@/services/studentService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
-
+import StudentIdCard from '@/components/StudentIdCard'; // Import the ID card component
 
 function StudentProfileContent({ studentId }: { studentId: string }) {
   const [student, setStudent] = useState<StudentData | null>(null);
@@ -21,22 +21,21 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
 
-
   useEffect(() => {
     async function fetchStudentData() {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await getStudentById(studentId);
+        const data = await getStudentById(studentId); // This can be PRN or Firestore ID
         if (data) {
-          // Ensure dates are Date objects
           setStudent({
             ...data,
             dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
             registrationDate: new Date(data.registrationDate),
+            printHistory: data.printHistory ? data.printHistory.map(ph => new Date(ph)) : [],
           });
         } else {
-          setError(`Student with ID ${studentId} not found.`);
+          setError(`Student with identifier ${studentId} not found.`);
         }
       } catch (err) {
         console.error("Failed to fetch student data:", err);
@@ -50,14 +49,14 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
   
   useEffect(() => {
     if (typeof window !== 'undefined' && student) {
-      const currentUrl = window.location.href;
+      const currentUrl = `${window.location.origin}/students/${student.prnNumber}`; // Use PRN for QR
       setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}`);
     }
   }, [student]);
 
 
   if (isLoading) {
-    return <div className="max-w-lg mx-auto text-center py-10"><p>Loading student profile...</p></div>;
+    return <div className="flex justify-center items-center min-h-[300px]"><p>Loading student profile...</p></div>;
   }
 
   if (error) {
@@ -78,7 +77,6 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
   }
 
   if (!student) {
-     // This case should be covered by error state, but as a fallback
     return (
       <div className="max-w-lg mx-auto text-center py-10">
         <Card className="shadow-lg p-8">
@@ -101,11 +99,29 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
   expiryDate.setFullYear(expiryDate.getFullYear() + 1);
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-8">
+      {/* Student ID Card Preview Section */}
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-xl">ID Card Preview</CardTitle>
+        </CardHeader>
+        <CardContent className="flex justify-center items-center">
+          <StudentIdCard student={student} showFlipButton={true} />
+        </CardContent>
+        <CardContent className="flex justify-center pb-6">
+           <Button asChild>
+            <Link href={`/print-preview?studentIds=${student.prnNumber}`} target="_blank">
+              <Printer className="mr-2 h-4 w-4" /> Print ID Card
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Student Details Section */}
       <Card className="shadow-xl border-primary border-2 rounded-lg overflow-hidden">
         <CardHeader className="bg-primary text-primary-foreground p-4">
           <CardTitle className="flex items-center gap-2 text-xl">
-            <User size={24} /> Student Digital ID
+            <User size={24} /> Student Digital Profile
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
@@ -134,9 +150,13 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
               <p className="font-semibold text-primary">Year of Joining:</p>
               <p>{student.yearOfJoining}</p>
             </div>
+             <div>
+              <p className="font-semibold text-primary">Blood Group:</p>
+              <p>{student.bloodGroup || 'N/A'}</p>
+            </div>
             <div>
               <p className="font-semibold text-primary">Registration Date:</p>
-              <p>{format(student.registrationDate, 'dd MMM, yyyy')}</p>
+              <p>{format(student.registrationDate, 'dd MMM, yyyy HH:mm')}</p>
             </div>
             <div>
               <p className="font-semibold text-destructive">ID Expiry Date:</p>
@@ -148,7 +168,7 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
             <div className="mt-6 p-4 bg-accent/10 rounded-md text-center">
               <QrCode className="mx-auto mb-2 text-accent" size={48} />
               <p className="text-sm font-semibold text-accent-foreground">Digital Student Profile</p>
-              <p className="text-xs text-muted-foreground">Student ID: {student.id}</p>
+              <p className="text-xs text-muted-foreground">Student ID (PRN): {student.prnNumber}</p>
               <Image 
                 src={qrCodeUrl}
                 alt={`QR Code for ${student.fullName}'s profile`} 
@@ -167,6 +187,24 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Print History Section */}
+      {student.printHistory && student.printHistory.length > 0 && (
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2"><History /> ID Card Print History</CardTitle>
+            <CardDescription>This card was printed on the following dates:</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+              {student.printHistory.map((printDate, index) => (
+                <li key={index}>{format(printDate, 'dd MMM, yyyy HH:mm:ss')}</li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="text-center">
         <Link href="/students/list">
             <Button variant="outline">
@@ -178,26 +216,18 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
   );
 }
 
-// The prop `paramsInput` (renamed from `params` to avoid confusion with resolved `params`)
-// is what Next.js passes to the page component. The error indicates this is a Promise.
-export default function StudentProfilePage({ params: paramsInput }: { params: { id: string } /* Or Promise<{ id: string }> if type needs update */ }) {
-  // Use React.use to unwrap the params promise, as suggested by the Next.js error.
-  // This must be called unconditionally at the top level of the component.
-  // We cast paramsInput to a Promise type based on the runtime error's message.
+export default function StudentProfilePage({ params: paramsInput }: { params: { id: string } }) {
   const resolvedParams = React.use(paramsInput as unknown as Promise<{ id: string }>);
-
   const { isLoading: authIsLoading } = useAuth();
 
   if (authIsLoading) {
-    // This check will occur after resolvedParams is available (due to React.use suspending if needed)
-    // or if authIsLoading resolves faster.
     return <div className="flex justify-center items-center min-h-screen"><p>Loading profile...</p></div>;
   }
   
-  // Now use resolvedParams.id
   return (
     <ProtectedRoute>
       <StudentProfileContent studentId={resolvedParams.id} />
     </ProtectedRoute>
   );
 }
+

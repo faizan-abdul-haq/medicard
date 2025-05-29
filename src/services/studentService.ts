@@ -13,7 +13,9 @@ import {
   where, 
   Timestamp,
   writeBatch,
-  serverTimestamp
+  serverTimestamp,
+  updateDoc,
+  arrayUnion
 } from 'firebase/firestore';
 // When using Firebase Storage, you would import:
 // import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -22,9 +24,10 @@ const STUDENTS_COLLECTION = 'students';
 
 // Helper to convert Firestore Timestamps to JS Date objects
 const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => {
-  const data = docData as Omit<StudentData, 'id' | 'dateOfBirth' | 'registrationDate'> & {
+  const data = docData as Omit<StudentData, 'id' | 'dateOfBirth' | 'registrationDate' | 'printHistory'> & {
     dateOfBirth: Timestamp | Date | string; 
     registrationDate: Timestamp | Date | string;
+    printHistory?: Array<Timestamp | Date | string>;
   };
   
   let dob: Date;
@@ -45,13 +48,23 @@ const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => 
     regDate = new Date(data.registrationDate);
   }
 
+  let printHistoryDates: Date[] | undefined = undefined;
+  if (data.printHistory && Array.isArray(data.printHistory)) {
+    printHistoryDates = data.printHistory.map(ph => {
+      if (ph instanceof Timestamp) return ph.toDate();
+      if (ph instanceof Date) return ph;
+      return new Date(ph);
+    }).sort((a,b) => b.getTime() - a.getTime()); // Sort descending
+  }
+
   return {
     ...data,
     id,
     dateOfBirth: dob,
     registrationDate: regDate,
     bloodGroup: data.bloodGroup || undefined, // Handle optional bloodGroup
-    photographUrl: data.photographUrl || "https://placehold.co/120x150.png", 
+    photographUrl: data.photographUrl || "https://placehold.co/120x150.png",
+    printHistory: printHistoryDates,
   };
 };
 
@@ -69,12 +82,14 @@ export async function getStudents(): Promise<StudentData[]> {
 
 export async function getStudentById(id: string): Promise<StudentData | null> {
   try {
-    const studentDocRef = doc(db, STUDENTS_COLLECTION, id);
-    let studentSnap = await getDoc(studentDocRef);
+    // First try to get by document ID
+    const studentDocRefById = doc(db, STUDENTS_COLLECTION, id);
+    let studentSnap = await getDoc(studentDocRefById);
 
     if (studentSnap.exists()) {
       return mapFirestoreDocToStudentData(studentSnap.data(), studentSnap.id);
     } else {
+      // If not found by ID, try to find by PRN number
       const q = query(collection(db, STUDENTS_COLLECTION), where("prnNumber", "==", id));
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
@@ -82,12 +97,37 @@ export async function getStudentById(id: string): Promise<StudentData | null> {
         return mapFirestoreDocToStudentData(studentDoc.data(), studentDoc.id);
       }
     }
-    return null;
+    return null; // Not found by ID or PRN
   } catch (error) {
     console.error(`Error fetching student by ID/PRN ${id}: `, error);
     throw new Error("Failed to fetch student data from Firestore.");
   }
 }
+
+export async function recordCardPrint(studentPrn: string): Promise<void> {
+  try {
+    const q = query(collection(db, STUDENTS_COLLECTION), where("prnNumber", "==", studentPrn));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      console.warn(`Student with PRN ${studentPrn} not found. Cannot record print event.`);
+      return; // Or throw new Error(`Student with PRN ${studentPrn} not found.`);
+    }
+    
+    const studentDoc = querySnapshot.docs[0];
+    const studentDocRef = doc(db, STUDENTS_COLLECTION, studentDoc.id);
+
+    await updateDoc(studentDocRef, {
+      printHistory: arrayUnion(serverTimestamp()) 
+    });
+    console.log(`Print recorded for student PRN ${studentPrn}`);
+  } catch (error) {
+    console.error(`Error recording card print for PRN ${studentPrn}: `, error);
+    // Not throwing an error here to prevent print preview from failing if logging fails
+    // In a production app, you might want more robust error handling or logging.
+  }
+}
+
 
 // Function to upload image to Firebase Storage (example, not fully integrated in this step for brevity)
 // async function uploadPhotograph(file: File, prnNumber: string): Promise<string> {
@@ -99,7 +139,7 @@ export async function getStudentById(id: string): Promise<StudentData | null> {
 // }
 
 export async function registerStudent(
-  studentData: Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl'> & { photograph?: File | null, dateOfBirth: Date, photographUrl?: string }
+  studentData: Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl' | 'printHistory'> & { photograph?: File | null, dateOfBirth: Date, photographUrl?: string }
 ): Promise<StudentData> {
   try {
     const q = query(collection(db, STUDENTS_COLLECTION), where("prnNumber", "==", studentData.prnNumber));
@@ -134,6 +174,7 @@ export async function registerStudent(
       courseName: studentData.courseName,
       photographUrl: finalPhotographUrl,
       registrationDate: serverTimestamp(),
+      printHistory: [], // Initialize with empty print history
     };
 
     if (studentData.bloodGroup) {
@@ -196,6 +237,7 @@ export async function bulkRegisterStudents(studentsData: StudentData[]): Promise
       courseName: data.courseName || 'N/A Course',
       photographUrl: data.photographUrl || "https://placehold.co/120x150.png",
       registrationDate: serverTimestamp(),
+      printHistory: [], // Initialize with empty print history
     };
 
     if (data.bloodGroup) {
@@ -211,6 +253,7 @@ export async function bulkRegisterStudents(studentsData: StudentData[]): Promise
         registrationDate: new Date(), 
         dateOfBirth: studentToSave.dateOfBirth.toDate(),
         bloodGroup: studentToSave.bloodGroup,
+        printHistory: [],
     });
     successCount++;
   }
@@ -225,3 +268,4 @@ export async function bulkRegisterStudents(studentsData: StudentData[]): Promise
     return { successCount: 0, newStudents: [], errors }; 
   }
 }
+
