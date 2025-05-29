@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'; // Import React
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, QrCode, ShieldCheck, AlertTriangle } from "lucide-react";
@@ -178,30 +178,26 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
   );
 }
 
-// This page still needs to be a client component to use hooks like useEffect for data fetching
-// and to be wrapped by ProtectedRoute easily.
-// generateStaticParams is usually for SSG, which complicates client-side auth a bit.
-// For simplicity with client-side auth, we'll fetch data on client.
-// If real SSG is needed with auth, middleware-based protection is better.
+// The prop `paramsInput` (renamed from `params` to avoid confusion with resolved `params`)
+// is what Next.js passes to the page component. The error indicates this is a Promise.
+export default function StudentProfilePage({ params: paramsInput }: { params: { id: string } /* Or Promise<{ id: string }> if type needs update */ }) {
+  // Use React.use to unwrap the params promise, as suggested by the Next.js error.
+  // This must be called unconditionally at the top level of the component.
+  // We cast paramsInput to a Promise type based on the runtime error's message.
+  const resolvedParams = React.use(paramsInput as unknown as Promise<{ id: string }>);
 
-export default function StudentProfilePage({ params }: { params: { id: string } }) {
   const { isLoading: authIsLoading } = useAuth();
 
   if (authIsLoading) {
+    // This check will occur after resolvedParams is available (due to React.use suspending if needed)
+    // or if authIsLoading resolves faster.
     return <div className="flex justify-center items-center min-h-screen"><p>Loading profile...</p></div>;
   }
+  
+  // Now use resolvedParams.id
   return (
     <ProtectedRoute>
-      <StudentProfileContent studentId={params.id} />
+      <StudentProfileContent studentId={resolvedParams.id} />
     </ProtectedRoute>
   );
 }
-
-// If you need to pre-render some student pages at build time (and they are public or auth handled differently)
-// export async function generateStaticParams() {
-//   const students = await getStudents(); // This would now call your service
-//   return students.slice(0, 5).map((student) => ({ // Example: pre-render first 5
-//     id: student.prnNumber,
-//   }));
-// }
-
