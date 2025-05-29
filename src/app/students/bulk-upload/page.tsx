@@ -33,29 +33,30 @@ function BulkUploadContent() {
     "\"John Doe\",\"PRN1001\",\"R101\",\"B.Sc. Computers\",\"FIRST\",\"2003-05-15\",\"O+\",\"555-1234\",\"123 Main St, Anytown\",\"https://placehold.co/100x120.png\"\n" +
     "\"Jane Smith\",\"PRN1002\",\"R102\",\"B.Com. Finance\",\"SECOND\",\"2002-11-20\",\"A-\",\"555-5678\",\"456 Oak Ave, Otherville\",\"\"\n";
 
+  // Moved requiredHeadersForParsing here to be accessible by JSX
+  const requiredHeadersForParsing = ["fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth"];
+
   const parseCSV = (csvText: string): Partial<StudentData>[] => {
     const students: Partial<StudentData>[] = [];
     const lines = csvText.trim().split('\n');
-    const currentParsingErrors: string[] = []; // Renamed to avoid conflict with state setter
+    const currentParsingErrors: string[] = []; 
     
     if (lines.length < 2) {
         currentParsingErrors.push("CSV file must contain headers and at least one data row.");
-        setUploadErrors(currentParsingErrors); // Update state
+        setUploadErrors(currentParsingErrors); 
         toast({ title: "Invalid CSV", description: "CSV file must contain headers and at least one data row.", variant: "destructive" });
         return [];
     }
 
     const headersFromFile = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
     
-    // Updated required headers
-    const requiredHeadersForParsing = ["fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth"];
     for (const reqHeader of requiredHeadersForParsing) {
         if (!headersFromFile.includes(reqHeader)) {
             currentParsingErrors.push(`Missing required header: ${reqHeader}. Please use the template.`);
         }
     }
     if (currentParsingErrors.length > 0) {
-        setUploadErrors(currentParsingErrors); // Update state
+        setUploadErrors(currentParsingErrors); 
         toast({ title: "Invalid CSV Headers", description: currentParsingErrors.join(' '), variant: "destructive" });
         return [];
     }
@@ -70,7 +71,7 @@ function BulkUploadContent() {
       const student: Partial<StudentData> = {};
       let prnFound = false;
       let dobValid = false;
-      let rowError = false; // Flag for errors in the current row
+      let rowError = false; 
 
       headersFromFile.forEach((header, index) => {
         const key = header as keyof StudentData; 
@@ -85,7 +86,7 @@ function BulkUploadContent() {
              }
           }
           if (isValid(parsedDate)) {
-            value = parsedDate; // Keep as Date object
+            value = parsedDate; 
             dobValid = true;
           } else {
             currentParsingErrors.push(`Row ${i+1} (PRN: ${data[headersFromFile.indexOf("prnNumber")] || 'N/A'}): Invalid Date Format '${data[index]}'. Use YYYY-MM-DD, MM/DD/YYYY, or DD/MM/YYYY. Skipping record.`);
@@ -104,7 +105,7 @@ function BulkUploadContent() {
         (student as any)[key] = value;
       });
 
-      if (rowError) continue; // Skip this student if there was a row-specific error like invalid date
+      if (rowError) continue; 
 
       if (!prnFound || !student.prnNumber) {
         currentParsingErrors.push(`PRN number is missing for a student at row ${i + 1}. Skipping this record.`);
@@ -114,7 +115,7 @@ function BulkUploadContent() {
          currentParsingErrors.push(`Date of Birth is invalid or missing for student with PRN ${student.prnNumber} at row ${i + 1}. Skipping this record.`);
         continue;
       }
-      // Add more checks for other required fields
+      
       for(const reqHeader of requiredHeadersForParsing) {
         if (!student[reqHeader as keyof StudentData]) {
             currentParsingErrors.push(`Missing required field '${reqHeader}' for student with PRN ${student.prnNumber} at row ${i+1}. Skipping record.`);
@@ -126,7 +127,7 @@ function BulkUploadContent() {
 
       students.push(student);
     }
-    setUploadErrors(currentParsingErrors); // Set errors found during parsing
+    setUploadErrors(currentParsingErrors); 
     return students;
   };
 
@@ -180,9 +181,7 @@ function BulkUploadContent() {
     }
 
     setIsUploading(true);
-    // Keep existing parsing errors, add submission errors
-    // setUploadErrors([]); 
-
+    
     try {
       const studentsToRegister = parsedStudents.filter(p => 
         p.prnNumber && p.fullName && p.rollNumber && p.courseName && p.yearOfJoining && p.dateOfBirth && isValid(new Date(p.dateOfBirth))
@@ -198,7 +197,11 @@ function BulkUploadContent() {
         address: p.address || "N/A",
         mobileNumber: p.mobileNumber || "N/A",
         photographUrl: p.photographUrl || "https://placehold.co/100x120.png",
+        // These will be set by Firestore service
+        id: '', 
+        registrationDate: new Date(),
       })) as StudentData[];
+
 
       if (studentsToRegister.length === 0) {
         toast({ title: "No Valid Students to Register", description: "All parsed records had critical missing information or errors. Please check parsing messages.", variant: "warning"});
@@ -210,7 +213,7 @@ function BulkUploadContent() {
       
       let toastTitle = "Bulk Upload Processed";
       let toastVariant: "default" | "warning" | "destructive" = "default";
-      const submissionErrors = result.errors; // Errors from Firestore service
+      const submissionErrors = result.errors;
 
       if (submissionErrors.length > 0 && result.successCount === 0) {
         toastTitle = "Bulk Upload Failed";
@@ -227,7 +230,6 @@ function BulkUploadContent() {
         duration: submissionErrors.length > 0 ? 9000 : 5000,
       });
 
-      // Combine parsing errors with submission errors
       setUploadErrors(prev => [...prev, ...submissionErrors]);
       
       if(result.successCount > 0) {
@@ -237,7 +239,7 @@ function BulkUploadContent() {
         form.reset(); 
         const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement | null;
         if (fileInput) fileInput.value = '';
-        // Clear only parsing errors if successful, keep submission errors if any
+        
         if (submissionErrors.length === 0) setUploadErrors([]);
       }
 
@@ -390,3 +392,4 @@ export default function BulkUploadPage() {
     </ProtectedRoute>
   );
 }
+
