@@ -9,6 +9,7 @@ import { Stethoscope, User, MapPin, Phone, Hash, CalendarDays, BookUser, Award, 
 import { format } from 'date-fns';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label'; // Added import for Label
 
 interface StudentIdCardProps {
   student: StudentData;
