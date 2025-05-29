@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Stethoscope, Users, UploadCloud, LogIn, LogOut, LayoutDashboard } from 'lucide-react';
+import { Stethoscope, Users, UserPlus, UploadCloud, LogIn, LogOut, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePathname } from 'next/navigation';
@@ -33,7 +33,9 @@ export default function Header() {
               </li>
               <li>
                 <Button variant="ghost" asChild className="text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground transition-colors px-2 md:px-3 py-1 md:py-2 text-sm md:text-base">
-                  <Link href="/register">Register</Link>
+                  <Link href="/register"  className="flex items-center gap-1">
+                  <UserPlus size={18} /> Register
+                  </Link>
                 </Button>
               </li>
               <li>
