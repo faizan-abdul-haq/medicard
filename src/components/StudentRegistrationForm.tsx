@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ChangeEvent, FormEvent } from 'react';
@@ -11,14 +12,14 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CalendarIcon, UserPlus, Image as ImageIcon } from 'lucide-react';
+import { CalendarIcon, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
-
+import { registerStudent } from '@/services/studentService'; // Import the service
 
 export default function StudentRegistrationForm() {
-  const [formData, setFormData] = useState<Partial<StudentData>>({
+  const [formData, setFormData] = useState<Partial<Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl'>> & { photograph?: File | null, dateOfBirth?: Date }>({
     fullName: '',
     address: '',
     dateOfBirth: undefined,
@@ -31,15 +32,9 @@ export default function StudentRegistrationForm() {
   });
   const [photographPreview, setPhotographPreview] = useState<string | null>(null);
   const [submittedStudent, setSubmittedStudent] = useState<StudentData | null>(null);
-  const [isClient, setIsClient] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { toast } = useToast();
-
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -55,10 +50,13 @@ export default function StudentRegistrationForm() {
       const file = e.target.files[0];
       setFormData(prev => ({ ...prev, photograph: file }));
       setPhotographPreview(URL.createObjectURL(file));
+    } else {
+      setFormData(prev => ({ ...prev, photograph: null }));
+      setPhotographPreview(null);
     }
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!formData.dateOfBirth) {
       toast({
@@ -68,32 +66,56 @@ export default function StudentRegistrationForm() {
       });
       return;
     }
+    if (!formData.fullName || !formData.prnNumber || !formData.rollNumber || !formData.courseName || !formData.yearOfJoining) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const newStudent: StudentData = {
-      id: formData.prnNumber || crypto.randomUUID(), // Use PRN or generate UUID
-      ...formData,
-      fullName: formData.fullName || '',
-      address: formData.address || '',
-      dateOfBirth: formData.dateOfBirth,
-      mobileNumber: formData.mobileNumber || '',
-      prnNumber: formData.prnNumber || '',
-      rollNumber: formData.rollNumber || '',
-      yearOfJoining: formData.yearOfJoining || '',
-      courseName: formData.courseName || '',
-      photograph: formData.photograph,
-      photographUrl: photographPreview || undefined,
-      registrationDate: new Date(),
-    };
-    setSubmittedStudent(newStudent);
-    toast({
-      title: "Registration Successful!",
-      description: `${newStudent.fullName}'s ID card has been generated.`,
-    });
+    setIsSubmitting(true);
+    try {
+      // Prepare data for the service
+      const studentToRegister = {
+        fullName: formData.fullName,
+        address: formData.address || 'N/A',
+        dateOfBirth: formData.dateOfBirth,
+        mobileNumber: formData.mobileNumber || 'N/A',
+        prnNumber: formData.prnNumber,
+        rollNumber: formData.rollNumber,
+        yearOfJoining: formData.yearOfJoining,
+        courseName: formData.courseName,
+        photograph: formData.photograph,
+      };
+
+      const newStudent = await registerStudent(studentToRegister);
+      
+      // For preview, ensure photographUrl is set if a file was selected
+      const previewStudent = {
+        ...newStudent,
+        photographUrl: photographPreview || newStudent.photographUrl,
+      };
+      setSubmittedStudent(previewStudent);
+      
+      toast({
+        title: "Registration Successful!",
+        description: `${newStudent.fullName}'s ID card has been generated (simulated).`,
+      });
+      // Optionally reset form
+      // setFormData({ fullName: '', ... }); setPhotographPreview(null);
+    } catch (error) {
+      console.error("Registration failed:", error);
+      toast({
+        title: "Registration Failed",
+        description: "Could not register student. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-
-  if (!isClient) {
-    return <p>Loading form...</p>; // Or a skeleton loader
-  }
 
   return (
     <div className="space-y-8">
@@ -108,23 +130,23 @@ export default function StudentRegistrationForm() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input id="fullName" name="fullName" value={formData.fullName} onChange={handleChange} required />
+                <Label htmlFor="fullName">Full Name <span className="text-destructive">*</span></Label>
+                <Input id="fullName" name="fullName" value={formData.fullName || ''} onChange={handleChange} required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="mobileNumber">Mobile Number</Label>
-                <Input id="mobileNumber" name="mobileNumber" type="tel" value={formData.mobileNumber} onChange={handleChange} required />
+                <Input id="mobileNumber" name="mobileNumber" type="tel" value={formData.mobileNumber || ''} onChange={handleChange} />
               </div>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="address">Address</Label>
-              <Textarea id="address" name="address" value={formData.address} onChange={handleChange} required />
+              <Textarea id="address" name="address" value={formData.address || ''} onChange={handleChange} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Label htmlFor="dateOfBirth">Date of Birth <span className="text-destructive">*</span></Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -143,7 +165,8 @@ export default function StudentRegistrationForm() {
                       initialFocus
                       captionLayout="dropdown-buttons"
                       fromYear={1950}
-                      toYear={new Date().getFullYear()}
+                      toYear={new Date().getFullYear() - 10} // Student must be at least 10
+                      required
                     />
                   </PopoverContent>
                 </Popover>
@@ -153,7 +176,7 @@ export default function StudentRegistrationForm() {
                 <Input id="photograph" name="photograph" type="file" accept="image/*" onChange={handlePhotoChange} className="file:text-primary file:font-semibold"/>
                 {photographPreview && (
                   <div className="mt-2">
-                     <Image src={photographPreview} alt="Photograph preview" width={100} height={120} className="rounded-md border" data-ai-hint="student portrait"/>
+                     <Image src={photographPreview} alt="Photograph preview" width={100} height={120} className="rounded-md border object-cover" data-ai-hint="student portrait"/>
                   </div>
                 )}
               </div>
@@ -161,28 +184,28 @@ export default function StudentRegistrationForm() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="prnNumber">PRN Number</Label>
-                <Input id="prnNumber" name="prnNumber" value={formData.prnNumber} onChange={handleChange} required />
+                <Label htmlFor="prnNumber">PRN Number <span className="text-destructive">*</span></Label>
+                <Input id="prnNumber" name="prnNumber" value={formData.prnNumber || ''} onChange={handleChange} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="rollNumber">Roll Number</Label>
-                <Input id="rollNumber" name="rollNumber" value={formData.rollNumber} onChange={handleChange} required />
+                <Label htmlFor="rollNumber">Roll Number <span className="text-destructive">*</span></Label>
+                <Input id="rollNumber" name="rollNumber" value={formData.rollNumber || ''} onChange={handleChange} required />
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="yearOfJoining">Year of Joining</Label>
-                <Input id="yearOfJoining" name="yearOfJoining" type="number" placeholder="YYYY" value={formData.yearOfJoining} onChange={handleChange} required />
+                <Label htmlFor="yearOfJoining">Year of Joining (YYYY) <span className="text-destructive">*</span></Label>
+                <Input id="yearOfJoining" name="yearOfJoining" type="number" placeholder="YYYY" value={formData.yearOfJoining || ''} onChange={handleChange} required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="courseName">Course Name</Label>
-                <Input id="courseName" name="courseName" value={formData.courseName} onChange={handleChange} required />
+                <Label htmlFor="courseName">Course Name <span className="text-destructive">*</span></Label>
+                <Input id="courseName" name="courseName" value={formData.courseName || ''} onChange={handleChange} required />
               </div>
             </div>
             
-            <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-              <UserPlus className="mr-2 h-4 w-4" /> Register Student & Generate ID
+            <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isSubmitting}>
+              {isSubmitting ? 'Registering...' : <><UserPlus className="mr-2 h-4 w-4" /> Register Student & Generate ID</>}
             </Button>
           </form>
         </CardContent>
@@ -192,6 +215,21 @@ export default function StudentRegistrationForm() {
         <div className="mt-12">
           <h2 className="text-2xl font-semibold text-center mb-6 text-primary">Generated ID Card Preview</h2>
           <StudentIdCard student={submittedStudent} />
+          <div className="text-center mt-4">
+            <Button variant="outline" onClick={() => {
+              setSubmittedStudent(null);
+              // Optionally reset form fields:
+              setFormData({
+                fullName: '', address: '', dateOfBirth: undefined, mobileNumber: '',
+                prnNumber: '', rollNumber: '', yearOfJoining: '', courseName: '', photograph: null,
+              });
+              setPhotographPreview(null);
+              const form = document.querySelector('form');
+              if (form) form.reset(); // Clears file input if form is querySelectable
+            }}>
+              Register Another Student
+            </Button>
+          </div>
         </div>
       )}
     </div>

@@ -1,8 +1,21 @@
+
+'use client';
+
 import Link from 'next/link';
-import { Stethoscope, Users, UploadCloud } from 'lucide-react';
+import { Stethoscope, Users, UploadCloud, LogIn, LogOut, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { usePathname } from 'next/navigation';
 
 export default function Header() {
+  const { isAuthenticated, logout, isLoading } = useAuth();
+  const pathname = usePathname();
+
+  // Don't render header on login page, or while auth state is loading
+  if (pathname === '/login' || isLoading) {
+    return null;
+  }
+
   return (
     <header className="bg-primary text-primary-foreground shadow-md">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
@@ -11,32 +24,45 @@ export default function Header() {
           <span>MediCard</span>
         </Link>
         <nav>
-          <ul className="flex space-x-2 md:space-x-4 items-center">
-            <li>
-              <Button variant="ghost" asChild className="text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground transition-colors px-2 md:px-3 py-1 md:py-2 text-sm md:text-base">
-                <Link href="/">Dashboard</Link>
-              </Button>
-            </li>
-            <li>
-              <Button variant="ghost" asChild className="text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground transition-colors px-2 md:px-3 py-1 md:py-2 text-sm md:text-base">
-                <Link href="/register">Register</Link>
-              </Button>
-            </li>
-            <li>
-              <Button variant="ghost" asChild className="text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground transition-colors px-2 md:px-3 py-1 md:py-2 text-sm md:text-base">
-                <Link href="/students/list" className="flex items-center gap-1">
-                  <Users size={18} /> Students
+          {isAuthenticated ? (
+            <ul className="flex space-x-2 md:space-x-4 items-center">
+              <li>
+                <Button variant="ghost" asChild className="text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground transition-colors px-2 md:px-3 py-1 md:py-2 text-sm md:text-base">
+                  <Link href="/" className="flex items-center gap-1"><LayoutDashboard size={18}/>Dashboard</Link>
+                </Button>
+              </li>
+              <li>
+                <Button variant="ghost" asChild className="text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground transition-colors px-2 md:px-3 py-1 md:py-2 text-sm md:text-base">
+                  <Link href="/register">Register</Link>
+                </Button>
+              </li>
+              <li>
+                <Button variant="ghost" asChild className="text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground transition-colors px-2 md:px-3 py-1 md:py-2 text-sm md:text-base">
+                  <Link href="/students/list" className="flex items-center gap-1">
+                    <Users size={18} /> Students
+                  </Link>
+                </Button>
+              </li>
+              <li>
+                <Button variant="ghost" asChild className="text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground transition-colors px-2 md:px-3 py-1 md:py-2 text-sm md:text-base">
+                  <Link href="/students/bulk-upload" className="flex items-center gap-1">
+                    <UploadCloud size={18} /> Bulk Upload
+                  </Link>
+                </Button>
+              </li>
+              <li>
+                <Button variant="ghost" onClick={logout} className="text-primary-foreground hover:bg-red-500 hover:text-white transition-colors px-2 md:px-3 py-1 md:py-2 text-sm md:text-base">
+                  <LogOut size={18} className="mr-1" /> Logout
+                </Button>
+              </li>
+            </ul>
+          ) : (
+             <Button variant="outline" asChild className="border-primary-foreground text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground transition-colors">
+                <Link href="/login" className="flex items-center gap-1">
+                  <LogIn size={18} /> Login
                 </Link>
               </Button>
-            </li>
-            <li>
-              <Button variant="ghost" asChild className="text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground transition-colors px-2 md:px-3 py-1 md:py-2 text-sm md:text-base">
-                <Link href="/students/bulk-upload" className="flex items-center gap-1">
-                  <UploadCloud size={18} /> Bulk Upload
-                </Link>
-              </Button>
-            </li>
-          </ul>
+          )}
         </nav>
       </div>
     </header>

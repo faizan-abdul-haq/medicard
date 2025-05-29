@@ -1,21 +1,23 @@
+
 export interface StudentData {
   id: string; // Could be PRN or a generated UUID
-  photograph?: File | null;
-  photographUrl?: string; // For display after "upload" or from mock data
+  photograph?: File | null; // For upload
+  photographUrl?: string; // For display after "upload" or from mock/service
   fullName: string;
   address: string;
-  dateOfBirth: Date | undefined;
+  dateOfBirth: Date | undefined; // Keep as Date object
   mobileNumber: string;
   prnNumber: string;
   rollNumber: string;
   yearOfJoining: string;
   courseName: string;
-  registrationDate: Date;
+  registrationDate: Date; // Keep as Date object
 }
 
-// Added for dashboard recent activity display
 export interface RecentRegistration {
   name: string;
   date: string;
   profileLink: string;
+  photographUrl?: string;
 }
+

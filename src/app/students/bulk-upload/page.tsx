@@ -11,12 +11,15 @@ import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, FileText, Download, TableIcon, UserCircle } from "lucide-react";
 import type { StudentData } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format } from 'date-fns';
+import { format, isValid, parseISO } from 'date-fns';
+import { bulkRegisterStudents } from '@/services/studentService';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 
-export default function BulkUploadPage() {
+function BulkUploadContent() {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [parsedStudents, setParsedStudents] = useState<StudentData[]>([]);
+  const [parsedStudents, setParsedStudents] = useState<Partial<StudentData>[]>([]); // Use Partial for parsing stage
   const { toast } = useToast();
 
   const csvHeaders = [
@@ -27,9 +30,8 @@ export default function BulkUploadPage() {
     "\"John Doe\",\"123 Main St, Anytown\",\"2003-05-15\",\"555-1234\",\"PRN1001\",\"R101\",\"2021\",\"B.Sc. Computers\",\"https://placehold.co/100x120.png\"\n" +
     "\"Jane Smith\",\"456 Oak Ave, Otherville\",\"2002-11-20\",\"555-5678\",\"PRN1002\",\"R102\",\"2020\",\"B.Com. Finance\",\"\"\n";
 
-
-  const parseCSV = (csvText: string): StudentData[] => {
-    const students: StudentData[] = [];
+  const parseCSV = (csvText: string): Partial<StudentData>[] => {
+    const students: Partial<StudentData>[] = [];
     const lines = csvText.trim().split('\n');
     
     if (lines.length < 2) {
@@ -39,9 +41,8 @@ export default function BulkUploadPage() {
 
     const headersFromFile = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
     
-    // Basic validation for required headers
-    const requiredHeaders = ["fullName", "prnNumber", "rollNumber", "courseName"];
-    for (const reqHeader of requiredHeaders) {
+    const requiredHeadersPresent = ["fullName", "prnNumber", "rollNumber", "courseName"];
+    for (const reqHeader of requiredHeadersPresent) {
         if (!headersFromFile.includes(reqHeader)) {
             toast({ title: "Invalid CSV Headers", description: `Missing required header: ${reqHeader}. Please use the template.`, variant: "destructive" });
             return [];
@@ -50,13 +51,11 @@ export default function BulkUploadPage() {
 
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
-      if (!line.trim()) continue; // Skip empty lines
+      if (!line.trim()) continue; 
 
-      // This is a naive CSV parser, doesn't handle commas within quoted fields well.
-      // For robust parsing, a library would be better.
       const data = line.split(',').map(d => d.trim().replace(/"/g, ''));
       
-      const student: Partial<StudentData> = { registrationDate: new Date() };
+      const student: Partial<StudentData> = {};
       let prnFound = false;
 
       headersFromFile.forEach((header, index) => {
@@ -64,22 +63,22 @@ export default function BulkUploadPage() {
         let value: any = data[index] || '';
 
         if (key === 'dateOfBirth') {
-          value = value ? new Date(value) : undefined;
-           if (value && isNaN(value.getTime())) { // Check for invalid date
-            toast({ title: `Invalid Date Format for ${student.fullName || `row ${i+1}`}`, description: `Date of Birth '${data[index]}' is not valid. Use YYYY-MM-DD.`, variant: "destructive" });
-            value = undefined;
+          const parsedDate = parseISO(value); // Expects YYYY-MM-DD
+          if (isValid(parsedDate)) {
+            value = parsedDate;
+          } else {
+            toast({ title: `Invalid Date Format for row ${i+1}`, description: `Date of Birth '${data[index]}' is not valid. Use YYYY-MM-DD. Record may be skipped or have default DOB.`, variant: "warning" });
+            value = undefined; // Let service handle default if needed
           }
         } else if (key === 'photographUrl' && !value) {
-          value = "https://placehold.co/100x120.png";
+          value = "https://placehold.co/100x120.png"; // Default placeholder
         } else if (key === 'prnNumber' && value) {
           prnFound = true;
         }
         
-        // Ensure numeric fields are treated as strings as per StudentData type for year/roll
         if (key === 'yearOfJoining' || key === 'rollNumber') {
             value = String(value);
         }
-
         (student as any)[key] = value;
       });
 
@@ -88,18 +87,8 @@ export default function BulkUploadPage() {
         continue; 
       }
       
-      student.id = student.prnNumber; // Use PRN as ID
-
-      // Fill missing required fields with defaults or skip if critical
-      if (!student.fullName) student.fullName = "N/A";
-      if (!student.rollNumber) student.rollNumber = "N/A";
-      if (!student.courseName) student.courseName = "N/A";
-      if (!student.address) student.address = "N/A";
-      if (!student.mobileNumber) student.mobileNumber = "N/A";
-      if (!student.yearOfJoining) student.yearOfJoining = new Date().getFullYear().toString();
-
-
-      students.push(student as StudentData);
+      student.id = student.prnNumber; 
+      students.push(student);
     }
     return students;
   };
@@ -117,18 +106,14 @@ export default function BulkUploadPage() {
             setParsedStudents(jsonData);
             if (jsonData.length > 0) {
                  toast({ title: "CSV Parsed Successfully", description: `${jsonData.length} student records ready for review.` });
-            } else if (file) { // if file was selected but parsing resulted in 0 students and no error toast from parser yet
-                 toast({ title: "No Data Found", description: "The CSV file seems empty or incorrectly formatted after headers.", variant: "warning" });
+            } else if (file) { 
+                 toast({ title: "No Valid Data Found", description: "The CSV file seems empty or incorrectly formatted after headers, or all records had errors.", variant: "warning" });
             }
           }
         };
         reader.readAsText(selectedFile);
       } else {
-        toast({
-          title: "Invalid File Type",
-          description: "Please upload a CSV file.",
-          variant: "destructive",
-        });
+        toast({ title: "Invalid File Type", description: "Please upload a CSV file.", variant: "destructive" });
         setFile(null);
         setParsedStudents([]);
         if (e.target) e.target.value = ''; 
@@ -141,36 +126,34 @@ export default function BulkUploadPage() {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!file && parsedStudents.length === 0) {
+    if (parsedStudents.length === 0) {
       toast({
         title: "No Data to Upload",
-        description: "Please select a CSV file and ensure it's parsed.",
+        description: "Please select a CSV file and ensure valid student data is parsed.",
         variant: "destructive",
       });
       return;
     }
-    if (parsedStudents.length === 0 && file) {
-        toast({
-          title: "No Parsed Students",
-          description: "No valid student data was parsed from the file. Please check the CSV format or content.",
-          variant: "destructive",
-        });
-        return;
-    }
-
 
     setIsUploading(true);
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
-    setIsUploading(false);
-
-    toast({
-      title: "Upload Successful (Simulated)",
-      description: `${parsedStudents.length} student records would be processed and ID cards generated.`,
-    });
-    setFile(null);
-    setParsedStudents([]);
-    const form = e.target as HTMLFormElement;
-    form.reset(); 
+    try {
+      const result = await bulkRegisterStudents(parsedStudents);
+      toast({
+        title: "Upload Successful (Simulated)",
+        description: `${result.successCount} student records processed. Check student list.`,
+      });
+      setFile(null);
+      setParsedStudents([]);
+      const form = e.target as HTMLFormElement;
+      form.reset(); 
+      const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement | null;
+      if (fileInput) fileInput.value = '';
+    } catch (error) {
+      console.error("Bulk upload failed:", error);
+      toast({ title: "Upload Failed", description: "An error occurred during bulk upload.", variant: "destructive" });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDownloadTemplate = () => {
@@ -186,11 +169,7 @@ export default function BulkUploadPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } else {
-        toast({
-            title: "Download Failed",
-            description: "Your browser does not support this download method.",
-            variant: "destructive",
-        });
+        toast({ title: "Download Failed", description: "Your browser does not support this download method.", variant: "destructive" });
     }
   };
 
@@ -223,7 +202,7 @@ export default function BulkUploadPage() {
                     <Download className="mr-2 h-4 w-4" /> Download CSV Template
                 </Button>
                 <Button type="submit" className="w-full sm:flex-grow bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isUploading || parsedStudents.length === 0}>
-                {isUploading ? 'Uploading...' : <><UploadCloud className="mr-2 h-4 w-4" /> Upload & Register Students</>}
+                {isUploading ? 'Uploading...' : <><UploadCloud className="mr-2 h-4 w-4" /> Upload & Register {parsedStudents.length > 0 ? `(${parsedStudents.length})` : ''} Students</>}
                 </Button>
             </div>
           </form>
@@ -243,22 +222,22 @@ export default function BulkUploadPage() {
                         <TableHead>PRN</TableHead>
                         <TableHead>Roll No.</TableHead>
                         <TableHead>Course</TableHead>
-                        <TableHead>DOB</TableHead>
+                        <TableHead>DOB (YYYY-MM-DD)</TableHead>
                         <TableHead>Mobile</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {parsedStudents.map((student, index) => (
-                        <TableRow key={student.id || index}>
+                        <TableRow key={student.prnNumber || index}>
                           <TableCell className="font-medium flex items-center gap-2">
                             <UserCircle size={18} className="text-muted-foreground" />
-                            {student.fullName}
+                            {student.fullName || 'N/A'}
                           </TableCell>
-                          <TableCell>{student.prnNumber}</TableCell>
-                          <TableCell>{student.rollNumber}</TableCell>
-                          <TableCell>{student.courseName}</TableCell>
-                          <TableCell>{student.dateOfBirth ? format(student.dateOfBirth, 'dd/MM/yyyy') : 'N/A'}</TableCell>
-                          <TableCell>{student.mobileNumber}</TableCell>
+                          <TableCell>{student.prnNumber || 'N/A'}</TableCell>
+                          <TableCell>{student.rollNumber || 'N/A'}</TableCell>
+                          <TableCell>{student.courseName || 'N/A'}</TableCell>
+                          <TableCell>{student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'yyyy-MM-dd') : 'Invalid/Missing'}</TableCell>
+                          <TableCell>{student.mobileNumber || 'N/A'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -279,12 +258,25 @@ export default function BulkUploadPage() {
                   <li key={header}><code className="font-mono bg-gray-200 dark:bg-gray-700 px-1 rounded">{header}</code> ({header === 'dateOfBirth' ? 'YYYY-MM-DD' : header === 'yearOfJoining' ? 'YYYY' : header === 'photographUrl' ? 'Optional URL' : 'Text'})</li>
                 ))}
               </ul>
-              <p className="mt-2">The first row must be headers. Data rows follow. PRN Number is mandatory for each student.</p>
+              <p className="mt-2">The first row must be headers. Data rows follow. PRN Number is mandatory for each student. Required fields are: fullName, prnNumber, rollNumber, courseName.</p>
               <p>The template includes example data.</p>
             </CardContent>
           </Card>
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function BulkUploadPage() {
+  const { isLoading: authIsLoading } = useAuth();
+
+  if (authIsLoading) {
+    return <div className="flex justify-center items-center min-h-screen"><p>Loading bulk upload...</p></div>;
+  }
+  return (
+    <ProtectedRoute>
+      <BulkUploadContent />
+    </ProtectedRoute>
   );
 }

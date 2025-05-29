@@ -1,40 +1,91 @@
+
+'use client';
+
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, QrCode, ShieldCheck, AlertTriangle } from "lucide-react";
 import Image from "next/image";
-import { mockStudents } from '@/lib/mockStudents'; // Import mock students
 import type { StudentData } from '@/lib/types';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { getStudentById } from '@/services/studentService';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 
-async function getStudentData(id: string): Promise<StudentData | null> {
-  // Simulate fetching data from mockStudents
-  const student = mockStudents.find(s => s.prnNumber === id);
-  if (student) {
-    return {
-      ...student,
-      // Ensure there's always a photographUrl, even if it's a placeholder from mock or default
-      photographUrl: student.photographUrl || "https://placehold.co/100x120.png",
-      // Ensure dateOfBirth is a Date object if it exists, or undefined
-      dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth) : undefined,
-      registrationDate: new Date(student.registrationDate), // Ensure it's a Date object
-    };
+
+function StudentProfileContent({ studentId }: { studentId: string }) {
+  const [student, setStudent] = useState<StudentData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+
+
+  useEffect(() => {
+    async function fetchStudentData() {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await getStudentById(studentId);
+        if (data) {
+          // Ensure dates are Date objects
+          setStudent({
+            ...data,
+            dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
+            registrationDate: new Date(data.registrationDate),
+          });
+        } else {
+          setError(`Student with ID ${studentId} not found.`);
+        }
+      } catch (err) {
+        console.error("Failed to fetch student data:", err);
+        setError("Failed to load student data.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchStudentData();
+  }, [studentId]);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined' && student) {
+      const currentUrl = window.location.href;
+      setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}`);
+    }
+  }, [student]);
+
+
+  if (isLoading) {
+    return <div className="max-w-lg mx-auto text-center py-10"><p>Loading student profile...</p></div>;
   }
-  return null; // Student not found
-}
 
-export default async function StudentProfilePage({ params }: { params: { id: string } }) {
-  const student = await getStudentData(params.id);
+  if (error) {
+    return (
+      <div className="max-w-lg mx-auto text-center py-10">
+        <Card className="shadow-lg p-8 bg-destructive/10 border-destructive">
+          <AlertTriangle className="mx-auto text-destructive mb-4" size={48} />
+          <h2 className="text-2xl font-bold text-destructive mb-2">Error Loading Profile</h2>
+          <p className="text-muted-foreground mb-6">{error}</p>
+          <Link href="/students/list">
+            <Button variant="outline">
+              Back to Student List
+            </Button>
+          </Link>
+        </Card>
+      </div>
+    );
+  }
 
   if (!student) {
+     // This case should be covered by error state, but as a fallback
     return (
       <div className="max-w-lg mx-auto text-center py-10">
         <Card className="shadow-lg p-8">
           <AlertTriangle className="mx-auto text-destructive mb-4" size={48} />
           <h2 className="text-2xl font-bold text-destructive mb-2">Student Not Found</h2>
           <p className="text-muted-foreground mb-6">
-            The student profile with ID <code className="bg-muted px-1 rounded">{params.id}</code> could not be found.
+            The student profile could not be loaded.
           </p>
           <Link href="/students/list">
             <Button variant="outline">
@@ -61,7 +112,7 @@ export default async function StudentProfilePage({ params }: { params: { id: str
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             <div className="flex-shrink-0">
               <Avatar className="h-32 w-32 sm:h-40 sm:w-40 border-4 border-primary rounded-lg">
-                <AvatarImage src={student.photographUrl} alt={student.fullName} data-ai-hint="student portrait" className="object-cover"/>
+                <AvatarImage src={student.photographUrl || "https://placehold.co/100x120.png"} alt={student.fullName} data-ai-hint="student portrait" className="object-cover"/>
                 <AvatarFallback className="text-4xl">{student.fullName.split(' ').map(n => n[0]).join('')}</AvatarFallback>
               </Avatar>
             </div>
@@ -71,7 +122,7 @@ export default async function StudentProfilePage({ params }: { params: { id: str
               <div className="mt-4 space-y-1 text-sm">
                 <p><strong>PRN Number:</strong> {student.prnNumber}</p>
                 <p><strong>Roll Number:</strong> {student.rollNumber}</p>
-                {student.dateOfBirth && <p><strong>Date of Birth:</strong> {format(student.dateOfBirth, 'dd MMM, yyyy')}</p>}
+                {student.dateOfBirth && isValid(student.dateOfBirth) && <p><strong>Date of Birth:</strong> {format(student.dateOfBirth, 'dd MMM, yyyy')}</p>}
                 <p><strong>Mobile:</strong> {student.mobileNumber}</p>
                 <p className="whitespace-pre-wrap"><strong>Address:</strong> {student.address}</p>
               </div>
@@ -93,22 +144,24 @@ export default async function StudentProfilePage({ params }: { params: { id: str
             </div>
           </div>
 
-          <div className="mt-6 p-4 bg-accent/10 rounded-md text-center">
-            <QrCode className="mx-auto mb-2 text-accent" size={48} />
-            <p className="text-sm font-semibold text-accent-foreground">Digital Student Profile</p>
-            <p className="text-xs text-muted-foreground">Student ID: {student.id}</p>
-            <Image 
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${typeof window !== 'undefined' ? window.location.href : ''}`} 
-              alt={`QR Code for ${student.fullName}'s profile`} 
-              width={120} 
-              height={120} 
-              className="rounded-md border-2 border-primary-foreground mx-auto mt-2" 
-              data-ai-hint="qr code profile"
-              unoptimized // For dynamic external URLs
-            />
-             <p className="text-xs text-muted-foreground mt-1">Scan to verify this profile online.</p>
-          </div>
-          <div className="flex items-center justify-center mt-4 text-green-600"> {/* Tailwind green */}
+          {qrCodeUrl && (
+            <div className="mt-6 p-4 bg-accent/10 rounded-md text-center">
+              <QrCode className="mx-auto mb-2 text-accent" size={48} />
+              <p className="text-sm font-semibold text-accent-foreground">Digital Student Profile</p>
+              <p className="text-xs text-muted-foreground">Student ID: {student.id}</p>
+              <Image 
+                src={qrCodeUrl}
+                alt={`QR Code for ${student.fullName}'s profile`} 
+                width={120} 
+                height={120} 
+                className="rounded-md border-2 border-primary-foreground mx-auto mt-2" 
+                data-ai-hint="qr code profile"
+                unoptimized // For dynamic external URLs
+              />
+               <p className="text-xs text-muted-foreground mt-1">Scan to verify this profile online.</p>
+            </div>
+          )}
+          <div className="flex items-center justify-center mt-4 text-green-600">
             <ShieldCheck size={20} className="mr-2"/>
             <p className="font-semibold">Verified Student Record</p>
           </div>
@@ -125,9 +178,30 @@ export default async function StudentProfilePage({ params }: { params: { id: str
   );
 }
 
-export async function generateStaticParams() {
-  // Generate static paths for existing mock students
-  return mockStudents.map((student) => ({
-    id: student.prnNumber,
-  }));
+// This page still needs to be a client component to use hooks like useEffect for data fetching
+// and to be wrapped by ProtectedRoute easily.
+// generateStaticParams is usually for SSG, which complicates client-side auth a bit.
+// For simplicity with client-side auth, we'll fetch data on client.
+// If real SSG is needed with auth, middleware-based protection is better.
+
+export default function StudentProfilePage({ params }: { params: { id: string } }) {
+  const { isLoading: authIsLoading } = useAuth();
+
+  if (authIsLoading) {
+    return <div className="flex justify-center items-center min-h-screen"><p>Loading profile...</p></div>;
+  }
+  return (
+    <ProtectedRoute>
+      <StudentProfileContent studentId={params.id} />
+    </ProtectedRoute>
+  );
 }
+
+// If you need to pre-render some student pages at build time (and they are public or auth handled differently)
+// export async function generateStaticParams() {
+//   const students = await getStudents(); // This would now call your service
+//   return students.slice(0, 5).map((student) => ({ // Example: pre-render first 5
+//     id: student.prnNumber,
+//   }));
+// }
+

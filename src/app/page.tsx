@@ -1,11 +1,17 @@
+
+'use client';
+
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, BookOpenText, BadgeCheck, CalendarClock, ListChecks, UploadCloud, UserPlus, Link2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { mockStudents } from "@/lib/mockStudents";
 import type { RecentRegistration, StudentData } from "@/lib/types";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getStudents } from "@/services/studentService";
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface StatCardProps {
   title: string;
@@ -30,51 +36,72 @@ function StatCard({ title, value, description, icon, colorClass = "text-primary"
   );
 }
 
-export default function DashboardPage() {
-  const totalStudents = mockStudents.length;
-  const activeIDCards = Math.floor(totalStudents * 0.95); // Simulate 95% active
-  const expiringSoon = Math.floor(totalStudents * 0.05); // Simulate 5% expiring
+function DashboardContent() {
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [recentRegistrations, setRecentRegistrations] = useState<RecentRegistration[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setIsLoading(true);
+        const students = await getStudents();
+        setTotalStudents(students.length);
+
+        const sortedStudents = students
+          .sort((a, b) => new Date(b.registrationDate).getTime() - new Date(a.registrationDate).getTime())
+          .slice(0, 3)
+          .map(s => ({
+            name: s.fullName,
+            date: format(new Date(s.registrationDate), 'dd MMM, yyyy'),
+            profileLink: `/students/${s.prnNumber}`,
+            photographUrl: s.photographUrl
+          }));
+        setRecentRegistrations(sortedStudents);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+        // Potentially set an error state and show a message to the user
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+  
+  const activeIDCards = Math.floor(totalStudents * 0.95); 
+  const expiringSoon = Math.floor(totalStudents * 0.05);
 
   const stats = [
     {
       title: "Total Students Registered",
-      value: totalStudents.toString(),
+      value: isLoading ? "..." : totalStudents.toString(),
       description: `Currently in system`,
       icon: <Users className="h-5 w-5" />,
       colorClass: "text-primary",
     },
     {
       title: "Active ID Cards",
-      value: activeIDCards.toString(),
+      value: isLoading ? "..." : activeIDCards.toString(),
       description: "Valid and in circulation",
       icon: <BadgeCheck className="h-5 w-5" />,
-      colorClass: "text-green-600", // Tailwind green
+      colorClass: "text-green-600",
     },
     {
       title: "Expiring Soon",
-      value: expiringSoon.toString(),
+      value: isLoading ? "..." : expiringSoon.toString(),
       description: "Cards expiring next month",
       icon: <CalendarClock className="h-5 w-5" />,
-      colorClass: "text-orange-500", // Tailwind orange
+      colorClass: "text-orange-500",
     },
     {
-      title: "Courses Offered", // Keeping this as a placeholder
-      value: "15",
+      title: "Courses Offered",
+      value: "15", // Placeholder, not from dynamic data yet
       description: "Across various departments",
       icon: <BookOpenText className="h-5 w-5" />,
       colorClass: "text-accent",
     },
   ];
 
-  const recentRegistrations: RecentRegistration[] = mockStudents
-    .sort((a, b) => b.registrationDate.getTime() - a.registrationDate.getTime())
-    .slice(0, 3)
-    .map(s => ({
-      name: s.fullName,
-      date: format(s.registrationDate, 'dd MMM, yyyy'),
-      profileLink: `/students/${s.prnNumber}`,
-      photographUrl: s.photographUrl
-    }));
 
   return (
     <div className="space-y-8">
@@ -120,7 +147,7 @@ export default function DashboardPage() {
           <CardDescription>Latest student registrations.</CardDescription>
         </CardHeader>
         <CardContent>
-          {recentRegistrations.length > 0 ? (
+          {isLoading ? <p>Loading recent activity...</p> : recentRegistrations.length > 0 ? (
             <ul className="space-y-4">
               {recentRegistrations.map((reg, index) => (
                 <li key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-md">
@@ -134,7 +161,7 @@ export default function DashboardPage() {
                       <p className="text-xs text-muted-foreground">Registered on: {reg.date}</p>
                     </div>
                   </div>
-                  <Button asChild variant="ghost" size="sm" className="text-primary hover:text-accent-foreground">
+                  <Button asChild variant="ghost" size="sm" className="text-primary hover:text-primary/80">
                     <Link href={reg.profileLink}><Link2 size={14} className="mr-1" />Profile</Link>
                   </Button>
                 </li>
@@ -145,7 +172,21 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
-
     </div>
+  );
+}
+
+
+export default function DashboardPage() {
+  const { isAuthenticated, isLoading: authIsLoading } = useAuth();
+  
+  if (authIsLoading) {
+    return <div className="flex justify-center items-center min-h-screen"><p>Loading dashboard...</p></div>;
+  }
+
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
   );
 }
