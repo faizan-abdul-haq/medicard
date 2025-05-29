@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History, Mail, Phone, Home, CalendarDays, Droplets, HeartPulse, Users as UsersIcon, HelpCircle } from "lucide-react";
 import Image from "next/image";
@@ -101,13 +101,13 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
       expiryDate.setFullYear(expiryDate.getFullYear() + 1);
   }
 
-  const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value?: string | null }) => (
+  const DetailItem = ({ icon, label, value, classNameText }: { icon: React.ReactNode, label: string, value?: string | null, classNameText?: string }) => (
     value ? (
       <div className="flex items-start gap-2">
         <span className="text-primary">{icon}</span>
         <div>
           <p className="text-sm font-semibold text-muted-foreground">{label}</p>
-          <p className="font-semibold text-foreground whitespace-pre-wrap">{value}</p>
+          <p className={`font-semibold text-foreground whitespace-pre-wrap ${classNameText || ''}`}>{value}</p>
         </div>
       </div>
     ) : null
@@ -173,7 +173,7 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
             <h3 className="text-lg font-semibold text-primary flex items-center gap-2 mb-2"><HeartPulse size={20}/> Medical Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
                 <DetailItem icon={<UsersIcon size={16}/>} label="Emergency Contact Name" value={student.emergencyContactName} />
-                <DetailItem icon={<Phone size={16}/>} label="Emergency Contact Phone" value={student.emergencyContactPhone} />
+                <DetailItem icon={<PhoneCall size={16}/>} label="Emergency Contact Phone" value={student.emergencyContactPhone} />
             </div>
             <DetailItem icon={<AlertTriangle size={16}/>} label="Allergies" value={student.allergies} />
             <DetailItem icon={<HelpCircle size={16}/>} label="Known Medical Conditions" value={student.medicalConditions} />
@@ -232,6 +232,7 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
 }
 
 export default function StudentProfilePage({ params: paramsInput }: { params: { id: string } }) {
+  // React.use will suspend until the promise resolves
   const resolvedParams = React.use(paramsInput as unknown as Promise<{ id: string }>);
   const { isLoading: authIsLoading } = useAuth();
 
@@ -245,3 +246,4 @@ export default function StudentProfilePage({ params: paramsInput }: { params: { 
     </ProtectedRoute>
   );
 }
+
