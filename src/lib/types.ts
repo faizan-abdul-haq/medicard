@@ -1,23 +1,22 @@
 
 export interface StudentData {
-  id: string; // Could be PRN or a generated UUID
-  photograph?: File | null; // For upload
-  photographUrl?: string; // For display after "upload" or from mock/service
+  id: string; // Firestore document ID
+  photograph?: File | null; // For upload form, not stored in Firestore directly
+  photographUrl?: string; // URL to the photo (e.g., from Firebase Storage or placeholder)
   fullName: string;
   address: string;
-  dateOfBirth: Date | undefined; // Keep as Date object
+  dateOfBirth: Date; // Always ensure this is a JS Date object in the application
   mobileNumber: string;
-  prnNumber: string;
+  prnNumber: string; // Should be unique
   rollNumber: string;
   yearOfJoining: string;
   courseName: string;
-  registrationDate: Date; // Keep as Date object
+  registrationDate: Date; // Always ensure this is a JS Date object in the application
 }
 
 export interface RecentRegistration {
   name: string;
-  date: string;
+  date: string; // Formatted date string
   profileLink: string;
   photographUrl?: string;
 }
-
