@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from '@/components/ui/separator';
+import { uploadStudentPhoto } from '@/services/photoUploadService';
 
 const initialFormData: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl'>> & { photograph?: File | null, dateOfBirth?: Date } = {
   fullName: '',
@@ -116,6 +117,12 @@ export default function StudentRegistrationForm() {
 
     setIsSubmitting(true);
     try {
+
+      let photoUrl = '';
+      if (formData.photograph) {
+        photoUrl = await uploadStudentPhoto(formData.photograph, formData.prnNumber!);
+      }
+      
       // Ensure all required fields are present for the service call
       const studentToRegister = {
         fullName: formData.fullName!,
@@ -127,7 +134,8 @@ export default function StudentRegistrationForm() {
         yearOfJoining: formData.yearOfJoining!,
         courseName: formData.courseName!,
         bloodGroup: formData.bloodGroup || undefined,
-        photograph: formData.photograph || null, // Pass the File object
+        photograph: formData.photograph || null,
+        photographUrl: photoUrl || 'https://placehold.co/120x150.png'
         // emergencyContactName: formData.emergencyContactName || undefined,
         // emergencyContactPhone: formData.emergencyContactPhone || undefined,
         // allergies: formData.allergies || undefined,

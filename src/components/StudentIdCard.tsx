@@ -74,7 +74,7 @@ export default function StudentIdCard({ student, showFlipButton = true, initialS
         <div className="bg-blue-700 text-white p-1.5 flex items-center">
           <div className="w-1/5 flex justify-center items-center">
             {/* Replace with actual logo if available */}
-            <Image src="/ggmc_logo.png" alt="College Logo" width={30} height={30} data-ai-hint="college logo" onError={(e) => (e.currentTarget.src = 'https://placehold.co/30x30.png')} />
+            {/* <Image src="/ggmc_logo.png" alt="College Logo" width={30} height={30} data-ai-hint="college logo" onError={(e) => (e.currentTarget.src = 'https://placehold.co/30x30.png')} /> */}
           </div>
           <div className="w-4/5 text-center leading-tight">
             <p className="font-semibold text-[10px] tracking-tighter">{collegeName}</p>

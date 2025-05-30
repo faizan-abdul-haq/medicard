@@ -1,0 +1,28 @@
+import { supabase } from "@/lib/supabaseClient"; // adjust path as needed
+
+export async function uploadStudentPhoto(file: File, prn: string): Promise<string> {
+  const filePath = `student_id/${prn}-${Date.now()}-${file.name}`;
+
+  const { data, error } = await supabase.storage
+    .from("medicare") // Your bucket name only
+    .upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: false, // prevent overwriting
+    });
+
+  if (error) {
+    throw new Error(`Upload failed: ${error.message}`);
+  }
+
+  // Generate a public URL for the uploaded file
+  const { data: publicUrlData } = supabase
+    .storage
+    .from("medicare")
+    .getPublicUrl(filePath);
+
+  if (!publicUrlData?.publicUrl) {
+    throw new Error("Could not generate public URL for uploaded image.");
+  }
+
+  return publicUrlData.publicUrl;
+}

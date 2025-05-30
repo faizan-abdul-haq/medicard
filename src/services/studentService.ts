@@ -1,7 +1,7 @@
 
 'use server';
 
-import { db, storage } from '@/lib/firebase'; // Added storage
+import { db } from '@/lib/firebase';
 import type { StudentData } from '@/lib/types';
 import { 
   collection, 
@@ -17,24 +17,8 @@ import {
   updateDoc,
   arrayUnion
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"; // Firebase Storage imports
 
 const STUDENTS_COLLECTION = 'students';
-
-// Helper function to upload photograph to Firebase Storage
-async function uploadPhotograph(file: File, prnNumber: string): Promise<string> {
-  const filePath = `student_photos/${prnNumber}/${Date.now()}_${file.name}`; // Add timestamp to filename for uniqueness
-  const storageRef = ref(storage, filePath);
-  try {
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
-  } catch (error) {
-    console.error(`Error uploading photograph for PRN ${prnNumber}: `, error);
-    throw new Error(`Failed to upload photograph. ${error instanceof Error ? error.message : ''}`);
-  }
-}
-
 
 // Helper to convert Firestore Timestamps to JS Date objects
 const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => {
@@ -143,26 +127,13 @@ export async function recordCardPrint(studentPrn: string): Promise<void> {
 }
 
 export async function registerStudent(
-  studentData: Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl' | 'printHistory'> & { photograph?: File | null, dateOfBirth: Date }
+  studentData: Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl' | 'printHistory'> & { photographUrl?: string | null, dateOfBirth: Date }
 ): Promise<StudentData> {
   try {
     const q = query(collection(db, STUDENTS_COLLECTION), where("prnNumber", "==", studentData.prnNumber));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
       throw new Error(`Student with PRN number ${studentData.prnNumber} already exists.`);
-    }
-
-    let finalPhotographUrl = "https://placehold.co/120x150.png";
-    
-    if (studentData.photograph) {
-      try {
-        finalPhotographUrl = await uploadPhotograph(studentData.photograph, studentData.prnNumber);
-      } catch (uploadError) {
-        console.error("Photograph upload failed: ", uploadError);
-        // Decide if registration should proceed with a placeholder or fail
-        // For now, it proceeds with the default placeholder set above, but throws error to inform user
-        throw new Error(`Photograph upload failed. Student not registered. ${uploadError instanceof Error ? uploadError.message : ''}`);
-      }
     }
 
     const docDataToSave: any = {
@@ -174,7 +145,7 @@ export async function registerStudent(
       rollNumber: studentData.rollNumber,
       yearOfJoining: studentData.yearOfJoining,
       courseName: studentData.courseName,
-      photographUrl: finalPhotographUrl,
+      photographUrl: studentData.photographUrl,
       registrationDate: serverTimestamp(),
       printHistory: [],
       // emergencyContactName: studentData.emergencyContactName || null,

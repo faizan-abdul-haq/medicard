@@ -133,7 +133,7 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
               {qrCodeUrl && (
                 <div className="mt-4 p-3 bg-accent/10 rounded-md text-center">
                   <QrCode className="mx-auto mb-1 text-accent" size={32} />
-                  <p className="text-xs font-bold text-accent-foreground">Profile QR</p>
+                  <p className="text-xs font-bold text-foreground">Profile QR</p>
                   <Image 
                     src={qrCodeUrl}
                     alt={`QR Code for ${student.fullName}'s profile`} 
@@ -167,17 +167,17 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
             </div>
           </div>
           
-          <Separator/>
+          {/* <Separator/>
           
           <div>
             <h3 className="text-lg font-semibold text-primary flex items-center gap-2 mb-2"><HeartPulse size={20}/> Medical Information</h3>
-            {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
                 <DetailItem icon={<UsersIcon size={16}/>} label="Emergency Contact Name" value={student.emergencyContactName} />
                 <DetailItem icon={<PhoneCall size={16}/>} label="Emergency Contact Phone" value={student.emergencyContactPhone} />
             </div>
             <DetailItem icon={<AlertTriangle size={16}/>} label="Allergies" value={student.allergies} />
-            <DetailItem icon={<HelpCircle size={16}/>} label="Known Medical Conditions" value={student.medicalConditions} /> */}
-          </div>
+            <DetailItem icon={<HelpCircle size={16}/>} label="Known Medical Conditions" value={student.medicalConditions} />
+          </div> */}
 
           <div className="flex items-center justify-center mt-4 text-green-600">
             <ShieldCheck size={20} className="mr-2"/>
