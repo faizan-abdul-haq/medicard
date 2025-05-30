@@ -38,10 +38,10 @@ const initialFormData: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'ph
   courseName: '',
   photograph: null,
   bloodGroup: '',
-  emergencyContactName: '',
-  emergencyContactPhone: '',
-  allergies: '',
-  medicalConditions: '',
+  // emergencyContactName: '',
+  // emergencyContactPhone: '',
+  // allergies: '',
+  // medicalConditions: '',
 };
 
 export default function StudentRegistrationForm() {
@@ -128,10 +128,10 @@ export default function StudentRegistrationForm() {
         courseName: formData.courseName!,
         bloodGroup: formData.bloodGroup || undefined,
         photograph: formData.photograph || null, // Pass the File object
-        emergencyContactName: formData.emergencyContactName || undefined,
-        emergencyContactPhone: formData.emergencyContactPhone || undefined,
-        allergies: formData.allergies || undefined,
-        medicalConditions: formData.medicalConditions || undefined,
+        // emergencyContactName: formData.emergencyContactName || undefined,
+        // emergencyContactPhone: formData.emergencyContactPhone || undefined,
+        // allergies: formData.allergies || undefined,
+        // medicalConditions: formData.medicalConditions || undefined,
       };
 
       const newStudent = await registerStudent(studentToRegister);
@@ -290,12 +290,12 @@ export default function StudentRegistrationForm() {
                     </SelectContent>
                     </Select>
                 </div>
-                 <div className="space-y-2">
+                 {/* <div className="space-y-2">
                     <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>
                     <Input id="emergencyContactName" name="emergencyContactName" value={formData.emergencyContactName || ''} onChange={handleChange} placeholder="e.g., Jane Doe"/>
-                </div>
+                </div> */}
             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="emergencyContactPhone">Emergency Contact Phone</Label>
                     <Input id="emergencyContactPhone" name="emergencyContactPhone" type="tel" value={formData.emergencyContactPhone || ''} onChange={handleChange} placeholder="e.g., 555-123-4567"/>
@@ -308,7 +308,7 @@ export default function StudentRegistrationForm() {
              <div className="space-y-2">
                 <Label htmlFor="medicalConditions">Known Medical Conditions</Label>
                 <Textarea id="medicalConditions" name="medicalConditions" value={formData.medicalConditions || ''} onChange={handleChange} placeholder="e.g., Asthma, Diabetes"/>
-            </div>
+            </div> */}
             
             <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-base" disabled={isSubmitting}>
               {isSubmitting ? 'Registering...' : <><UserPlus className="mr-2 h-5 w-5" /> Register Student & Generate ID</>}

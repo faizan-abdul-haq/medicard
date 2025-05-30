@@ -16,10 +16,10 @@ export interface StudentData {
   printHistory?: Date[]; // Array of timestamps when the card was printed
 
   // New medical fields
-  emergencyContactName?: string;
-  emergencyContactPhone?: string;
-  allergies?: string;
-  medicalConditions?: string;
+  // emergencyContactName?: string;
+  // emergencyContactPhone?: string;
+  // allergies?: string;
+  // medicalConditions?: string;
 }
 
 export interface RecentRegistration {

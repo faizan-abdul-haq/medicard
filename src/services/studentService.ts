@@ -79,10 +79,10 @@ const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => 
     bloodGroup: data.bloodGroup || undefined,
     photographUrl: data.photographUrl || "https://placehold.co/120x150.png",
     printHistory: printHistoryDates,
-    emergencyContactName: data.emergencyContactName || undefined,
-    emergencyContactPhone: data.emergencyContactPhone || undefined,
-    allergies: data.allergies || undefined,
-    medicalConditions: data.medicalConditions || undefined,
+    // emergencyContactName: data.emergencyContactName || undefined,
+    // emergencyContactPhone: data.emergencyContactPhone || undefined,
+    // allergies: data.allergies || undefined,
+    // medicalConditions: data.medicalConditions || undefined,
   };
 };
 
@@ -177,10 +177,10 @@ export async function registerStudent(
       photographUrl: finalPhotographUrl,
       registrationDate: serverTimestamp(),
       printHistory: [],
-      emergencyContactName: studentData.emergencyContactName || null,
-      emergencyContactPhone: studentData.emergencyContactPhone || null,
-      allergies: studentData.allergies || null,
-      medicalConditions: studentData.medicalConditions || null,
+      // emergencyContactName: studentData.emergencyContactName || null,
+      // emergencyContactPhone: studentData.emergencyContactPhone || null,
+      // allergies: studentData.allergies || null,
+      // medicalConditions: studentData.medicalConditions || null,
     };
 
     if (studentData.bloodGroup) {
@@ -244,10 +244,10 @@ export async function bulkRegisterStudents(studentsData: StudentData[]): Promise
       photographUrl: data.photographUrl || "https://placehold.co/120x150.png", // Bulk upload assumes URL is provided or uses placeholder
       registrationDate: serverTimestamp(),
       printHistory: [],
-      emergencyContactName: data.emergencyContactName || null,
-      emergencyContactPhone: data.emergencyContactPhone || null,
-      allergies: data.allergies || null,
-      medicalConditions: data.medicalConditions || null,
+      // emergencyContactName: data.emergencyContactName || null,
+      // emergencyContactPhone: data.emergencyContactPhone || null,
+      // allergies: data.allergies || null,
+      // medicalConditions: data.medicalConditions || null,
     };
 
     if (data.bloodGroup) {
@@ -267,10 +267,10 @@ export async function bulkRegisterStudents(studentsData: StudentData[]): Promise
         bloodGroup: studentToSave.bloodGroup,
         printHistory: [],
         // ensure all fields are present even if null
-        emergencyContactName: studentToSave.emergencyContactName,
-        emergencyContactPhone: studentToSave.emergencyContactPhone,
-        allergies: studentToSave.allergies,
-        medicalConditions: studentToSave.medicalConditions,
+        // emergencyContactName: studentToSave.emergencyContactName,
+        // emergencyContactPhone: studentToSave.emergencyContactPhone,
+        // allergies: studentToSave.allergies,
+        // medicalConditions: studentToSave.medicalConditions,
     });
     successCount++;
   }

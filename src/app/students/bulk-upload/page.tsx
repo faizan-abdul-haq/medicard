@@ -26,12 +26,13 @@ function BulkUploadContent() {
 
   const csvHeaders = [
     "fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth", 
-    "bloodGroup", "mobileNumber", "address", "photographUrl",
-    "emergencyContactName", "emergencyContactPhone", "allergies", "medicalConditions"
+    "bloodGroup", "mobileNumber", "address", "photographUrl"
   ];
+
   const csvTemplateString = csvHeaders.join(',') + '\n' +
-    "\"John Doe\",\"PRN1001\",\"R101\",\"B.Sc. Computers\",\"FIRST\",\"2003-05-15\",\"O+\",\"555-1234\",\"123 Main St, Anytown\",\"https://placehold.co/100x120.png\",\"Jane Doe\",\"555-4321\",\"Peanuts\",\"Asthma\"\n" +
-    "\"Jane Smith\",\"PRN1002\",\"R102\",\"B.Com. Finance\",\"SECOND\",\"2002-11-20\",\"A-\",\"555-5678\",\"456 Oak Ave, Otherville\",\"\",\"Robert Smith\",\"555-8765\",\"\",\"\"\n";
+    "\"John Doe\",\"PRN1001\",\"R101\",\"B.Sc. Computers\",\"FIRST\",\"2003-05-15\",\"O+\",\"555-1234\",\"123 Main St, Anytown\",\"https://placehold.co/100x120.png\"\n" +
+    "\"Jane Smith\",\"PRN1002\",\"R102\",\"B.Com. Finance\",\"SECOND\",\"2002-11-20\",\"A-\",\"555-5678\",\"456 Oak Ave, Otherville\",\"\"\n";
+
 
   const requiredHeadersForParsing = ["fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth"];
 
@@ -97,7 +98,7 @@ function BulkUploadContent() {
           prnFound = true;
         }
         
-        if (['yearOfJoining', 'rollNumber', 'bloodGroup', 'emergencyContactName', 'emergencyContactPhone', 'allergies', 'medicalConditions'].includes(key)) {
+        if (['yearOfJoining', 'rollNumber', 'bloodGroup'].includes(key)) {
             value = String(value);
         }
         (student as any)[key] = value;
@@ -195,10 +196,10 @@ function BulkUploadContent() {
         address: p.address || "N/A",
         mobileNumber: p.mobileNumber || "N/A",
         photographUrl: p.photographUrl || "https://placehold.co/100x120.png",
-        emergencyContactName: p.emergencyContactName || undefined,
-        emergencyContactPhone: p.emergencyContactPhone || undefined,
-        allergies: p.allergies || undefined,
-        medicalConditions: p.medicalConditions || undefined,
+        // emergencyContactName: p.emergencyContactName || undefined,
+        // emergencyContactPhone: p.emergencyContactPhone || undefined,
+        // allergies: p.allergies || undefined,
+        // medicalConditions: p.medicalConditions || undefined,
         // These will be set by Firestore service
         id: '', 
         registrationDate: new Date(),
@@ -333,7 +334,7 @@ function BulkUploadContent() {
                         <TableHead>PRN</TableHead>
                         <TableHead>Course</TableHead>
                         <TableHead>DOB</TableHead>
-                        <TableHead>Emergency Contact</TableHead>
+                        {/* <TableHead>Emergency Contact</TableHead> */}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -346,10 +347,10 @@ function BulkUploadContent() {
                           <TableCell>{student.prnNumber || <span className="text-destructive">N/A</span>}</TableCell>
                           <TableCell>{student.courseName || <span className="text-destructive">N/A</span>}</TableCell>
                           <TableCell>{student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'dd/MM/yyyy') : <span className="text-destructive">Invalid/Missing</span>}</TableCell>
-                          <TableCell className="flex items-center gap-1">
+                          {/* <TableCell className="flex items-center gap-1">
                             {student.emergencyContactName ? <HeartPulse size={16} className="text-green-600"/> : null}
                             {student.emergencyContactName || 'N/A'}
-                          </TableCell>
+                          </TableCell> */}
                         </TableRow>
                       ))}
                     </TableBody>

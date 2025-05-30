@@ -171,12 +171,12 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
           
           <div>
             <h3 className="text-lg font-semibold text-primary flex items-center gap-2 mb-2"><HeartPulse size={20}/> Medical Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+            {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
                 <DetailItem icon={<UsersIcon size={16}/>} label="Emergency Contact Name" value={student.emergencyContactName} />
                 <DetailItem icon={<PhoneCall size={16}/>} label="Emergency Contact Phone" value={student.emergencyContactPhone} />
             </div>
             <DetailItem icon={<AlertTriangle size={16}/>} label="Allergies" value={student.allergies} />
-            <DetailItem icon={<HelpCircle size={16}/>} label="Known Medical Conditions" value={student.medicalConditions} />
+            <DetailItem icon={<HelpCircle size={16}/>} label="Known Medical Conditions" value={student.medicalConditions} /> */}
           </div>
 
           <div className="flex items-center justify-center mt-4 text-green-600">
