@@ -2,8 +2,9 @@
 'use client';
 
 import type { ChangeEvent, FormEvent } from 'react';
-import { useState } from 'react';
-import type { StudentData } from '@/lib/types';
+import { useState, useEffect } from 'react';
+import type { StudentData, CardSettingsData } from '@/lib/types';
+import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
 import StudentIdCard from './StudentIdCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,12 +13,14 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { CalendarIcon, UserPlus, Droplets, Printer, AlertTriangle, ShieldCheck, HeartPulse, PhoneCall, Users } from 'lucide-react';
+import { CalendarIcon, UserPlus, Droplets, Printer, AlertTriangle, ShieldCheck, HeartPulse, PhoneCall, Users, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useToast } from "@/hooks/use-toast";
-import { registerStudent } from '@/services/studentService'; 
+import { registerStudent } from '@/services/studentService';
+import { getCardSettings } from '@/services/cardSettingsService';
+import { uploadStudentPhoto } from '@/services/photoUploadService';
 import {
   Select,
   SelectContent,
@@ -26,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from '@/components/ui/separator';
-import { uploadStudentPhoto } from '@/services/photoUploadService';
+
 
 const initialFormData: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl'>> & { photograph?: File | null, dateOfBirth?: Date } = {
   fullName: '',
@@ -35,23 +38,39 @@ const initialFormData: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'ph
   mobileNumber: '',
   prnNumber: '',
   rollNumber: '',
-  yearOfJoining: 'FIRST', 
+  yearOfJoining: 'FIRST',
   courseName: '',
   photograph: null,
   bloodGroup: '',
-  // emergencyContactName: '',
-  // emergencyContactPhone: '',
-  // allergies: '',
-  // medicalConditions: '',
+  emergencyContactName: '',
+  emergencyContactPhone: '',
+  allergies: '',
+  medicalConditions: '',
 };
 
 export default function StudentRegistrationForm() {
   const [formData, setFormData] = useState(initialFormData);
   const [photographPreview, setPhotographPreview] = useState<string | null>(null);
   const [submittedStudent, setSubmittedStudent] = useState<StudentData | null>(null);
+  const [cardSettings, setCardSettings] = useState<CardSettingsData>(DEFAULT_CARD_SETTINGS);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (submittedStudent) { // Only load settings if there's a student to preview
+      setIsLoadingSettings(true);
+      getCardSettings()
+        .then(setCardSettings)
+        .catch(() => {
+          toast({ title: "Error loading card settings for preview", variant: "destructive"});
+          setCardSettings(DEFAULT_CARD_SETTINGS); // fallback
+        })
+        .finally(() => setIsLoadingSettings(false));
+    }
+  }, [submittedStudent, toast]);
+
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -65,7 +84,7 @@ export default function StudentRegistrationForm() {
   const handleDateChange = (date: Date | undefined) => {
     setFormData(prev => ({ ...prev, dateOfBirth: date }));
   };
-  
+
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -76,7 +95,7 @@ export default function StudentRegistrationForm() {
           description: "Please upload a valid image file (JPEG, PNG, GIF).",
           variant: "destructive",
         });
-        e.target.value = ''; 
+        e.target.value = '';
         return;
       }
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
@@ -85,7 +104,7 @@ export default function StudentRegistrationForm() {
           description: "Image size should not exceed 2MB.",
           variant: "destructive",
         });
-        e.target.value = ''; 
+        e.target.value = '';
         return;
       }
       setFormData(prev => ({ ...prev, photograph: file }));
@@ -118,12 +137,17 @@ export default function StudentRegistrationForm() {
     setIsSubmitting(true);
     try {
 
-      let photoUrl = '';
-      if (formData.photograph) {
-        photoUrl = await uploadStudentPhoto(formData.photograph, formData.prnNumber!);
+      let photoUrl = 'https://placehold.co/120x150.png'; // Default placeholder
+      if (formData.photograph && formData.prnNumber) {
+        try {
+           photoUrl = await uploadStudentPhoto(formData.photograph, formData.prnNumber);
+        } catch (uploadError) {
+           console.error("Photo upload failed:", uploadError);
+           toast({ title: "Photo Upload Failed", description: (uploadError as Error).message || "Could not upload photo.", variant: "warning"});
+           // Continue with placeholder
+        }
       }
-      
-      // Ensure all required fields are present for the service call
+
       const studentToRegister = {
         fullName: formData.fullName!,
         address: formData.address || 'N/A',
@@ -133,30 +157,27 @@ export default function StudentRegistrationForm() {
         rollNumber: formData.rollNumber!,
         yearOfJoining: formData.yearOfJoining!,
         courseName: formData.courseName!,
+        photographUrl: photoUrl,
         bloodGroup: formData.bloodGroup || undefined,
-        photograph: formData.photograph || null,
-        photographUrl: photoUrl || 'https://placehold.co/120x150.png'
-        // emergencyContactName: formData.emergencyContactName || undefined,
-        // emergencyContactPhone: formData.emergencyContactPhone || undefined,
-        // allergies: formData.allergies || undefined,
-        // medicalConditions: formData.medicalConditions || undefined,
+        emergencyContactName: formData.emergencyContactName || undefined,
+        emergencyContactPhone: formData.emergencyContactPhone || undefined,
+        allergies: formData.allergies || undefined,
+        medicalConditions: formData.medicalConditions || undefined,
       };
 
       const newStudent = await registerStudent(studentToRegister);
-      
-      // The newStudent from service will have the photographUrl from storage
       setSubmittedStudent(newStudent);
-      
+
       toast({
         title: "Registration Successful!",
         description: `${newStudent.fullName}'s ID card has been generated.`,
       });
-      
-      setFormData(initialFormData); // Reset form to initial state
+
+      setFormData(initialFormData);
       setPhotographPreview(null);
       const form = e.target as HTMLFormElement;
-      if (form) form.reset(); // Resets native form elements like file input
-      
+      if (form) form.reset();
+
     } catch (error) {
       console.error("Registration failed:", error);
       let errorMessage = "Could not register student. Please try again.";
@@ -188,8 +209,7 @@ export default function StudentRegistrationForm() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            
-            {/* Personal Details Section */}
+
             <div className="space-y-1">
                 <h3 className="text-lg font-semibold text-foreground flex items-center gap-2"><Users size={20}/> Personal & Academic Details</h3>
                 <Separator />
@@ -215,7 +235,7 @@ export default function StudentRegistrationForm() {
                 <Input id="mobileNumber" name="mobileNumber" type="tel" value={formData.mobileNumber || ''} onChange={handleChange} />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="courseName">Course Name <span className="text-destructive">*</span></Label>
@@ -235,7 +255,7 @@ export default function StudentRegistrationForm() {
                 </Select>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="dateOfBirth">Date of Birth <span className="text-destructive">*</span></Label>
@@ -257,7 +277,7 @@ export default function StudentRegistrationForm() {
                       initialFocus
                       captionLayout="dropdown-buttons"
                       fromYear={1950}
-                      toYear={new Date().getFullYear() - 10} 
+                      toYear={new Date().getFullYear() - 10}
                       required
                     />
                   </PopoverContent>
@@ -279,7 +299,6 @@ export default function StudentRegistrationForm() {
               <Textarea id="address" name="address" value={formData.address || ''} onChange={handleChange} placeholder="Enter full residential address"/>
             </div>
 
-            {/* Medical Details Section */}
             <div className="space-y-1 pt-4">
                 <h3 className="text-lg font-semibold text-foreground flex items-center gap-2"><HeartPulse size={20}/> Medical Information</h3>
                 <Separator />
@@ -298,12 +317,12 @@ export default function StudentRegistrationForm() {
                     </SelectContent>
                     </Select>
                 </div>
-                 {/* <div className="space-y-2">
+                 <div className="space-y-2">
                     <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>
                     <Input id="emergencyContactName" name="emergencyContactName" value={formData.emergencyContactName || ''} onChange={handleChange} placeholder="e.g., Jane Doe"/>
-                </div> */}
+                </div>
             </div>
-             {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="emergencyContactPhone">Emergency Contact Phone</Label>
                     <Input id="emergencyContactPhone" name="emergencyContactPhone" type="tel" value={formData.emergencyContactPhone || ''} onChange={handleChange} placeholder="e.g., 555-123-4567"/>
@@ -316,10 +335,11 @@ export default function StudentRegistrationForm() {
              <div className="space-y-2">
                 <Label htmlFor="medicalConditions">Known Medical Conditions</Label>
                 <Textarea id="medicalConditions" name="medicalConditions" value={formData.medicalConditions || ''} onChange={handleChange} placeholder="e.g., Asthma, Diabetes"/>
-            </div> */}
-            
+            </div>
+
             <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-base" disabled={isSubmitting}>
-              {isSubmitting ? 'Registering...' : <><UserPlus className="mr-2 h-5 w-5" /> Register Student & Generate ID</>}
+              {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin"/> : <UserPlus className="mr-2 h-5 w-5" />}
+              {isSubmitting ? 'Registering...' : 'Register Student & Generate ID'}
             </Button>
           </form>
         </CardContent>
@@ -334,7 +354,13 @@ export default function StudentRegistrationForm() {
             <CardDescription>Preview of the generated ID card for {submittedStudent.fullName}.</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
-             <StudentIdCard student={submittedStudent} showFlipButton={true} />
+            {isLoadingSettings ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin"/> Loading card preview with latest settings...
+              </div>
+            ) : (
+              <StudentIdCard student={submittedStudent} settings={cardSettings} showFlipButton={true} />
+            )}
           </CardContent>
           <CardFooter className="flex flex-col sm:flex-row justify-center items-center gap-2">
             <Button variant="outline" onClick={() => {
@@ -342,7 +368,7 @@ export default function StudentRegistrationForm() {
             }}>
               Register Another Student
             </Button>
-             <Button asChild>
+             <Button asChild className="bg-accent hover:bg-accent/80 text-accent-foreground">
                 <Link href={`/print-preview?studentIds=${submittedStudent.prnNumber}`} target="_blank">
                   <Printer className="mr-2 h-4 w-4" /> Print This Card
                 </Link>
@@ -353,3 +379,5 @@ export default function StudentRegistrationForm() {
     </div>
   );
 }
+
+    

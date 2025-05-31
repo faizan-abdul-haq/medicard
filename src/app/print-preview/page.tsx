@@ -4,93 +4,94 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import StudentIdCard from '@/components/StudentIdCard';
-import type { StudentData } from '@/lib/types';
+import type { StudentData, CardSettingsData } from '@/lib/types';
+import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
 import { getStudentById, recordCardPrint } from '@/services/studentService';
+import { getCardSettings } from '@/services/cardSettingsService';
 import { Button } from '@/components/ui/button';
 import { Printer, Loader2, AlertTriangle } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 function PrintPreviewContent() {
   const searchParams = useSearchParams();
   const studentIdsParam = searchParams.get('studentIds');
-  
+  const { toast } = useToast();
+
   const [studentsToPrint, setStudentsToPrint] = useState<StudentData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [cardSettings, setCardSettings] = useState<CardSettingsData>(DEFAULT_CARD_SETTINGS);
+  const [isLoadingData, setIsLoadingData] = useState(true); // For student data and settings
   const [error, setError] = useState<string | null>(null);
-  const { isAuthenticated, isLoading: authIsLoading } = useAuth(); // Get auth state
+  const { isAuthenticated, isLoading: authIsLoading } = useAuth();
 
   useEffect(() => {
-    // Only proceed if authenticated and auth check is complete
-    if (authIsLoading || !isAuthenticated) {
-        // If auth is still loading, or user is not authenticated, don't fetch yet.
-        // ProtectedRoute should handle redirection if not authenticated after loading.
-        if (!authIsLoading && !isAuthenticated) {
-            setError("Authentication required to view print preview.");
-            setIsLoading(false);
-        }
-        return;
+    if (authIsLoading) return; // Wait for auth check to complete
+
+    if (!isAuthenticated) {
+      setError("Authentication required to view print preview.");
+      setIsLoadingData(false);
+      return;
     }
 
-    async function fetchStudentsAndRecordPrint() {
-      if (!studentIdsParam) {
-        setError("No student IDs provided for printing.");
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
+    async function loadInitialData() {
+      setIsLoadingData(true);
       setError(null);
-      const ids = studentIdsParam.split(',');
-      const fetchedStudents: StudentData[] = [];
+      let fetchedStudents: StudentData[] = [];
       const errorsAcc: string[] = [];
-      const printRecordingPromises: Promise<void>[] = [];
 
-      for (const id of ids) {
-        try {
-          const student = await getStudentById(id.trim()); // Use PRN as ID
-          if (student) {
-            fetchedStudents.push(student);
-            // Record print event for this student
-            printRecordingPromises.push(recordCardPrint(student.prnNumber));
-          } else {
-            errorsAcc.push(`Student with PRN ${id} not found.`);
-          }
-        } catch (err) {
-          console.error(`Failed to fetch student ${id}:`, err);
-          errorsAcc.push(`Failed to load data for student PRN ${id}.`);
-        }
-      }
-
-      // Wait for all print recording events to complete (they run in parallel)
       try {
-        await Promise.all(printRecordingPromises);
-      } catch (recordError) {
-        console.error("Error during print recording:", recordError);
-        // Optionally, add a non-critical error message to `errorsAcc`
-        // errorsAcc.push("There was an issue logging all print events.");
+        const settings = await getCardSettings();
+        setCardSettings(settings);
+
+        if (!studentIdsParam) {
+          errorsAcc.push("No student IDs provided for printing.");
+        } else {
+          const ids = studentIdsParam.split(',');
+          const printRecordingPromises: Promise<void>[] = [];
+
+          for (const id of ids) {
+            try {
+              const student = await getStudentById(id.trim());
+              if (student) {
+                fetchedStudents.push(student);
+                printRecordingPromises.push(recordCardPrint(student.prnNumber));
+              } else {
+                errorsAcc.push(`Student with PRN ${id} not found.`);
+              }
+            } catch (err) {
+              console.error(`Failed to fetch student ${id}:`, err);
+              errorsAcc.push(`Failed to load data for student PRN ${id}.`);
+            }
+          }
+          // Wait for all print recording events to complete
+          await Promise.all(printRecordingPromises);
+        }
+      } catch (settingsError) {
+        toast({ title: "Error Loading Settings", description: "Failed to fetch card settings. Using defaults.", variant: "destructive" });
+        setCardSettings(DEFAULT_CARD_SETTINGS);
+      } finally {
+        if (errorsAcc.length > 0) {
+          setError(errorsAcc.join(' '));
+        }
+        setStudentsToPrint(fetchedStudents);
+        setIsLoadingData(false);
       }
-      
-      if (errorsAcc.length > 0) {
-        setError(errorsAcc.join(' '));
-      }
-      setStudentsToPrint(fetchedStudents);
-      setIsLoading(false);
     }
 
-    fetchStudentsAndRecordPrint();
-  }, [studentIdsParam, isAuthenticated, authIsLoading]); // Add isAuthenticated and authIsLoading as dependencies
+    loadInitialData();
+  }, [studentIdsParam, isAuthenticated, authIsLoading, toast]);
 
   const handlePrint = () => {
     window.print();
   };
 
-  if (authIsLoading || isLoading) { // Check both auth loading and data loading
+  if (authIsLoading || isLoadingData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 print:hidden">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
         <p className="text-lg text-muted-foreground">
-          {authIsLoading ? "Verifying authentication..." : "Loading student cards for printing..."}
+          {authIsLoading ? "Verifying authentication..." : isLoadingData ? "Loading cards and settings..." : "Preparing preview..."}
         </p>
       </div>
     );
@@ -107,7 +108,7 @@ function PrintPreviewContent() {
     );
   }
 
-  if (studentsToPrint.length === 0 && !isLoading) { // Ensure not to show this while still loading
+  if (studentsToPrint.length === 0 && !isLoadingData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 print:hidden text-center">
         <AlertTriangle className="h-12 w-12 text-yellow-500 mb-4" />
@@ -125,17 +126,17 @@ function PrintPreviewContent() {
           <Printer className="mr-2 h-5 w-5" /> Print All Cards ({studentsToPrint.length})
         </Button>
       </div>
-      
+
       <div className="grid grid-cols-1 gap-4 print:block">
         {studentsToPrint.map(student => (
           <div key={student.prnNumber} className="card-pair-container p-2 bg-gray-100 print:bg-transparent print:p-0 print:m-0 print:break-after-page">
             <h3 className="text-center font-semibold text-sm mb-2 print:hidden">{student.fullName} - {student.prnNumber}</h3>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center print:flex-row print:justify-around print:items-start">
               <div className="transform scale-95 print:scale-100">
-                 <StudentIdCard student={student} showFlipButton={false} initialSide="front"/>
+                 <StudentIdCard student={student} settings={cardSettings} showFlipButton={false} initialSide="front"/>
               </div>
               <div className="transform scale-95 print:scale-100">
-                 <StudentIdCard student={student} showFlipButton={false} initialSide="back"/>
+                 <StudentIdCard student={student} settings={cardSettings} showFlipButton={false} initialSide="back"/>
               </div>
             </div>
             <hr className="my-4 print:hidden"/>
@@ -146,16 +147,13 @@ function PrintPreviewContent() {
   );
 }
 
-// Suspense Boundary for useSearchParams
 function PrintPreviewPageWrapper() {
-  const { isLoading: authIsLoadingFromContext } = useAuth(); // Renamed to avoid conflict
+  const { isLoading: authIsLoadingFromContext } = useAuth();
 
-  // This initial loading state is for the AuthProvider itself,
-  // `PrintPreviewContent` will handle its internal loading and auth checks
   if (authIsLoadingFromContext) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" /> 
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="ml-2 text-muted-foreground">Initializing...</p>
       </div>
     );
@@ -165,7 +163,7 @@ function PrintPreviewPageWrapper() {
     <ProtectedRoute>
       <Suspense fallback={
           <div className="flex justify-center items-center min-h-screen">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" /> 
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="ml-2 text-muted-foreground">Loading preview...</p>
           </div>
         }>
@@ -175,3 +173,5 @@ function PrintPreviewPageWrapper() {
   );
 }
 export default PrintPreviewPageWrapper;
+
+    

@@ -4,34 +4,40 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History, Mail, Phone, Home, CalendarDays, Droplets, HeartPulse, Users as UsersIcon, HelpCircle, PhoneCall } from "lucide-react";
+import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History, Mail, Phone, Home, CalendarDays, Droplets, HeartPulse, Users as UsersIcon, HelpCircle, PhoneCall, Loader2 } from "lucide-react";
 import Image from "next/image";
-import type { StudentData } from '@/lib/types';
+import type { StudentData, CardSettingsData } from '@/lib/types';
+import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
 import { format, isValid } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { getStudentById } from '@/services/studentService';
+import { getCardSettings } from '@/services/cardSettingsService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
-import StudentIdCard from '@/components/StudentIdCard'; 
+import StudentIdCard from '@/components/StudentIdCard';
 import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
 
 function StudentProfileContent({ studentId }: { studentId: string }) {
   const [student, setStudent] = useState<StudentData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [cardSettings, setCardSettings] = useState<CardSettingsData>(DEFAULT_CARD_SETTINGS);
+  const [isLoadingStudent, setIsLoadingStudent] = useState(true);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchStudentData() {
-      setIsLoading(true);
+      setIsLoadingStudent(true);
       setError(null);
       try {
-        const data = await getStudentById(studentId); 
+        const data = await getStudentById(studentId);
         if (data) {
           setStudent({
             ...data,
-            dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined as any, // Keep as Date
+            dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined as any,
             registrationDate: data.registrationDate ? new Date(data.registrationDate) : new Date(),
             printHistory: data.printHistory ? data.printHistory.map(ph => new Date(ph)) : [],
           });
@@ -41,23 +47,47 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
       } catch (err) {
         console.error("Failed to fetch student data:", err);
         setError("Failed to load student data.");
+        toast({ title: "Error", description: "Failed to load student data.", variant: "destructive" });
       } finally {
-        setIsLoading(false);
+        setIsLoadingStudent(false);
       }
     }
     fetchStudentData();
-  }, [studentId]);
-  
+  }, [studentId, toast]);
+
+  useEffect(() => {
+    async function loadSettings() {
+      setIsLoadingSettings(true);
+      try {
+        const fetchedSettings = await getCardSettings();
+        setCardSettings(fetchedSettings);
+      } catch (error) {
+        toast({ title: "Error Loading Card Settings", description: "Failed to fetch card settings for preview. Using defaults.", variant: "destructive" });
+        setCardSettings(DEFAULT_CARD_SETTINGS);
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    }
+    loadSettings();
+  }, [toast]);
+
   useEffect(() => {
     if (typeof window !== 'undefined' && student) {
-      const currentUrl = `${window.location.origin}/students/${student.prnNumber}`; 
+      const currentUrl = `${window.location.origin}/students/${student.prnNumber}`;
       setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}`);
     }
   }, [student]);
 
 
-  if (isLoading) {
-    return <div className="flex justify-center items-center min-h-[300px]"><p className="text-lg font-semibold">Loading student profile...</p></div>;
+  if (isLoadingStudent || isLoadingSettings) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-[300px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-2"/>
+        <p className="text-lg font-semibold text-muted-foreground">
+          {isLoadingStudent ? "Loading student profile..." : "Loading card settings..."}
+        </p>
+      </div>
+    );
   }
 
   if (error) {
@@ -95,10 +125,10 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
       </div>
     );
   }
-  
+
   const expiryDate = student.registrationDate ? new Date(student.registrationDate) : new Date();
   if (student.registrationDate) {
-      expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+      expiryDate.setFullYear(expiryDate.getFullYear() + (cardSettings.validityPeriodMonths / 12));
   }
 
   const DetailItem = ({ icon, label, value, classNameText }: { icon: React.ReactNode, label: string, value?: string | null, classNameText?: string }) => (
@@ -134,14 +164,14 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
                 <div className="mt-4 p-3 bg-accent/10 rounded-md text-center">
                   <QrCode className="mx-auto mb-1 text-accent" size={32} />
                   <p className="text-xs font-bold text-foreground">Profile QR</p>
-                  <Image 
+                  <Image
                     src={qrCodeUrl}
-                    alt={`QR Code for ${student.fullName}'s profile`} 
-                    width={80} 
-                    height={80} 
-                    className="rounded-md border-2 border-primary-foreground mx-auto mt-1" 
+                    alt={`QR Code for ${student.fullName}'s profile`}
+                    width={80}
+                    height={80}
+                    className="rounded-md border-2 border-primary-foreground mx-auto mt-1"
                     data-ai-hint="qr code profile"
-                    unoptimized 
+                    unoptimized
                   />
                 </div>
               )}
@@ -150,13 +180,13 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
             <div className="flex-grow space-y-4 w-full">
               <h2 className="text-3xl font-bold text-primary text-center md:text-left">{student.fullName}</h2>
               <p className="text-lg text-muted-foreground font-semibold text-center md:text-left">{student.courseName} ({student.yearOfJoining} Year)</p>
-              
+
               <Separator/>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
                 <DetailItem icon={<User size={16}/>} label="PRN Number" value={student.prnNumber} />
                 <DetailItem icon={<User size={16}/>} label="Roll Number" value={student.rollNumber} />
-                {student.dateOfBirth && isValid(student.dateOfBirth) && 
+                {student.dateOfBirth && isValid(student.dateOfBirth) &&
                   <DetailItem icon={<CalendarDays size={16}/>} label="Date of Birth" value={format(student.dateOfBirth, 'dd MMM, yyyy')} />}
                 <DetailItem icon={<Phone size={16}/>} label="Mobile" value={student.mobileNumber} />
                 <DetailItem icon={<Droplets size={16}/>} label="Blood Group" value={student.bloodGroup} />
@@ -166,9 +196,9 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
                <DetailItem icon={<Home size={16}/>} label="Address" value={student.address} />
             </div>
           </div>
-          
-          {/* <Separator/>
-          
+
+          <Separator/>
+
           <div>
             <h3 className="text-lg font-semibold text-primary flex items-center gap-2 mb-2"><HeartPulse size={20}/> Medical Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
@@ -177,7 +207,7 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
             </div>
             <DetailItem icon={<AlertTriangle size={16}/>} label="Allergies" value={student.allergies} />
             <DetailItem icon={<HelpCircle size={16}/>} label="Known Medical Conditions" value={student.medicalConditions} />
-          </div> */}
+          </div>
 
           <div className="flex items-center justify-center mt-4 text-green-600">
             <ShieldCheck size={20} className="mr-2"/>
@@ -192,7 +222,7 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
           <CardDescription className="font-semibold">Interactive preview of the student's ID card.</CardDescription>
         </CardHeader>
         <CardContent className="flex justify-center items-center p-4">
-          <StudentIdCard student={student} showFlipButton={true} initialSide="front" />
+          <StudentIdCard student={student} settings={cardSettings} showFlipButton={true} initialSide="front" />
         </CardContent>
         <CardFooter className="flex justify-center pb-6">
            <Button asChild className="bg-accent hover:bg-accent/80 text-accent-foreground">
@@ -232,14 +262,13 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
 }
 
 export default function StudentProfilePage({ params: paramsInput }: { params: { id: string } }) {
-  // React.use will suspend until the promise resolves
   const resolvedParams = React.use(paramsInput as unknown as Promise<{ id: string }>);
   const { isLoading: authIsLoading } = useAuth();
 
   if (authIsLoading) {
     return <div className="flex justify-center items-center min-h-screen"><p className="text-lg font-semibold">Loading authentication...</p></div>;
   }
-  
+
   return (
     <ProtectedRoute>
       <StudentProfileContent studentId={resolvedParams.id} />
@@ -247,3 +276,4 @@ export default function StudentProfilePage({ params: paramsInput }: { params: { 
   );
 }
 
+    
