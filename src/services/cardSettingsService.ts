@@ -15,11 +15,15 @@ export async function getCardSettings(): Promise<CardSettingsData> {
     const docSnap = await getDoc(settingsDocRef);
 
     if (docSnap.exists()) {
-      // Combine fetched data with defaults to ensure all fields are present
-      const fetchedData = docSnap.data() as Partial<CardSettingsData>;
-      return { ...DEFAULT_CARD_SETTINGS, ...fetchedData };
+      // Destructure lastUpdated (a Firestore Timestamp) out, as it's not a plain object
+      // and not needed by client components for rendering the card.
+      const { lastUpdated, ...clientData } = docSnap.data();
+      // Combine fetched data (now plain) with defaults.
+      // Cast clientData to Partial<CardSettingsData> to ensure type safety during the spread.
+      return { ...DEFAULT_CARD_SETTINGS, ...(clientData as Partial<CardSettingsData>) };
     } else {
-      // If no settings found, return (and implicitly save) defaults
+      // If no settings found, save and return defaults.
+      // lastUpdated is added here for the Firestore document but won't be in the returned DEFAULT_CARD_SETTINGS.
       await setDoc(settingsDocRef, { ...DEFAULT_CARD_SETTINGS, lastUpdated: serverTimestamp() });
       return DEFAULT_CARD_SETTINGS;
     }
@@ -33,7 +37,8 @@ export async function getCardSettings(): Promise<CardSettingsData> {
 export async function saveCardSettings(settings: Partial<CardSettingsData>): Promise<void> {
   try {
     const settingsDocRef = doc(db, SETTINGS_COLLECTION, CARD_SETTINGS_DOC_ID);
-    // Use setDoc with merge: true to only update provided fields or create if not exists
+    // Use setDoc with merge: true to only update provided fields or create if not exists.
+    // lastUpdated is set here using serverTimestamp for the Firestore document.
     await setDoc(settingsDocRef, { ...settings, lastUpdated: serverTimestamp() }, { merge: true });
   } catch (error) {
     console.error("Error saving card settings: ", error);
