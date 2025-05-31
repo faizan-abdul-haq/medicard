@@ -2,7 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Stethoscope, Users, UserPlus, UploadCloud, LogIn, LogOut, LayoutDashboard } from 'lucide-react';
+import { Stethoscope, Users, UserPlus, UploadCloud, LogIn, LogOut, LayoutDashboard, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePathname } from 'next/navigation';
@@ -25,7 +25,7 @@ export default function Header() {
         </Link>
         <nav>
           {isAuthenticated ? (
-            <ul className="flex space-x-2 md:space-x-4 items-center">
+            <ul className="flex space-x-1 md:space-x-2 items-center">
               <li>
                 <Button variant="ghost" asChild className="text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground transition-colors px-2 md:px-3 py-1 md:py-2 text-sm md:text-base">
                   <Link href="/" className="flex items-center gap-1"><LayoutDashboard size={18}/>Dashboard</Link>
@@ -49,6 +49,13 @@ export default function Header() {
                 <Button variant="ghost" asChild className="text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground transition-colors px-2 md:px-3 py-1 md:py-2 text-sm md:text-base">
                   <Link href="/students/bulk-upload" className="flex items-center gap-1">
                     <UploadCloud size={18} /> Bulk Upload
+                  </Link>
+                </Button>
+              </li>
+               <li>
+                <Button variant="ghost" asChild className="text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground transition-colors px-2 md:px-3 py-1 md:py-2 text-sm md:text-base">
+                  <Link href="/card-settings" className="flex items-center gap-1">
+                    <Settings size={18} /> Card Settings
                   </Link>
                 </Button>
               </li>

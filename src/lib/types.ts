@@ -15,11 +15,10 @@ export interface StudentData {
   registrationDate: Date; // Always ensure this is a JS Date object in the application
   printHistory?: Date[]; // Array of timestamps when the card was printed
 
-  // New medical fields
-  // emergencyContactName?: string;
-  // emergencyContactPhone?: string;
-  // allergies?: string;
-  // medicalConditions?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  allergies?: string;
+  medicalConditions?: string;
 }
 
 export interface RecentRegistration {
@@ -33,3 +32,38 @@ export interface RecentRegistration {
 export interface PrintPreviewParams {
   studentIds?: string; // Comma-separated string of PRN numbers
 }
+
+export interface CardSettingsData {
+  id?: string; // Firestore document ID, e.g., 'default_settings'
+  collegeNameLine1: string;
+  collegeNameLine2: string;
+  headerBackgroundColor: string; // e.g., 'hsl(231, 48%, 48%)' or '#3F51B5'
+  headerTextColor: string;     // e.g., 'hsl(210, 40%, 98%)' or '#E3F2FD'
+  importantInfoBackgroundColor: string; // e.g., 'hsl(231, 48%, 90%)' or '#C5CAE9'
+  deanTitle: string;
+  officePhoneNumber: string;
+  validityPeriodMonths: number; // e.g., 12 for 1 year
+  logoUrl: string; // URL for the college logo
+  instructionLine1: string;
+  instructionLine2: string;
+  instructionLine3: string;
+  instructionLine4: string;
+  defaultCardHolderSignatureText: string; // e.g., "Card Holder's Signature"
+}
+
+export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
+  collegeNameLine1: "GOVERNMENT MEDICAL COLLEGE &",
+  collegeNameLine2: "GROUP OF HOSPITALS, MUMBAI 400008",
+  headerBackgroundColor: "hsl(221, 83%, 53%)", // A vibrant blue
+  headerTextColor: "hsl(0, 0%, 100%)",       // White
+  importantInfoBackgroundColor: "hsl(220, 70%, 95%)", // Very light blue
+  deanTitle: "DEAN",
+  officePhoneNumber: "022-23735555",
+  validityPeriodMonths: 12, // 1 year
+  logoUrl: "/ggmc_logo.png", // Path to a logo in the public folder
+  instructionLine1: "This card must always be displayed while you are in premises & produced on demand for inspection.",
+  instructionLine2: "If found please return to office address.",
+  instructionLine3: "It is not transferrable & is the property of GGMC & Sir J.J. Hospital.",
+  instructionLine4: "Card validity: till you are at GGMC & Sir J.J. Hospital.",
+  defaultCardHolderSignatureText: "Card Holder's Signature"
+};
