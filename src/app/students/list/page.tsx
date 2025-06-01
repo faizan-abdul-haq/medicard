@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,37 +10,50 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { StudentData } from '@/lib/types';
 import { format } from 'date-fns';
-import { Users, Eye, Search, ChevronLeft, ChevronRight, Printer, Download } from 'lucide-react';
-import { getStudents } from '@/services/studentService';
+import { Users, Eye, Search, ChevronLeft, ChevronRight, Printer, Download, Trash2, Loader2 } from 'lucide-react';
+import { getStudents, deleteStudent } from '@/services/studentService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const ITEMS_PER_PAGE = 10;
 
 function StudentListContent() {
   const [students, setStudents] = useState<StudentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null); // Store ID of student being deleted
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
-  useEffect(() => {
-    async function fetchStudents() {
-      setIsLoading(true);
-      try {
-        const data = await getStudents();
-        setStudents(data.sort((a,b) => new Date(b.registrationDate).getTime() - new Date(a.registrationDate).getTime()));
-      } catch (error) {
-        console.error("Failed to fetch students:", error);
-        toast({ title: "Error", description: "Failed to fetch student list.", variant: "destructive"});
-      } finally {
-        setIsLoading(false);
-      }
+  const fetchStudentsData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await getStudents();
+      setStudents(data.sort((a,b) => new Date(b.registrationDate).getTime() - new Date(a.registrationDate).getTime()));
+    } catch (error) {
+      console.error("Failed to fetch students:", error);
+      toast({ title: "Error", description: "Failed to fetch student list.", variant: "destructive"});
+    } finally {
+      setIsLoading(false);
     }
-    fetchStudents();
   }, [toast]);
+
+  useEffect(() => {
+    fetchStudentsData();
+  }, [fetchStudentsData]);
 
   const filteredStudents = useMemo(() => {
     if (!searchTerm) return students;
@@ -86,6 +99,26 @@ function StudentListContent() {
   const isAllSelectedOnPage = paginatedStudents.length > 0 && paginatedStudents.every(s => selectedStudents.has(s.prnNumber));
   const isSomeSelectedOnPage = paginatedStudents.some(s => selectedStudents.has(s.prnNumber)) && !isAllSelectedOnPage;
 
+  const handleDeleteStudent = async (studentId: string, photographUrl?: string) => {
+    setIsDeleting(studentId);
+    try {
+      await deleteStudent(studentId, photographUrl);
+      toast({ title: "Student Deleted", description: "The student record has been removed." });
+      fetchStudentsData(); // Refetch students to update the list
+      setSelectedStudents(prev => { // Remove from selection if deleted
+        const newSelected = new Set(prev);
+        const studentToDelete = students.find(s => s.id === studentId);
+        if(studentToDelete) newSelected.delete(studentToDelete.prnNumber);
+        return newSelected;
+      });
+    } catch (error) {
+      console.error("Failed to delete student:", error);
+      toast({ title: "Error", description: "Failed to delete student.", variant: "destructive" });
+    } finally {
+      setIsDeleting(null);
+    }
+  };
+
   const handleDownloadCSV = () => {
     if (filteredStudents.length === 0) {
       toast({ title: "No Data", description: "No students to download.", variant: "warning" });
@@ -104,13 +137,13 @@ function StudentListContent() {
       const row = [
         `"${student.prnNumber}"`,
         `"${student.fullName}"`,
-        `"${student.courseName}"`,
+        `"${student.courseName || ''}"`,
         `"${student.yearOfJoining}"`,
         `"${student.rollNumber}"`,
         `"${format(new Date(student.registrationDate), 'yyyy-MM-dd HH:mm')}"`,
         `"${student.dateOfBirth ? format(new Date(student.dateOfBirth), 'yyyy-MM-dd') : ''}"`,
         `"${student.mobileNumber || ''}"`,
-        `"${(student.address || '').replace(/"/g, '""')}"`, // Escape double quotes
+        `"${(student.address || '').replace(/"/g, '""')}"`, 
         `"${student.bloodGroup || ''}"`,
         `"${student.emergencyContactName || ''}"`,
         `"${student.emergencyContactPhone || ''}"`,
@@ -136,9 +169,15 @@ function StudentListContent() {
   };
 
 
-  if (isLoading) {
-    return <p className="text-center py-4">Loading students...</p>;
+  if (isLoading && students.length === 0) { // Show full page loader only on initial load
+    return (
+      <div className="flex justify-center items-center min-h-[300px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2 text-muted-foreground">Loading students...</p>
+      </div>
+    );
   }
+
 
   return (
     <div className="space-y-8">
@@ -176,7 +215,15 @@ function StudentListContent() {
           </div>
         </CardHeader>
         <CardContent>
-          {paginatedStudents.length > 0 ? (
+          {isLoading && students.length > 0 && ( // Show subtle loading indicator when refetching
+            <div className="flex justify-center py-4"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+          )}
+          {!isLoading && paginatedStudents.length === 0 && (
+             <p className="text-muted-foreground text-center py-4">
+              {searchTerm ? "No students match your search." : "No students registered yet."}
+            </p>
+          )}
+          {paginatedStudents.length > 0 && (
             <>
               <Table>
                 <TableHeader>
@@ -209,12 +256,33 @@ function StudentListContent() {
                       <TableCell>{student.fullName}</TableCell>
                       <TableCell>{student.courseName}</TableCell>
                       <TableCell>{format(new Date(student.registrationDate), 'dd MMM, yyyy')}</TableCell>
-                      <TableCell>
+                      <TableCell className="space-x-1">
                         <Button asChild variant="outline" size="sm">
-                          <Link href={`/students/${student.prnNumber}`}>
-                            <Eye size={16} className="mr-1" /> View
+                          <Link href={`/students/${student.id}`}>
+                            <Eye size={16} className="mr-1" /> View/Edit
                           </Link>
                         </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" disabled={isDeleting === student.id}>
+                              {isDeleting === student.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 size={16} />}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the student record for {student.fullName} (PRN: {student.prnNumber}) and their associated photograph.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteStudent(student.id, student.photographUrl)} className="bg-destructive hover:bg-destructive/90">
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -244,10 +312,6 @@ function StudentListContent() {
                 </div>
               )}
             </>
-          ) : (
-            <p className="text-muted-foreground text-center py-4">
-              {searchTerm ? "No students match your search." : "No students registered yet."}
-            </p>
           )}
         </CardContent>
       </Card>
@@ -274,3 +338,4 @@ export default function StudentListPage() {
     </ProtectedRoute>
   );
 }
+

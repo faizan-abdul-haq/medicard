@@ -1,7 +1,7 @@
 
 'use server';
 
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase'; // Added storage
 import type { StudentData } from '@/lib/types';
 import { 
   collection, 
@@ -15,8 +15,10 @@ import {
   writeBatch,
   serverTimestamp,
   updateDoc,
-  arrayUnion
+  arrayUnion,
+  deleteDoc // Added deleteDoc
 } from 'firebase/firestore';
+import { ref, deleteObject, uploadBytes, getDownloadURL } from 'firebase/storage'; // Added Firebase Storage functions
 
 const STUDENTS_COLLECTION = 'students';
 
@@ -34,7 +36,9 @@ const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => 
   } else if (data.dateOfBirth instanceof Date) {
     dob = data.dateOfBirth;
   } else {
-    dob = new Date(data.dateOfBirth); 
+    // Attempt to parse string; fallback to a default/invalid date if necessary
+    const parsed = new Date(data.dateOfBirth);
+    dob = isNaN(parsed.getTime()) ? new Date('1900-01-01') : parsed; // Fallback for invalid date string
   }
 
   let regDate: Date;
@@ -43,7 +47,8 @@ const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => 
   } else if (data.registrationDate instanceof Date) {
     regDate = data.registrationDate;
   } else {
-    regDate = new Date(data.registrationDate);
+    const parsed = new Date(data.registrationDate);
+    regDate = isNaN(parsed.getTime()) ? new Date() : parsed; // Fallback for invalid date string
   }
 
   let printHistoryDates: Date[] | undefined = undefined;
@@ -51,8 +56,9 @@ const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => 
     printHistoryDates = data.printHistory.map(ph => {
       if (ph instanceof Timestamp) return ph.toDate();
       if (ph instanceof Date) return ph;
-      return new Date(ph);
-    }).sort((a,b) => b.getTime() - a.getTime()); // Sort descending
+      const parsed = new Date(ph);
+      return isNaN(parsed.getTime()) ? new Date() : parsed;
+    }).sort((a,b) => b.getTime() - a.getTime()); 
   }
 
   return {
@@ -61,12 +67,12 @@ const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => 
     dateOfBirth: dob,
     registrationDate: regDate,
     bloodGroup: data.bloodGroup || undefined,
-    photographUrl: data.photographUrl || "https://placehold.co/120x150.png",
+    photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
     printHistory: printHistoryDates,
-    // emergencyContactName: data.emergencyContactName || undefined,
-    // emergencyContactPhone: data.emergencyContactPhone || undefined,
-    // allergies: data.allergies || undefined,
-    // medicalConditions: data.medicalConditions || undefined,
+    emergencyContactName: data.emergencyContactName || undefined,
+    emergencyContactPhone: data.emergencyContactPhone || undefined,
+    allergies: data.allergies || undefined,
+    medicalConditions: data.medicalConditions || undefined,
   };
 };
 
@@ -84,12 +90,14 @@ export async function getStudents(): Promise<StudentData[]> {
 
 export async function getStudentById(id: string): Promise<StudentData | null> {
   try {
+    // Try fetching by Firestore document ID first
     const studentDocRefById = doc(db, STUDENTS_COLLECTION, id);
     let studentSnap = await getDoc(studentDocRefById);
 
     if (studentSnap.exists()) {
       return mapFirestoreDocToStudentData(studentSnap.data(), studentSnap.id);
     } else {
+      // If not found by ID, try fetching by PRN number
       const q = query(collection(db, STUDENTS_COLLECTION), where("prnNumber", "==", id));
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
@@ -97,12 +105,13 @@ export async function getStudentById(id: string): Promise<StudentData | null> {
         return mapFirestoreDocToStudentData(studentDoc.data(), studentDoc.id);
       }
     }
-    return null;
+    return null; // Student not found by either ID or PRN
   } catch (error) {
     console.error(`Error fetching student by ID/PRN ${id}: `, error);
     throw new Error("Failed to fetch student data from Firestore.");
   }
 }
+
 
 export async function recordCardPrint(studentPrn: string): Promise<void> {
   try {
@@ -120,14 +129,46 @@ export async function recordCardPrint(studentPrn: string): Promise<void> {
     await updateDoc(studentDocRef, {
       printHistory: arrayUnion(serverTimestamp()) 
     });
-    console.log(`Print recorded for student PRN ${studentPrn}`);
   } catch (error) {
     console.error(`Error recording card print for PRN ${studentPrn}: `, error);
+    // Optionally re-throw or handle as needed by the application
   }
 }
 
+// Helper to upload photograph
+async function uploadPhotograph(photoFile: File, prnNumber: string): Promise<string> {
+  const filePath = `student_photos/${prnNumber}/${Date.now()}_${photoFile.name}`;
+  const photoRef = ref(storage, filePath);
+  await uploadBytes(photoRef, photoFile);
+  return getDownloadURL(photoRef);
+}
+
+// Helper to delete photograph from Firebase Storage
+async function deletePhotograph(photographUrl: string): Promise<void> {
+  if (!photographUrl || !photographUrl.startsWith("https://firebasestorage.googleapis.com")) {
+    // Not a Firebase Storage URL, or no URL, so nothing to delete
+    return;
+  }
+  try {
+    const photoRef = ref(storage, photographUrl); // This creates a reference from the full URL
+    await deleteObject(photoRef);
+  } catch (error: any) {
+    // It's common for deleteObject to fail if the file doesn't exist (e.g., already deleted, or URL was wrong)
+    // Or if permissions are not set up correctly.
+    // For "object-not-found", we can often ignore it if the goal is to ensure it's gone.
+    if (error.code === 'storage/object-not-found') {
+      console.warn(`Photo not found for deletion (may have been already deleted): ${photographUrl}`);
+    } else {
+      console.error("Error deleting photograph from Firebase Storage: ", error);
+      // Decide if this error should be propagated
+      // throw new Error("Failed to delete existing photograph."); 
+    }
+  }
+}
+
+
 export async function registerStudent(
-  studentData: Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl' | 'printHistory'> & { photographUrl?: string | null, dateOfBirth: Date }
+  studentData: Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl' | 'printHistory' | 'photograph'> & { photograph?: File | null, dateOfBirth: Date, photographUrl?: string | null }
 ): Promise<StudentData> {
   try {
     const q = query(collection(db, STUDENTS_COLLECTION), where("prnNumber", "==", studentData.prnNumber));
@@ -136,26 +177,33 @@ export async function registerStudent(
       throw new Error(`Student with PRN number ${studentData.prnNumber} already exists.`);
     }
 
+    let finalPhotographUrl = studentData.photographUrl || "https://placehold.co/80x100.png";
+    if (studentData.photograph instanceof File) {
+      finalPhotographUrl = await uploadPhotograph(studentData.photograph, studentData.prnNumber);
+    }
+    
     const docDataToSave: any = {
       fullName: studentData.fullName,
-      address: studentData.address,
+      address: studentData.address || "N/A",
       dateOfBirth: Timestamp.fromDate(studentData.dateOfBirth),
-      mobileNumber: studentData.mobileNumber,
+      mobileNumber: studentData.mobileNumber || "N/A",
       prnNumber: studentData.prnNumber,
       rollNumber: studentData.rollNumber,
       yearOfJoining: studentData.yearOfJoining,
       courseName: studentData.courseName,
-      photographUrl: studentData.photographUrl,
+      photographUrl: finalPhotographUrl,
       registrationDate: serverTimestamp(),
       printHistory: [],
-      // emergencyContactName: studentData.emergencyContactName || null,
-      // emergencyContactPhone: studentData.emergencyContactPhone || null,
-      // allergies: studentData.allergies || null,
-      // medicalConditions: studentData.medicalConditions || null,
+      emergencyContactName: studentData.emergencyContactName || null,
+      emergencyContactPhone: studentData.emergencyContactPhone || null,
+      allergies: studentData.allergies || null,
+      medicalConditions: studentData.medicalConditions || null,
     };
 
     if (studentData.bloodGroup) {
       docDataToSave.bloodGroup = studentData.bloodGroup;
+    } else {
+      docDataToSave.bloodGroup = null; // Explicitly set to null if not provided
     }
 
     const docRef = await addDoc(collection(db, STUDENTS_COLLECTION), docDataToSave);
@@ -176,11 +224,97 @@ export async function registerStudent(
   }
 }
 
-export async function bulkRegisterStudents(studentsData: StudentData[]): Promise<{ successCount: number; newStudents: StudentData[], errors: string[] }> {
+
+export async function updateStudent(
+  studentDocId: string,
+  dataToUpdate: Partial<Omit<StudentData, 'id' | 'prnNumber' | 'registrationDate' | 'photograph'>>, // PRN shouldn't be updatable here
+  newPhotographFile?: File | null,
+  existingPhotographUrl?: string | null
+): Promise<StudentData> {
+  try {
+    const studentDocRef = doc(db, STUDENTS_COLLECTION, studentDocId);
+    const currentDocSnap = await getDoc(studentDocRef);
+    if (!currentDocSnap.exists()) {
+      throw new Error("Student document not found for update.");
+    }
+    const currentStudentData = currentDocSnap.data() as StudentData;
+
+    let finalPhotographUrl = existingPhotographUrl;
+
+    if (newPhotographFile instanceof File) {
+      // If there's an existing photo and it's different, delete it
+      if (existingPhotographUrl && existingPhotographUrl !== "https://placehold.co/80x100.png") {
+        await deletePhotograph(existingPhotographUrl);
+      }
+      finalPhotographUrl = await uploadPhotograph(newPhotographFile, currentStudentData.prnNumber);
+    } else if (dataToUpdate.photographUrl === null) { // Explicitly removing photo
+        if (existingPhotographUrl && existingPhotographUrl !== "https://placehold.co/80x100.png") {
+            await deletePhotograph(existingPhotographUrl);
+        }
+        finalPhotographUrl = "https://placehold.co/80x100.png"; // Set to placeholder
+    }
+
+
+    const updatePayload: any = { ...dataToUpdate };
+    if (finalPhotographUrl !== undefined) {
+      updatePayload.photographUrl = finalPhotographUrl;
+    }
+    if (dataToUpdate.dateOfBirth) {
+      updatePayload.dateOfBirth = Timestamp.fromDate(new Date(dataToUpdate.dateOfBirth));
+    }
+    // Ensure fields not meant to be updated are not in payload
+    delete updatePayload.id;
+    delete updatePayload.prnNumber; 
+    delete updatePayload.registrationDate;
+
+    await updateDoc(studentDocRef, updatePayload);
+
+    const updatedDocSnap = await getDoc(studentDocRef);
+     if (!updatedDocSnap.exists()) {
+        throw new Error("Failed to retrieve updated student document.");
+    }
+    return mapFirestoreDocToStudentData(updatedDocSnap.data(), updatedDocSnap.id);
+
+  } catch (error) {
+    console.error("Error updating student: ", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to update student in Firestore.");
+  }
+}
+
+
+export async function deleteStudent(studentDocId: string, photographUrl?: string): Promise<void> {
+  try {
+    const studentDocRef = doc(db, STUDENTS_COLLECTION, studentDocId);
+    // First, delete the photo if a URL is provided
+    if (photographUrl) {
+      await deletePhotograph(photographUrl);
+    }
+    // Then, delete the Firestore document
+    await deleteDoc(studentDocRef);
+  } catch (error) {
+    console.error("Error deleting student: ", error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Failed to delete student from Firestore.");
+  }
+}
+
+
+export async function bulkRegisterStudents(studentsDataInput: StudentData[]): Promise<{ successCount: number; newStudents: StudentData[], errors: string[] }> {
   const batch = writeBatch(db);
   const newStudentsPlaceholder: StudentData[] = []; 
   const errors: string[] = [];
   let successCount = 0;
+
+  // Ensure studentsData has all required fields and correct types from CSV parsing stage
+  const studentsData = studentsDataInput.map(s => ({
+    ...s,
+    dateOfBirth: s.dateOfBirth ? new Date(s.dateOfBirth) : new Date('2000-01-01') // Ensure Date object
+  }));
 
   const prnsInBatch = new Set<string>();
 
@@ -206,60 +340,56 @@ export async function bulkRegisterStudents(studentsData: StudentData[]): Promise
     const studentToSave: any = {
       fullName: data.fullName || 'N/A',
       address: data.address || 'N/A',
-      dateOfBirth: data.dateOfBirth ? Timestamp.fromDate(new Date(data.dateOfBirth)) : Timestamp.fromDate(new Date('2000-01-01')),
+      dateOfBirth: data.dateOfBirth ? Timestamp.fromDate(data.dateOfBirth) : Timestamp.fromDate(new Date('2000-01-01')),
       mobileNumber: data.mobileNumber || 'N/A',
       prnNumber: data.prnNumber,
       rollNumber: data.rollNumber || 'N/A_ROLL',
       yearOfJoining: data.yearOfJoining || new Date().getFullYear().toString(),
       courseName: data.courseName || 'N/A Course',
-      photographUrl: data.photographUrl || "https://placehold.co/120x150.png", // Bulk upload assumes URL is provided or uses placeholder
+      photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
       registrationDate: serverTimestamp(),
       printHistory: [],
-      // emergencyContactName: data.emergencyContactName || null,
-      // emergencyContactPhone: data.emergencyContactPhone || null,
-      // allergies: data.allergies || null,
-      // medicalConditions: data.medicalConditions || null,
+      emergencyContactName: data.emergencyContactName || null,
+      emergencyContactPhone: data.emergencyContactPhone || null,
+      allergies: data.allergies || null,
+      medicalConditions: data.medicalConditions || null,
     };
-
-    if (data.bloodGroup) {
+     if (data.bloodGroup) {
       studentToSave.bloodGroup = data.bloodGroup;
+    } else {
+      studentToSave.bloodGroup = null; 
     }
+
 
     batch.set(studentDocRef, studentToSave);
     prnsInBatch.add(data.prnNumber);
     
-    // For the return, simulate the full object structure
-    const { photograph, ...restOfStudentToSave } = studentToSave; // remove photograph if it was accidentally passed
     newStudentsPlaceholder.push({
-        ...restOfStudentToSave,
+        ...data, // Use the processed 'data' which has Date objects
         id: studentDocRef.id, 
-        registrationDate: new Date(), // This will be replaced by serverTimestamp effect
-        dateOfBirth: studentToSave.dateOfBirth.toDate(),
-        bloodGroup: studentToSave.bloodGroup,
+        registrationDate: new Date(), 
         printHistory: [],
-        // ensure all fields are present even if null
-        // emergencyContactName: studentToSave.emergencyContactName,
-        // emergencyContactPhone: studentToSave.emergencyContactPhone,
-        // allergies: studentToSave.allergies,
-        // medicalConditions: studentToSave.medicalConditions,
+        photographUrl: studentToSave.photographUrl,
     });
     successCount++;
   }
 
   try {
     await batch.commit();
-    // Fetch the actual newly created students to return correct data with server timestamps
     const actualNewStudents: StudentData[] = [];
     for (const placeholder of newStudentsPlaceholder) {
         const newDocSnap = await getDoc(doc(db, STUDENTS_COLLECTION, placeholder.id));
         if (newDocSnap.exists()) {
             actualNewStudents.push(mapFirestoreDocToStudentData(newDocSnap.data(), newDocSnap.id));
+        } else {
+            errors.push(`Failed to retrieve newly created student ${placeholder.prnNumber} after batch commit.`);
         }
     }
     return { successCount, newStudents: actualNewStudents, errors };
   } catch (error) {
     console.error("Error committing bulk student registration: ", error);
     errors.push(`Batch commit failed: ${error instanceof Error ? error.message : String(error)}`);
+    // Return successCount based on what was attempted in the batch before commit error
     return { successCount: 0, newStudents: [], errors }; 
   }
 }
