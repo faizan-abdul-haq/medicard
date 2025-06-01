@@ -156,16 +156,15 @@ export default function StudentRegistrationForm() {
 
 
     setIsSubmitting(true);
+    let photoUrl = 'https://placehold.co/80x100.png'; // Default placeholder if no photo or upload fails
     try {
-
-      let photoUrl = 'https://placehold.co/120x150.png'; // Default placeholder
       if (formData.photograph && formData.prnNumber) {
         try {
            photoUrl = await uploadStudentPhoto(formData.photograph, formData.prnNumber);
         } catch (uploadError) {
            console.error("Photo upload failed:", uploadError);
-           toast({ title: "Photo Upload Failed", description: (uploadError as Error).message || "Could not upload photo.", variant: "warning"});
-           // Continue with placeholder
+           toast({ title: "Photo Upload Failed", description: (uploadError as Error).message || "Could not upload photo. Using placeholder.", variant: "warning"});
+           // Continue with placeholder, error already toasted
         }
       }
 
@@ -173,15 +172,15 @@ export default function StudentRegistrationForm() {
         fullName: formData.fullName!,
         address: formData.address || 'N/A',
         dateOfBirth: formData.dateOfBirth!,
-        mobileNumber: formData.mobileNumber || 'N/A',
+        mobileNumber: formData.mobileNumber && MOBILE_REGEX.test(formData.mobileNumber) ? formData.mobileNumber : 'N/A',
         prnNumber: formData.prnNumber!,
         rollNumber: formData.rollNumber!,
         yearOfJoining: formData.yearOfJoining!,
         courseName: formData.courseName!,
-        photographUrl: photoUrl,
-        bloodGroup: formData.bloodGroup || undefined,
+        photographUrl: photoUrl, // Use uploaded URL or default
+        bloodGroup: formData.bloodGroup === "NO_GROUP" ? undefined : formData.bloodGroup || undefined,
         emergencyContactName: formData.emergencyContactName || undefined,
-        emergencyContactPhone: formData.emergencyContactPhone || undefined,
+        emergencyContactPhone: formData.emergencyContactPhone && MOBILE_REGEX.test(formData.emergencyContactPhone) ? formData.emergencyContactPhone : undefined,
         allergies: formData.allergies || undefined,
         medicalConditions: formData.medicalConditions || undefined,
       };
@@ -197,7 +196,15 @@ export default function StudentRegistrationForm() {
       setFormData(initialFormData);
       setPhotographPreview(null);
       const form = e.target as HTMLFormElement;
-      if (form) form.reset();
+      if (form) {
+        form.reset();
+         // Also reset the file input specifically if needed
+        const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement;
+        if (fileInput) {
+            fileInput.value = '';
+        }
+      }
+
 
     } catch (error) {
       console.error("Registration failed:", error);
@@ -327,7 +334,7 @@ export default function StudentRegistrationForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label htmlFor="bloodGroup">Blood Group</Label>
-                    <Select value={formData.bloodGroup || ''} onValueChange={(value) => handleSelectChange('bloodGroup', value)}>
+                    <Select value={formData.bloodGroup || ''} onValueChange={(value) => handleSelectChange('bloodGroup', value === "NO_GROUP" ? "" : value)}>
                     <SelectTrigger id="bloodGroup" className="w-full">
                         <SelectValue placeholder="Select blood group" />
                     </SelectTrigger>
@@ -335,7 +342,7 @@ export default function StudentRegistrationForm() {
                         {bloodGroups.map((group) => (
                         <SelectItem key={group} value={group}> <Droplets size={14} className="inline mr-2 text-red-500"/> {group}</SelectItem>
                         ))}
-                         <SelectItem value="">None</SelectItem>
+                         <SelectItem value="NO_GROUP">None</SelectItem>
                     </SelectContent>
                     </Select>
                 </div>
@@ -406,3 +413,5 @@ export default function StudentRegistrationForm() {
     </div>
   );
 }
+
+    
