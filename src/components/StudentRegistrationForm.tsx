@@ -2,7 +2,7 @@
 'use client';
 
 import type { ChangeEvent, FormEvent } from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { StudentData, CardSettingsData } from '@/lib/types';
 import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
 import StudentIdCard from './StudentIdCard';
@@ -13,7 +13,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { CalendarIcon, UserPlus, Droplets, Printer, AlertTriangle, ShieldCheck, HeartPulse, PhoneCall, Users, Loader2, ArrowLeft } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription as ShadcnAlertDescription } from '@/components/ui/alert';
+import { CalendarIcon, UserPlus, Droplets, Printer, AlertTriangle, ShieldCheck, HeartPulse, PhoneCall, Users, Loader2, ArrowLeft, Camera, UploadCloud, SwitchCamera } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -22,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { registerStudent } from '@/services/studentService';
 import { getCardSettings } from '@/services/cardSettingsService';
 import { uploadStudentPhoto } from '@/services/photoUploadService';
+import Webcam from 'react-webcam';
 import {
   Select,
   SelectContent,
@@ -51,6 +53,24 @@ const initialFormData: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'ph
 
 const MOBILE_REGEX = /^\d{10}$/;
 
+// Helper function to convert data URI to File object
+const dataURLtoFile = (dataurl: string, filename: string): File => {
+  const arr = dataurl.split(',');
+  const mimeMatch = arr[0].match(/:(.*?);/);
+  if (!mimeMatch) {
+    throw new Error('Invalid data URL: Missing MIME type');
+  }
+  const mime = mimeMatch[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+};
+
+
 export default function StudentRegistrationForm() {
   const [formData, setFormData] = useState(initialFormData);
   const [photographPreview, setPhotographPreview] = useState<string | null>(null);
@@ -61,14 +81,21 @@ export default function StudentRegistrationForm() {
   const router = useRouter();
   const { toast } = useToast();
 
+  const [inputMode, setInputMode] = useState<'upload' | 'webcam'>('upload');
+  const webcamRef = useRef<Webcam>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [webcamError, setWebcamError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+
   useEffect(() => {
-    if (submittedStudent) { // Only load settings if there's a student to preview
+    if (submittedStudent) { 
       setIsLoadingSettings(true);
       getCardSettings()
         .then(setCardSettings)
         .catch(() => {
           toast({ title: "Error loading card settings for preview", variant: "destructive"});
-          setCardSettings(DEFAULT_CARD_SETTINGS); // fallback
+          setCardSettings(DEFAULT_CARD_SETTINGS); 
         })
         .finally(() => setIsLoadingSettings(false));
     }
@@ -98,7 +125,7 @@ export default function StudentRegistrationForm() {
           description: "Please upload a valid image file (JPEG, PNG, GIF).",
           variant: "destructive",
         });
-        e.target.value = '';
+        if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
@@ -107,16 +134,72 @@ export default function StudentRegistrationForm() {
           description: "Image size should not exceed 2MB.",
           variant: "destructive",
         });
-        e.target.value = '';
+         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
       setFormData(prev => ({ ...prev, photograph: file }));
       setPhotographPreview(URL.createObjectURL(file));
+      // If switching from webcam, ensure webcam state is neutral
+      if (inputMode === 'webcam' && webcamRef.current) {
+        // Potentially stop webcam tracks if active, though react-webcam might handle this
+      }
     } else {
-      setFormData(prev => ({ ...prev, photograph: null }));
-      setPhotographPreview(null);
+      // Only clear if it was an intentional clear by the user (e.g. removing the file)
+      // or if the file selection dialog was cancelled.
+      // For now, if e.target.files is null/empty, we assume a cancel or removal.
+      if (!formData.photograph) { // Only clear if there wasn't already a photo (e.g. from webcam)
+        setFormData(prev => ({ ...prev, photograph: null }));
+        setPhotographPreview(null);
+      }
     }
   };
+
+  const capturePhoto = () => {
+    if (webcamRef.current) {
+      const imageSrc = webcamRef.current.getScreenshot();
+      if (imageSrc) {
+        const file = dataURLtoFile(imageSrc, `webcam_capture_${Date.now()}.jpg`);
+        setFormData(prev => ({ ...prev, photograph: file }));
+        setPhotographPreview(imageSrc);
+        if (fileInputRef.current) { // Clear file input if webcam photo is taken
+          fileInputRef.current.value = "";
+        }
+        // setInputMode('upload'); // Optionally switch back to upload mode or keep webcam active
+        toast({ title: "Photo Captured!", description: "Image from webcam is ready."});
+      } else {
+        toast({ title: "Capture Failed", description: "Could not capture image from webcam.", variant: "destructive"});
+      }
+    }
+  };
+
+  const handleUserMedia = () => {
+    setHasCameraPermission(true);
+    setWebcamError(null);
+    toast({ title: "Webcam Activated", description: "Camera is ready."});
+  };
+
+  const handleUserMediaError = (error: String | DOMException) => {
+    console.error("Webcam error:", error);
+    setHasCameraPermission(false);
+    let errorMessage = "Could not access webcam. ";
+    if (typeof error === 'string') {
+      errorMessage += error;
+    } else if (error.name === "NotAllowedError") {
+      errorMessage += "Permission denied. Please enable camera access in your browser settings.";
+    } else if (error.name === "NotFoundError") {
+      errorMessage += "No camera found. Please ensure a webcam is connected.";
+    } else {
+      errorMessage += "An unknown error occurred."
+    }
+    setWebcamError(errorMessage);
+    toast({
+      variant: 'destructive',
+      title: 'Webcam Access Error',
+      description: errorMessage,
+    });
+    setInputMode('upload'); // Switch back to file upload if webcam fails
+  };
+
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -156,7 +239,7 @@ export default function StudentRegistrationForm() {
 
 
     setIsSubmitting(true);
-    let photoUrl = 'https://placehold.co/80x100.png'; // Default placeholder if no photo or upload fails
+    let photoUrl = 'https://placehold.co/80x100.png'; 
     try {
       if (formData.photograph && formData.prnNumber) {
         try {
@@ -164,7 +247,6 @@ export default function StudentRegistrationForm() {
         } catch (uploadError) {
            console.error("Photo upload failed:", uploadError);
            toast({ title: "Photo Upload Failed", description: (uploadError as Error).message || "Could not upload photo. Using placeholder.", variant: "warning"});
-           // Continue with placeholder, error already toasted
         }
       }
 
@@ -177,7 +259,7 @@ export default function StudentRegistrationForm() {
         rollNumber: formData.rollNumber!,
         yearOfJoining: formData.yearOfJoining!,
         courseName: formData.courseName!,
-        photographUrl: photoUrl, // Use uploaded URL or default
+        photographUrl: photoUrl, 
         bloodGroup: formData.bloodGroup === "NO_GROUP" ? undefined : formData.bloodGroup || undefined,
         emergencyContactName: formData.emergencyContactName || undefined,
         emergencyContactPhone: formData.emergencyContactPhone && MOBILE_REGEX.test(formData.emergencyContactPhone) ? formData.emergencyContactPhone : undefined,
@@ -195,16 +277,18 @@ export default function StudentRegistrationForm() {
 
       setFormData(initialFormData);
       setPhotographPreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = ""; // Clear file input
+      setHasCameraPermission(null); // Reset camera permission status
+      setWebcamError(null);
+      setInputMode('upload'); // Reset to default input mode
+      // No need to directly call form.reset() if we manage individual inputs
       const form = e.target as HTMLFormElement;
       if (form) {
-        form.reset();
-         // Also reset the file input specifically if needed
-        const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement;
-        if (fileInput) {
-            fileInput.value = '';
-        }
+         const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement;
+         if (fileInput) {
+             fileInput.value = '';
+         }
       }
-
 
     } catch (error) {
       console.error("Registration failed:", error);
@@ -311,10 +395,62 @@ export default function StudentRegistrationForm() {
                   </PopoverContent>
                 </Popover>
               </div>
+              
+              {/* Photograph Section */}
               <div className="space-y-2">
-                <Label htmlFor="photograph">Student Photograph (Max 2MB)</Label>
-                <Input id="photograph" name="photograph" type="file" accept="image/jpeg, image/png, image/gif" onChange={handlePhotoChange} className="file:text-primary file:font-semibold"/>
-                {photographPreview && (
+                <Label>Student Photograph (Max 2MB)</Label>
+                <div className="flex gap-2 mb-2">
+                    <Button type="button" variant={inputMode === 'upload' ? 'default' : 'outline'} onClick={() => setInputMode('upload')}>
+                        <UploadCloud className="mr-2 h-4 w-4" /> Upload File
+                    </Button>
+                    <Button type="button" variant={inputMode === 'webcam' ? 'default' : 'outline'} onClick={() => setInputMode('webcam')}>
+                        <Camera className="mr-2 h-4 w-4" /> Use Webcam
+                    </Button>
+                </div>
+
+                {inputMode === 'upload' && (
+                    <Input 
+                        id="photographFile" 
+                        name="photographFile" 
+                        type="file" 
+                        accept="image/jpeg, image/png, image/gif" 
+                        onChange={handlePhotoChange} 
+                        ref={fileInputRef}
+                        className="file:text-primary file:font-semibold"
+                    />
+                )}
+
+                {inputMode === 'webcam' && (
+                    <div className="space-y-2">
+                        <div className="border rounded-md overflow-hidden w-full aspect-video bg-muted">
+                             <Webcam
+                                audio={false}
+                                ref={webcamRef}
+                                screenshotFormat="image/jpeg"
+                                videoConstraints={{ facingMode: "user", aspectRatio: 16/9 }}
+                                className="w-full h-full object-cover"
+                                onUserMedia={handleUserMedia}
+                                onUserMediaError={handleUserMediaError}
+                              />
+                        </div>
+                        {hasCameraPermission === false && webcamError && (
+                             <Alert variant="destructive">
+                                <AlertTriangle className="h-4 w-4"/>
+                                <AlertTitle>Webcam Error</AlertTitle>
+                                <ShadcnAlertDescription>{webcamError}</ShadcnAlertDescription>
+                            </Alert>
+                        )}
+                        {hasCameraPermission && (
+                            <Button type="button" onClick={capturePhoto} className="w-full" variant="outline">
+                                <Camera className="mr-2 h-4 w-4" /> Capture Photo
+                            </Button>
+                        )}
+                         {hasCameraPermission === null && !webcamError && (
+                            <p className="text-sm text-muted-foreground">Requesting camera access...</p>
+                        )}
+                    </div>
+                )}
+                 {photographPreview && (
                   <div className="mt-2">
                       <Image src={photographPreview} alt="Photograph preview" width={100} height={120} className="rounded-md border object-cover" data-ai-hint="student portrait" unoptimized/>
                   </div>
@@ -413,5 +549,3 @@ export default function StudentRegistrationForm() {
     </div>
   );
 }
-
-    
