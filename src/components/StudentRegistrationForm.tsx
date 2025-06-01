@@ -13,10 +13,11 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { CalendarIcon, UserPlus, Droplets, Printer, AlertTriangle, ShieldCheck, HeartPulse, PhoneCall, Users, Loader2 } from 'lucide-react';
+import { CalendarIcon, UserPlus, Droplets, Printer, AlertTriangle, ShieldCheck, HeartPulse, PhoneCall, Users, Loader2, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
 import { registerStudent } from '@/services/studentService';
 import { getCardSettings } from '@/services/cardSettingsService';
@@ -48,6 +49,8 @@ const initialFormData: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'ph
   medicalConditions: '',
 };
 
+const MOBILE_REGEX = /^\d{10}$/;
+
 export default function StudentRegistrationForm() {
   const [formData, setFormData] = useState(initialFormData);
   const [photographPreview, setPhotographPreview] = useState<string | null>(null);
@@ -55,7 +58,7 @@ export default function StudentRegistrationForm() {
   const [cardSettings, setCardSettings] = useState<CardSettingsData>(DEFAULT_CARD_SETTINGS);
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -133,6 +136,24 @@ export default function StudentRegistrationForm() {
       });
       return;
     }
+
+    if (formData.mobileNumber && !MOBILE_REGEX.test(formData.mobileNumber)) {
+      toast({
+        title: "Validation Error",
+        description: "Mobile number must be exactly 10 digits.",
+        variant: "destructive",
+      });
+      return;
+    }
+     if (formData.emergencyContactPhone && !MOBILE_REGEX.test(formData.emergencyContactPhone)) {
+      toast({
+        title: "Validation Error",
+        description: "Emergency contact phone number must be exactly 10 digits.",
+        variant: "destructive",
+      });
+      return;
+    }
+
 
     setIsSubmitting(true);
     try {
@@ -231,8 +252,8 @@ export default function StudentRegistrationForm() {
                 <Input id="rollNumber" name="rollNumber" value={formData.rollNumber || ''} onChange={handleChange} required />
               </div>
                <div className="space-y-2">
-                <Label htmlFor="mobileNumber">Mobile Number</Label>
-                <Input id="mobileNumber" name="mobileNumber" type="tel" value={formData.mobileNumber || ''} onChange={handleChange} />
+                <Label htmlFor="mobileNumber">Mobile Number (10 digits)</Label>
+                <Input id="mobileNumber" name="mobileNumber" type="tel" value={formData.mobileNumber || ''} onChange={handleChange} pattern="\d{10}" title="Mobile number must be 10 digits"/>
               </div>
             </div>
 
@@ -314,6 +335,7 @@ export default function StudentRegistrationForm() {
                         {bloodGroups.map((group) => (
                         <SelectItem key={group} value={group}> <Droplets size={14} className="inline mr-2 text-red-500"/> {group}</SelectItem>
                         ))}
+                         <SelectItem value="">None</SelectItem>
                     </SelectContent>
                     </Select>
                 </div>
@@ -324,8 +346,8 @@ export default function StudentRegistrationForm() {
             </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                    <Label htmlFor="emergencyContactPhone">Emergency Contact Phone</Label>
-                    <Input id="emergencyContactPhone" name="emergencyContactPhone" type="tel" value={formData.emergencyContactPhone || ''} onChange={handleChange} placeholder="e.g., 555-123-4567"/>
+                    <Label htmlFor="emergencyContactPhone">Emergency Contact Phone (10 digits)</Label>
+                    <Input id="emergencyContactPhone" name="emergencyContactPhone" type="tel" value={formData.emergencyContactPhone || ''} onChange={handleChange} placeholder="e.g., 5551234567" pattern="\d{10}" title="Emergency contact phone must be 10 digits"/>
                 </div>
             </div>
             <div className="space-y-2">
@@ -343,6 +365,11 @@ export default function StudentRegistrationForm() {
             </Button>
           </form>
         </CardContent>
+         <CardFooter className="pt-6">
+            <Button variant="outline" onClick={() => router.back()} className="w-full">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+            </Button>
+          </CardFooter>
       </Card>
 
       {submittedStudent && (
@@ -379,5 +406,3 @@ export default function StudentRegistrationForm() {
     </div>
   );
 }
-
-    

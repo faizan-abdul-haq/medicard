@@ -14,8 +14,9 @@ import { getCardSettings, saveCardSettings } from '@/services/cardSettingsServic
 import { useToast } from '@/hooks/use-toast';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, Save, SettingsIcon, Palette, FileText, Clock, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Save, SettingsIcon, Palette, FileText, Clock, Image as ImageIcon, ArrowLeft } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useRouter } from 'next/navigation';
 
 // A mock student for preview purposes. In a real scenario, you might want a more dynamic preview.
 const mockStudentForPreview: StudentData = {
@@ -23,7 +24,7 @@ const mockStudentForPreview: StudentData = {
   fullName: 'Dr. A. P. J. Abdul Kalam',
   address: '123 Science Lane, Innovation City, Tech State 54321',
   dateOfBirth: new Date('1931-10-15'),
-  mobileNumber: '987-654-3210',
+  mobileNumber: '9876543210',
   prnNumber: 'PRN000',
   rollNumber: 'R000',
   yearOfJoining: 'FIRST',
@@ -32,7 +33,7 @@ const mockStudentForPreview: StudentData = {
   registrationDate: new Date(),
   bloodGroup: 'O+',
   emergencyContactName: 'Mr. Contact',
-  emergencyContactPhone: '111-222-3333',
+  emergencyContactPhone: '1112223333',
   allergies: 'None',
   medicalConditions: 'Healthy',
 };
@@ -42,6 +43,7 @@ function CardSettingsContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     async function loadSettings() {
@@ -105,7 +107,7 @@ function CardSettingsContent() {
           </CardTitle>
           <CardDescription>
             Customize the appearance and content of the student ID cards. Changes will apply to newly printed cards.
-            Use HSL format for colors (e.g., `hsl(221, 83%, 53%)`) or hex codes (e.g. `#3B82F6`).
+            Use HSL format for colors (e.g., `hsl(221, 83%, 53%)`) or hex codes (e.g. `#3B82F6`). Fonts are currently predefined.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid md:grid-cols-2 gap-8">
@@ -221,14 +223,19 @@ function CardSettingsContent() {
             <StudentIdCard student={mockStudentForPreview} settings={settings} showFlipButton={false} initialSide="back" />
           </div>
         </CardContent>
-        <CardFooter className="flex justify-end gap-2 py-4 border-t">
-          <Button variant="outline" onClick={handleResetToDefaults} disabled={isSaving}>
-            Reset to Defaults
+        <CardFooter className="flex justify-between items-center py-4 border-t">
+           <Button variant="outline" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
           </Button>
-          <Button onClick={handleSaveSettings} disabled={isSaving || isLoading} className="bg-accent hover:bg-accent/90">
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Save Settings
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleResetToDefaults} disabled={isSaving}>
+              Reset to Defaults
+            </Button>
+            <Button onClick={handleSaveSettings} disabled={isSaving || isLoading} className="bg-accent hover:bg-accent/90">
+              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              Save Settings
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     </div>

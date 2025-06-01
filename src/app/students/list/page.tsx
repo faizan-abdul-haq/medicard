@@ -10,10 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { StudentData } from '@/lib/types';
 import { format } from 'date-fns';
-import { Users, Eye, Search, ChevronLeft, ChevronRight, Printer } from 'lucide-react';
+import { Users, Eye, Search, ChevronLeft, ChevronRight, Printer, Download } from 'lucide-react';
 import { getStudents } from '@/services/studentService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -23,6 +24,7 @@ function StudentListContent() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchStudents() {
@@ -32,18 +34,20 @@ function StudentListContent() {
         setStudents(data.sort((a,b) => new Date(b.registrationDate).getTime() - new Date(a.registrationDate).getTime()));
       } catch (error) {
         console.error("Failed to fetch students:", error);
+        toast({ title: "Error", description: "Failed to fetch student list.", variant: "destructive"});
       } finally {
         setIsLoading(false);
       }
     }
     fetchStudents();
-  }, []);
+  }, [toast]);
 
   const filteredStudents = useMemo(() => {
     if (!searchTerm) return students;
     return students.filter(student =>
       student.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.prnNumber.toLowerCase().includes(searchTerm.toLowerCase())
+      student.prnNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (student.courseName && student.courseName.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   }, [students, searchTerm]);
 
@@ -82,6 +86,55 @@ function StudentListContent() {
   const isAllSelectedOnPage = paginatedStudents.length > 0 && paginatedStudents.every(s => selectedStudents.has(s.prnNumber));
   const isSomeSelectedOnPage = paginatedStudents.some(s => selectedStudents.has(s.prnNumber)) && !isAllSelectedOnPage;
 
+  const handleDownloadCSV = () => {
+    if (filteredStudents.length === 0) {
+      toast({ title: "No Data", description: "No students to download.", variant: "warning" });
+      return;
+    }
+
+    const headers = [
+      "PRN Number", "Full Name", "Course", "Year of Joining", "Roll Number", 
+      "Registration Date", "Date of Birth", "Mobile Number", "Address", 
+      "Blood Group", "Emergency Contact Name", "Emergency Contact Phone", 
+      "Allergies", "Medical Conditions", "Photograph URL"
+    ];
+    const csvRows = [headers.join(',')];
+
+    filteredStudents.forEach(student => {
+      const row = [
+        `"${student.prnNumber}"`,
+        `"${student.fullName}"`,
+        `"${student.courseName}"`,
+        `"${student.yearOfJoining}"`,
+        `"${student.rollNumber}"`,
+        `"${format(new Date(student.registrationDate), 'yyyy-MM-dd HH:mm')}"`,
+        `"${student.dateOfBirth ? format(new Date(student.dateOfBirth), 'yyyy-MM-dd') : ''}"`,
+        `"${student.mobileNumber || ''}"`,
+        `"${(student.address || '').replace(/"/g, '""')}"`, // Escape double quotes
+        `"${student.bloodGroup || ''}"`,
+        `"${student.emergencyContactName || ''}"`,
+        `"${student.emergencyContactPhone || ''}"`,
+        `"${(student.allergies || '').replace(/"/g, '""')}"`,
+        `"${(student.medicalConditions || '').replace(/"/g, '""')}"`,
+        `"${student.photographUrl || ''}"`
+      ];
+      csvRows.push(row.join(','));
+    });
+
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `students_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast({ title: "CSV Downloaded", description: `${filteredStudents.length} student records exported.`});
+  };
+
 
   if (isLoading) {
     return <p className="text-center py-4">Loading students...</p>;
@@ -98,12 +151,12 @@ function StudentListContent() {
               </CardTitle>
               <CardDescription>Browse all registered students. Found {filteredStudents.length} students.</CardDescription>
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
               <div className="relative flex-grow sm:flex-grow-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search by name or PRN..."
+                  placeholder="Search by name, PRN, course..."
                   value={searchTerm}
                   onChange={handleSearchChange}
                   className="pl-10 w-full sm:w-64"
@@ -116,6 +169,9 @@ function StudentListContent() {
                   </Link>
                 </Button>
               )}
+               <Button onClick={handleDownloadCSV} variant="outline" disabled={filteredStudents.length === 0}>
+                  <Download size={16} className="mr-2" /> Download CSV
+                </Button>
             </div>
           </div>
         </CardHeader>

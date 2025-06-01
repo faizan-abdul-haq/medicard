@@ -3,15 +3,18 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, BookOpenText, BadgeCheck, CalendarClock, ListChecks, UploadCloud, UserPlus, Link2 } from "lucide-react";
+import { Users, BookOpenText, BadgeCheck, CalendarClock, ListChecks, UploadCloud, UserPlus, Link2, SettingsIcon as Settings, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import type { RecentRegistration, StudentData } from "@/lib/types";
-import { format } from "date-fns";
+import type { RecentRegistration, StudentData, CardSettingsData } from "@/lib/types";
+import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
+import { format, addMonths, isBefore, startOfMonth, endOfMonth } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getStudents } from "@/services/studentService";
+import { getCardSettings } from '@/services/cardSettingsService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface StatCardProps {
   title: string;
@@ -40,12 +43,21 @@ function DashboardContent() {
   const [totalStudents, setTotalStudents] = useState(0);
   const [recentRegistrations, setRecentRegistrations] = useState<RecentRegistration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeIDCards, setActiveIDCards] = useState(0);
+  const [expiringSoonCount, setExpiringSoonCount] = useState(0);
+  const [cardSettings, setCardSettings] = useState<CardSettingsData>(DEFAULT_CARD_SETTINGS);
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchData() {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        const students = await getStudents();
+        const [students, settings] = await Promise.all([
+          getStudents(),
+          getCardSettings()
+        ]);
+        
+        setCardSettings(settings);
         setTotalStudents(students.length);
 
         const sortedStudents = students
@@ -58,19 +70,40 @@ function DashboardContent() {
             photographUrl: s.photographUrl
           }));
         setRecentRegistrations(sortedStudents);
+
+        // Calculate Active ID Cards and Expiring Soon
+        const now = new Date();
+        let activeCount = 0;
+        let expiringCount = 0;
+        const nextMonthStart = startOfMonth(addMonths(now, 1));
+        const nextMonthEnd = endOfMonth(addMonths(now, 1));
+
+        students.forEach(student => {
+          const expiryDate = addMonths(new Date(student.registrationDate), settings.validityPeriodMonths);
+          if (isBefore(now, expiryDate)) {
+            activeCount++;
+          }
+          if (isBefore(expiryDate, nextMonthEnd) && isBefore(nextMonthStart, expiryDate)) {
+            expiringCount++;
+          }
+        });
+        setActiveIDCards(activeCount);
+        setExpiringSoonCount(expiringCount);
+
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
-        // Potentially set an error state and show a message to the user
+        toast({
+          title: "Error Fetching Dashboard Data",
+          description: "Could not load all dashboard statistics.",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
     }
     fetchData();
-  }, []);
+  }, [toast]);
   
-  const activeIDCards = Math.floor(totalStudents * 0.95); 
-  const expiringSoon = Math.floor(totalStudents * 0.05);
-
   const stats = [
     {
       title: "Total Students Registered",
@@ -82,13 +115,13 @@ function DashboardContent() {
     {
       title: "Active ID Cards",
       value: isLoading ? "..." : activeIDCards.toString(),
-      description: "Valid and in circulation",
+      description: `Valid based on ${cardSettings.validityPeriodMonths}-month validity`,
       icon: <BadgeCheck className="h-5 w-5" />,
       colorClass: "text-green-600",
     },
     {
-      title: "Expiring Soon",
-      value: isLoading ? "..." : expiringSoon.toString(),
+      title: "Expiring Next Month",
+      value: isLoading ? "..." : expiringSoonCount.toString(),
       description: "Cards expiring next month",
       icon: <CalendarClock className="h-5 w-5" />,
       colorClass: "text-orange-500",
@@ -123,7 +156,7 @@ function DashboardContent() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mt-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-center mt-10">
         <Link href="/register" legacyBehavior passHref>
           <Button size="lg" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-6 text-base">
             <UserPlus className="mr-2" /> Register New Student
@@ -137,6 +170,11 @@ function DashboardContent() {
         <Link href="/students/bulk-upload" legacyBehavior passHref>
           <Button size="lg" variant="outline" className="w-full py-6 text-base">
             <UploadCloud className="mr-2" /> Bulk Upload Students
+          </Button>
+        </Link>
+         <Link href="/card-settings" legacyBehavior passHref>
+          <Button size="lg" variant="outline" className="w-full py-6 text-base">
+            <Settings className="mr-2" /> Card Settings
           </Button>
         </Link>
       </div>

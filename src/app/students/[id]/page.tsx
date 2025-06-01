@@ -4,13 +4,14 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History, Mail, Phone, Home, CalendarDays, Droplets, HeartPulse, Users as UsersIcon, HelpCircle, PhoneCall, Loader2 } from "lucide-react";
+import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History, Mail, Phone, Home, CalendarDays, Droplets, HeartPulse, Users as UsersIcon, HelpCircle, PhoneCall, Loader2, ArrowLeft, SettingsIcon } from "lucide-react";
 import Image from "next/image";
 import type { StudentData, CardSettingsData } from '@/lib/types';
 import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
-import { format, isValid } from 'date-fns';
+import { format, isValid, addMonths } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 import { getStudentById } from '@/services/studentService';
 import { getCardSettings } from '@/services/cardSettingsService';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -27,6 +28,7 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchStudentData() {
@@ -97,11 +99,9 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
           <AlertTriangle className="mx-auto text-destructive mb-4" size={48} />
           <h2 className="text-2xl font-bold text-destructive mb-2">Error Loading Profile</h2>
           <p className="text-muted-foreground mb-6">{error}</p>
-          <Link href="/students/list">
-            <Button variant="outline">
-              Back to Student List
-            </Button>
-          </Link>
+          <Button variant="outline" onClick={() => router.push('/students/list')}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Student List
+          </Button>
         </Card>
       </div>
     );
@@ -116,20 +116,16 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
           <p className="text-muted-foreground mb-6">
             The student profile could not be loaded.
           </p>
-          <Link href="/students/list">
-            <Button variant="outline">
-              Back to Student List
-            </Button>
-          </Link>
+          <Button variant="outline" onClick={() => router.push('/students/list')}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Student List
+          </Button>
         </Card>
       </div>
     );
   }
 
-  const expiryDate = student.registrationDate ? new Date(student.registrationDate) : new Date();
-  if (student.registrationDate) {
-      expiryDate.setFullYear(expiryDate.getFullYear() + (cardSettings.validityPeriodMonths / 12));
-  }
+  const expiryDate = student.registrationDate ? addMonths(new Date(student.registrationDate), cardSettings.validityPeriodMonths) : new Date();
+
 
   const DetailItem = ({ icon, label, value, classNameText }: { icon: React.ReactNode, label: string, value?: string | null, classNameText?: string }) => (
     value ? (
@@ -250,12 +246,15 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
         </Card>
       )}
 
-      <div className="text-center pt-4">
+      <div className="text-center pt-4 space-x-2">
+        <Button variant="outline" size="lg" onClick={() => router.back()}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+        </Button>
         <Link href="/students/list">
-            <Button variant="outline" size="lg">
-              Back to Student List
+            <Button variant="secondary" size="lg">
+              Full Student List
             </Button>
-          </Link>
+        </Link>
       </div>
     </div>
   );
@@ -275,5 +274,3 @@ export default function StudentProfilePage({ params: paramsInput }: { params: { 
     </ProtectedRoute>
   );
 }
-
-    

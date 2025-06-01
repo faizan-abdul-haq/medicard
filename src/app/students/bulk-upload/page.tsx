@@ -3,19 +3,22 @@
 
 import type { ChangeEvent, FormEvent } from 'react';
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { UploadCloud, FileText, Download, TableIcon, UserCircle, AlertTriangle, HeartPulse } from "lucide-react";
+import { UploadCloud, FileText, Download, TableIcon, UserCircle, AlertTriangle, HeartPulse, ArrowLeft } from "lucide-react";
 import type { StudentData } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, isValid, parseISO, parse } from 'date-fns';
 import { bulkRegisterStudents } from '@/services/studentService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription as ShadcnAlertDescription, AlertTitle as ShadcnAlertTitle } from "@/components/ui/alert";
+
+const MOBILE_REGEX = /^\d{10}$/;
 
 function BulkUploadContent() {
   const [file, setFile] = useState<File | null>(null);
@@ -23,16 +26,17 @@ function BulkUploadContent() {
   const [parsedStudents, setParsedStudents] = useState<Partial<StudentData>[]>([]);
   const [uploadErrors, setUploadErrors] = useState<string[]>([]);
   const { toast } = useToast();
+  const router = useRouter();
 
   const csvHeaders = [
     "fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth", 
-    "bloodGroup", "mobileNumber", "address", "photographUrl"
+    "bloodGroup", "mobileNumber", "address", "photographUrl",
+    "emergencyContactName", "emergencyContactPhone", "allergies", "medicalConditions"
   ];
 
   const csvTemplateString = csvHeaders.join(',') + '\n' +
-    "\"John Doe\",\"PRN1001\",\"R101\",\"B.Sc. Computers\",\"FIRST\",\"2003-05-15\",\"O+\",\"555-1234\",\"123 Main St, Anytown\",\"https://placehold.co/100x120.png\"\n" +
-    "\"Jane Smith\",\"PRN1002\",\"R102\",\"B.Com. Finance\",\"SECOND\",\"2002-11-20\",\"A-\",\"555-5678\",\"456 Oak Ave, Otherville\",\"\"\n";
-
+    "\"John Doe\",\"PRN1001\",\"R101\",\"B.Sc. Computers\",\"FIRST\",\"2003-05-15\",\"O+\",\"9876543210\",\"123 Main St, Anytown\",\"https://placehold.co/100x120.png\",\"Emergency John\",\"9876543211\",\"Peanuts\",\"None\"\n" +
+    "\"Jane Smith\",\"PRN1002\",\"R102\",\"B.Com. Finance\",\"SECOND\",\"2002-11-20\",\"A-\",\"9876543212\",\"456 Oak Ave, Otherville\",\"\",\"Emergency Jane\",\"\",\"Pollen\",\"Asthma\"\n";
 
   const requiredHeadersForParsing = ["fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth"];
 
@@ -96,6 +100,9 @@ function BulkUploadContent() {
           value = "https://placehold.co/100x120.png"; 
         } else if (key === 'prnNumber' && value) {
           prnFound = true;
+        } else if ((key === 'mobileNumber' || key === 'emergencyContactPhone') && value && !MOBILE_REGEX.test(value)) {
+          currentParsingErrors.push(`Row ${i+1} (PRN: ${student.prnNumber || 'N/A'}): Invalid ${key} '${value}'. Must be 10 digits. Field will be cleared.`);
+          value = ''; // Clear invalid phone number but don't skip entire record if other required fields are fine
         }
         
         if (['yearOfJoining', 'rollNumber', 'bloodGroup'].includes(key)) {
@@ -194,13 +201,12 @@ function BulkUploadContent() {
         dateOfBirth: new Date(p.dateOfBirth!), 
         bloodGroup: p.bloodGroup || undefined,
         address: p.address || "N/A",
-        mobileNumber: p.mobileNumber || "N/A",
+        mobileNumber: (p.mobileNumber && MOBILE_REGEX.test(p.mobileNumber)) ? p.mobileNumber : undefined,
         photographUrl: p.photographUrl || "https://placehold.co/100x120.png",
-        // emergencyContactName: p.emergencyContactName || undefined,
-        // emergencyContactPhone: p.emergencyContactPhone || undefined,
-        // allergies: p.allergies || undefined,
-        // medicalConditions: p.medicalConditions || undefined,
-        // These will be set by Firestore service
+        emergencyContactName: p.emergencyContactName || undefined,
+        emergencyContactPhone: (p.emergencyContactPhone && MOBILE_REGEX.test(p.emergencyContactPhone)) ? p.emergencyContactPhone : undefined,
+        allergies: p.allergies || undefined,
+        medicalConditions: p.medicalConditions || undefined,
         id: '', 
         registrationDate: new Date(),
       })) as StudentData[];
@@ -280,7 +286,7 @@ function BulkUploadContent() {
           <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
             <UploadCloud size={28} /> Bulk Student Upload
           </CardTitle>
-          <CardDescription>Upload a CSV file to register multiple students. Review parsed data before final submission. Ensure PRN numbers are unique. Dates can be YYYY-MM-DD, MM/DD/YYYY, or DD/MM/YYYY.</CardDescription>
+          <CardDescription>Upload a CSV file to register multiple students. Review parsed data before final submission. Ensure PRN numbers are unique. Dates can be YYYY-MM-DD, MM/DD/YYYY, or DD/MM/YYYY. Phone numbers must be 10 digits.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -332,9 +338,10 @@ function BulkUploadContent() {
                       <TableRow>
                         <TableHead>Full Name</TableHead>
                         <TableHead>PRN</TableHead>
+                        <TableHead>Mobile</TableHead>
                         <TableHead>Course</TableHead>
                         <TableHead>DOB</TableHead>
-                        {/* <TableHead>Emergency Contact</TableHead> */}
+                        <TableHead>Emergency Contact</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -345,12 +352,13 @@ function BulkUploadContent() {
                             {student.fullName || <span className="text-destructive">N/A</span>}
                           </TableCell>
                           <TableCell>{student.prnNumber || <span className="text-destructive">N/A</span>}</TableCell>
+                           <TableCell>{(student.mobileNumber && MOBILE_REGEX.test(student.mobileNumber)) ? student.mobileNumber : <span className="text-orange-500">Invalid/Missing</span>}</TableCell>
                           <TableCell>{student.courseName || <span className="text-destructive">N/A</span>}</TableCell>
                           <TableCell>{student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'dd/MM/yyyy') : <span className="text-destructive">Invalid/Missing</span>}</TableCell>
-                          {/* <TableCell className="flex items-center gap-1">
-                            {student.emergencyContactName ? <HeartPulse size={16} className="text-green-600"/> : null}
-                            {student.emergencyContactName || 'N/A'}
-                          </TableCell> */}
+                          <TableCell className="flex items-center gap-1">
+                            {student.emergencyContactName ? <HeartPulse size={16} className="text-green-600"/> : <span className="text-muted-foreground">N/A</span>}
+                            {student.emergencyContactName || ''} {(student.emergencyContactPhone && MOBILE_REGEX.test(student.emergencyContactPhone)) ? `(${student.emergencyContactPhone})` : ''}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -373,6 +381,7 @@ function BulkUploadContent() {
                   if (header === 'dateOfBirth') typeHint = 'Date';
                   else if (header === 'yearOfJoining') typeHint = 'Text (e.g. FIRST)';
                   else if (header === 'photographUrl') typeHint = 'Optional URL';
+                  else if (header === 'mobileNumber' || header === 'emergencyContactPhone') typeHint = '10-digit Phone';
                   return (
                     <li key={header}><code className="font-mono bg-gray-200 dark:bg-gray-700 px-1 rounded text-xs">{header}</code>{isRequired ? <span className="text-destructive">*</span> : ""} ({typeHint})</li>
                   );
@@ -384,6 +393,11 @@ function BulkUploadContent() {
             </CardContent>
           </Card>
         </CardContent>
+        <CardFooter className="pt-6">
+            <Button variant="outline" onClick={() => router.back()} className="w-full">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+            </Button>
+        </CardFooter>
       </Card>
     </div>
   );
