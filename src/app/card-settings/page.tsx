@@ -33,10 +33,7 @@ const mockStudentForPreview: StudentData = {
   photographUrl: 'https://placehold.co/80x100.png',
   registrationDate: new Date(),
   bloodGroup: 'O+',
-  emergencyContactName: 'Mr. Contact',
-  emergencyContactPhone: '1112223333',
-  allergies: 'None',
-  medicalConditions: 'Healthy',
+  // Removed: emergencyContactName, emergencyContactPhone, allergies, medicalConditions
 };
 
 const availableFonts = [
