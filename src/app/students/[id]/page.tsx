@@ -4,7 +4,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History, Mail, Phone, Home, CalendarDays, Droplets, HeartPulse, Users as UsersIcon, HelpCircle, PhoneCall as PhoneCallIcon, Loader2, ArrowLeft, SettingsIcon, Edit3, Trash2 } from "lucide-react"; // Added Edit3, Trash2, Renamed PhoneCall
+import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History, Mail, Phone, Home, CalendarDays, Droplets, Loader2, ArrowLeft, SettingsIcon, Edit3, Trash2 } from "lucide-react";
 import Image from "next/image";
 import type { StudentData, CardSettingsData } from '@/lib/types';
 import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
@@ -13,11 +13,11 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import { getStudentById, deleteStudent } from '@/services/studentService'; 
-import { getCardSettings } from '@/services/cardSettingsService'; // Corrected import path
+import { getCardSettings } from '@/services/cardSettingsService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import StudentIdCard from '@/components/StudentIdCard';
-import StudentEditForm from '@/components/StudentEditForm'; // New Import
+import StudentEditForm from '@/components/StudentEditForm';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -38,7 +38,7 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
   const [cardSettings, setCardSettings] = useState<CardSettingsData>(DEFAULT_CARD_SETTINGS);
   const [isLoadingStudent, setIsLoadingStudent] = useState(true);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
-  const [isEditing, setIsEditing] = useState(false); // New state for edit mode
+  const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
@@ -259,16 +259,7 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
                <DetailItem icon={<Home size={14}/>} label="Address" value={student.address} />
             </div>
           </div>
-          <Separator/>
-          <div>
-            <h3 className="text-md font-semibold text-primary flex items-center gap-2 mb-1"><HeartPulse size={18}/> Medical Information</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                <DetailItem icon={<UsersIcon size={14}/>} label="Emergency Contact Name" value={student.emergencyContactName} />
-                <DetailItem icon={<PhoneCallIcon size={14}/>} label="Emergency Contact Phone" value={student.emergencyContactPhone} />
-            </div>
-            <DetailItem icon={<AlertTriangle size={14}/>} label="Allergies" value={student.allergies} />
-            <DetailItem icon={<HelpCircle size={14}/>} label="Known Medical Conditions" value={student.medicalConditions} />
-          </div>
+          
           <div className="flex items-center justify-center mt-3 text-green-600">
             <ShieldCheck size={18} className="mr-2"/>
             <p className="font-semibold text-sm">Verified Student Record</p>
@@ -281,14 +272,9 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
           <CardTitle className="text-xl font-semibold text-primary">ID Card Preview</CardTitle>
           <CardDescription className="font-semibold">Interactive preview of the student's ID card (reflects saved settings).</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col sm:flex-row justify-around items-center p-4 gap-4">
+        <CardContent className="flex flex-col justify-center items-center p-4 gap-4">
             <div className="text-center">
-                <p className="text-sm font-medium mb-1">Front Side</p>
                 <StudentIdCard student={student} settings={cardSettings} showFlipButton={true} initialSide="front" />
-            </div>
-            <div className="text-center">
-                <p className="text-sm font-medium mb-1">Back Side</p>
-                <StudentIdCard student={student} settings={cardSettings} showFlipButton={true} initialSide="back" />
             </div>
         </CardContent>
         <CardFooter className="flex justify-center pb-6">
@@ -335,4 +321,3 @@ export default function StudentProfilePage({ params: paramsInput }: { params: { 
     </ProtectedRoute>
   );
 }
-

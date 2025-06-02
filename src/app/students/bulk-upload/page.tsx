@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { UploadCloud, FileText, Download, TableIcon, UserCircle, AlertTriangle, HeartPulse, ArrowLeft } from "lucide-react";
+import { UploadCloud, FileText, Download, TableIcon, UserCircle, AlertTriangle, Droplets, ArrowLeft } from "lucide-react";
 import type { StudentData } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, isValid, parseISO, parse } from 'date-fns';
@@ -30,13 +30,12 @@ function BulkUploadContent() {
 
   const csvHeaders = [
     "fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth", 
-    "bloodGroup", "mobileNumber", "address", "photographUrl",
-    "emergencyContactName", "emergencyContactPhone", "allergies", "medicalConditions"
+    "bloodGroup", "mobileNumber", "address", "photographUrl"
   ];
 
   const csvTemplateString = csvHeaders.join(',') + '\n' +
-    "\"John Doe\",\"PRN1001\",\"R101\",\"B.Sc. Computers\",\"FIRST\",\"2003-05-15\",\"O+\",\"9876543210\",\"123 Main St, Anytown\",\"https://placehold.co/100x120.png\",\"Emergency John\",\"9876543211\",\"Peanuts\",\"None\"\n" +
-    "\"Jane Smith\",\"PRN1002\",\"R102\",\"B.Com. Finance\",\"SECOND\",\"2002-11-20\",\"A-\",\"9876543212\",\"456 Oak Ave, Otherville\",\"\",\"Emergency Jane\",\"\",\"Pollen\",\"Asthma\"\n";
+    "\"John Doe\",\"PRN1001\",\"R101\",\"B.Sc. Computers\",\"FIRST\",\"2003-05-15\",\"O+\",\"9876543210\",\"123 Main St, Anytown\",\"https://placehold.co/100x120.png\"\n" +
+    "\"Jane Smith\",\"PRN1002\",\"R102\",\"B.Com. Finance\",\"SECOND\",\"2002-11-20\",\"A-\",\"9876543212\",\"456 Oak Ave, Otherville\",\"\"\n";
 
   const requiredHeadersForParsing = ["fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth"];
 
@@ -100,8 +99,8 @@ function BulkUploadContent() {
           value = "https://placehold.co/100x120.png"; 
         } else if (key === 'prnNumber' && value) {
           prnFound = true;
-        } else if ((key === 'mobileNumber' || key === 'emergencyContactPhone') && value && !MOBILE_REGEX.test(value)) {
-          currentParsingErrors.push(`Row ${i+1} (PRN: ${student.prnNumber || 'N/A'}): Invalid ${key} '${value}'. Must be 10 digits. Field will be cleared.`);
+        } else if (key === 'mobileNumber' && value && !MOBILE_REGEX.test(value)) {
+          currentParsingErrors.push(`Row ${i+1} (PRN: ${student.prnNumber || 'N/A'}): Invalid mobileNumber '${value}'. Must be 10 digits. Field will be cleared.`);
           value = ''; // Clear invalid phone number but don't skip entire record if other required fields are fine
         }
         
@@ -203,10 +202,6 @@ function BulkUploadContent() {
         address: p.address || "N/A",
         mobileNumber: (p.mobileNumber && MOBILE_REGEX.test(p.mobileNumber)) ? p.mobileNumber : undefined,
         photographUrl: p.photographUrl || "https://placehold.co/100x120.png",
-        emergencyContactName: p.emergencyContactName || undefined,
-        emergencyContactPhone: (p.emergencyContactPhone && MOBILE_REGEX.test(p.emergencyContactPhone)) ? p.emergencyContactPhone : undefined,
-        allergies: p.allergies || undefined,
-        medicalConditions: p.medicalConditions || undefined,
         id: '', 
         registrationDate: new Date(),
       })) as StudentData[];
@@ -341,7 +336,7 @@ function BulkUploadContent() {
                         <TableHead>Mobile</TableHead>
                         <TableHead>Course</TableHead>
                         <TableHead>DOB</TableHead>
-                        <TableHead>Emergency Contact</TableHead>
+                        <TableHead>Blood Group</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -356,8 +351,8 @@ function BulkUploadContent() {
                           <TableCell>{student.courseName || <span className="text-destructive">N/A</span>}</TableCell>
                           <TableCell>{student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'dd/MM/yyyy') : <span className="text-destructive">Invalid/Missing</span>}</TableCell>
                           <TableCell className="flex items-center gap-1">
-                            {student.emergencyContactName ? <HeartPulse size={16} className="text-green-600"/> : <span className="text-muted-foreground">N/A</span>}
-                            {student.emergencyContactName || ''} {(student.emergencyContactPhone && MOBILE_REGEX.test(student.emergencyContactPhone)) ? `(${student.emergencyContactPhone})` : ''}
+                            {student.bloodGroup ? <Droplets size={16} className="text-red-600"/> : <span className="text-muted-foreground">N/A</span>}
+                            {student.bloodGroup || ''}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -381,7 +376,7 @@ function BulkUploadContent() {
                   if (header === 'dateOfBirth') typeHint = 'Date';
                   else if (header === 'yearOfJoining') typeHint = 'Text (e.g. FIRST)';
                   else if (header === 'photographUrl') typeHint = 'Optional URL';
-                  else if (header === 'mobileNumber' || header === 'emergencyContactPhone') typeHint = '10-digit Phone';
+                  else if (header === 'mobileNumber') typeHint = '10-digit Phone';
                   return (
                     <li key={header}><code className="font-mono bg-gray-200 dark:bg-gray-700 px-1 rounded text-xs">{header}</code>{isRequired ? <span className="text-destructive">*</span> : ""} ({typeHint})</li>
                   );
@@ -391,8 +386,7 @@ function BulkUploadContent() {
               <p>The template includes example data. Date formats: YYYY-MM-DD, MM/DD/YYYY, or DD/MM/YYYY.</p>
               <p>For `photographUrl`, provide a direct URL to an image, or leave blank to use a default placeholder.</p>
             </CardContent>
-          </Card>
-        </CardContent>
+          </CardContent>
         <CardFooter className="pt-6">
             <Button variant="outline" onClick={() => router.back()} className="w-full">
               <ArrowLeft className="mr-2 h-4 w-4" /> Go Back

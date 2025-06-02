@@ -62,17 +62,20 @@ const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => 
   }
 
   return {
-    ...data,
+    // Ensure all fields from StudentData are present
+    fullName: data.fullName,
+    address: data.address,
+    mobileNumber: data.mobileNumber,
+    prnNumber: data.prnNumber,
+    rollNumber: data.rollNumber,
+    yearOfJoining: data.yearOfJoining,
+    courseName: data.courseName,
     id,
     dateOfBirth: dob,
     registrationDate: regDate,
     bloodGroup: data.bloodGroup || undefined,
     photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
     printHistory: printHistoryDates,
-    emergencyContactName: data.emergencyContactName || undefined,
-    emergencyContactPhone: data.emergencyContactPhone || undefined,
-    allergies: data.allergies || undefined,
-    medicalConditions: data.medicalConditions || undefined,
   };
 };
 
@@ -194,10 +197,6 @@ export async function registerStudent(
       photographUrl: finalPhotographUrl,
       registrationDate: serverTimestamp(),
       printHistory: [],
-      emergencyContactName: studentData.emergencyContactName || null,
-      emergencyContactPhone: studentData.emergencyContactPhone || null,
-      allergies: studentData.allergies || null,
-      medicalConditions: studentData.medicalConditions || null,
     };
 
     if (studentData.bloodGroup) {
@@ -266,6 +265,15 @@ export async function updateStudent(
     delete updatePayload.id;
     delete updatePayload.prnNumber; 
     delete updatePayload.registrationDate;
+    
+    // Ensure only valid fields are in payload
+    const validFields: (keyof StudentData)[] = ['fullName', 'address', 'dateOfBirth', 'mobileNumber', 'rollNumber', 'yearOfJoining', 'courseName', 'bloodGroup', 'photographUrl'];
+    for (const key in updatePayload) {
+        if (!validFields.includes(key as keyof StudentData)) {
+            delete updatePayload[key];
+        }
+    }
+
 
     await updateDoc(studentDocRef, updatePayload);
 
@@ -349,10 +357,6 @@ export async function bulkRegisterStudents(studentsDataInput: StudentData[]): Pr
       photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
       registrationDate: serverTimestamp(),
       printHistory: [],
-      emergencyContactName: data.emergencyContactName || null,
-      emergencyContactPhone: data.emergencyContactPhone || null,
-      allergies: data.allergies || null,
-      medicalConditions: data.medicalConditions || null,
     };
      if (data.bloodGroup) {
       studentToSave.bloodGroup = data.bloodGroup;

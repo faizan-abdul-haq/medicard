@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription as ShadcnAlertDescription } from '@/components/ui/alert';
-import { CalendarIcon, UserCog, Droplets, AlertTriangle, HeartPulse, PhoneCall, Users, Loader2, Save, Camera, UploadCloud, Trash2 } from 'lucide-react';
+import { CalendarIcon, UserCog, Droplets, AlertTriangle, Loader2, Save, Camera, UploadCloud, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
@@ -166,10 +166,6 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
       toast({ title: "Validation Error", description: "Mobile number must be 10 digits.", variant: "destructive" });
       return;
     }
-    if (formData.emergencyContactPhone && !MOBILE_REGEX.test(formData.emergencyContactPhone)) {
-      toast({ title: "Validation Error", description: "Emergency contact phone must be 10 digits.", variant: "destructive" });
-      return;
-    }
 
     setIsSubmitting(true);
     
@@ -227,7 +223,7 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
             {/* Form Section */}
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-foreground flex items-center gap-2"><Users size={20}/> Personal & Academic</h3>
+                    <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">Personal & Academic</h3>
                     <Separator />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -308,7 +304,7 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
                 </div>
 
                 <div className="space-y-1 pt-3">
-                    <h3 className="text-lg font-semibold text-foreground flex items-center gap-2"><HeartPulse size={20}/> Medical Info</h3>
+                    <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">Medical Info</h3>
                     <Separator />
                 </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -322,22 +318,6 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
                         </SelectContent>
                         </Select>
                     </div>
-                    <div>
-                        <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>
-                        <Input id="emergencyContactName" name="emergencyContactName" value={formData.emergencyContactName || ''} onChange={handleChange} />
-                    </div>
-                </div>
-                <div>
-                    <Label htmlFor="emergencyContactPhone">Emergency Contact Phone (10 digits)</Label>
-                    <Input id="emergencyContactPhone" name="emergencyContactPhone" type="tel" value={formData.emergencyContactPhone || ''} onChange={handleChange} pattern="\d{10}" title="Emergency phone must be 10 digits"/>
-                </div>
-                <div>
-                    <Label htmlFor="allergies">Allergies</Label>
-                    <Textarea id="allergies" name="allergies" value={formData.allergies || ''} onChange={handleChange} placeholder="e.g., Peanuts, Penicillin"/>
-                </div>
-                <div>
-                    <Label htmlFor="medicalConditions">Known Medical Conditions</Label>
-                    <Textarea id="medicalConditions" name="medicalConditions" value={formData.medicalConditions || ''} onChange={handleChange} placeholder="e.g., Asthma, Diabetes"/>
                 </div>
                 
                 <div className="flex gap-2 pt-4">

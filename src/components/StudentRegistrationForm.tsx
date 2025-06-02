@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription as ShadcnAlertDescription } from '@/components/ui/alert';
-import { CalendarIcon, UserPlus, Droplets, Printer, AlertTriangle, ShieldCheck, HeartPulse, PhoneCall, Users, Loader2, ArrowLeft, Camera, UploadCloud, SwitchCamera } from 'lucide-react';
+import { CalendarIcon, UserPlus, Droplets, Printer, AlertTriangle, ShieldCheck, Loader2, ArrowLeft, Camera, UploadCloud } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -22,7 +22,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
 import { registerStudent } from '@/services/studentService';
 import { getCardSettings } from '@/services/cardSettingsService';
-import { uploadStudentPhoto } from '@/services/photoUploadService';
+// import { uploadStudentPhoto } from '@/services/photoUploadService'; // Not directly used here now, studentService handles it
 import Webcam from 'react-webcam';
 import {
   Select,
@@ -45,10 +45,6 @@ const initialFormData: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'ph
   courseName: '',
   photograph: null,
   bloodGroup: '',
-  emergencyContactName: '',
-  emergencyContactPhone: '',
-  allergies: '',
-  medicalConditions: '',
 };
 
 const MOBILE_REGEX = /^\d{10}$/;
@@ -228,28 +224,11 @@ export default function StudentRegistrationForm() {
       });
       return;
     }
-     if (formData.emergencyContactPhone && !MOBILE_REGEX.test(formData.emergencyContactPhone)) {
-      toast({
-        title: "Validation Error",
-        description: "Emergency contact phone number must be exactly 10 digits.",
-        variant: "destructive",
-      });
-      return;
-    }
 
 
     setIsSubmitting(true);
-    let photoUrl = 'https://placehold.co/80x100.png'; 
+    // photoUrl will be handled by registerStudent service
     try {
-      if (formData.photograph && formData.prnNumber) {
-        try {
-           photoUrl = await uploadStudentPhoto(formData.photograph, formData.prnNumber);
-        } catch (uploadError) {
-           console.error("Photo upload failed:", uploadError);
-           toast({ title: "Photo Upload Failed", description: (uploadError as Error).message || "Could not upload photo. Using placeholder.", variant: "warning"});
-        }
-      }
-
       const studentToRegister = {
         fullName: formData.fullName!,
         address: formData.address || 'N/A',
@@ -259,12 +238,8 @@ export default function StudentRegistrationForm() {
         rollNumber: formData.rollNumber!,
         yearOfJoining: formData.yearOfJoining!,
         courseName: formData.courseName!,
-        photographUrl: photoUrl, 
+        photograph: formData.photograph, // Pass the File object
         bloodGroup: formData.bloodGroup === "NO_GROUP" ? undefined : formData.bloodGroup || undefined,
-        emergencyContactName: formData.emergencyContactName || undefined,
-        emergencyContactPhone: formData.emergencyContactPhone && MOBILE_REGEX.test(formData.emergencyContactPhone) ? formData.emergencyContactPhone : undefined,
-        allergies: formData.allergies || undefined,
-        medicalConditions: formData.medicalConditions || undefined,
       };
 
       const newStudent = await registerStudent(studentToRegister);
@@ -281,7 +256,6 @@ export default function StudentRegistrationForm() {
       setHasCameraPermission(null); // Reset camera permission status
       setWebcamError(null);
       setInputMode('upload'); // Reset to default input mode
-      // No need to directly call form.reset() if we manage individual inputs
       const form = e.target as HTMLFormElement;
       if (form) {
          const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement;
@@ -323,7 +297,7 @@ export default function StudentRegistrationForm() {
           <form onSubmit={handleSubmit} className="space-y-6">
 
             <div className="space-y-1">
-                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2"><Users size={20}/> Personal & Academic Details</h3>
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">Personal & Academic Details</h3>
                 <Separator />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -464,7 +438,7 @@ export default function StudentRegistrationForm() {
             </div>
 
             <div className="space-y-1 pt-4">
-                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2"><HeartPulse size={20}/> Medical Information</h3>
+                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">Medical Information</h3>
                 <Separator />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -482,26 +456,8 @@ export default function StudentRegistrationForm() {
                     </SelectContent>
                     </Select>
                 </div>
-                 <div className="space-y-2">
-                    <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>
-                    <Input id="emergencyContactName" name="emergencyContactName" value={formData.emergencyContactName || ''} onChange={handleChange} placeholder="e.g., Jane Doe"/>
-                </div>
             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                    <Label htmlFor="emergencyContactPhone">Emergency Contact Phone (10 digits)</Label>
-                    <Input id="emergencyContactPhone" name="emergencyContactPhone" type="tel" value={formData.emergencyContactPhone || ''} onChange={handleChange} placeholder="e.g., 5551234567" pattern="\d{10}" title="Emergency contact phone must be 10 digits"/>
-                </div>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="allergies">Allergies</Label>
-                <Textarea id="allergies" name="allergies" value={formData.allergies || ''} onChange={handleChange} placeholder="e.g., Peanuts, Penicillin"/>
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="medicalConditions">Known Medical Conditions</Label>
-                <Textarea id="medicalConditions" name="medicalConditions" value={formData.medicalConditions || ''} onChange={handleChange} placeholder="e.g., Asthma, Diabetes"/>
-            </div>
-
+            
             <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-base" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin"/> : <UserPlus className="mr-2 h-5 w-5" />}
               {isSubmitting ? 'Registering...' : 'Register Student & Generate ID'}

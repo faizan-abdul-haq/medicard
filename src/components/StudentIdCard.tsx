@@ -180,15 +180,6 @@ export default function StudentIdCard({
             <p className="font-semibold whitespace-pre-line text-[8.5px] leading-tight mt-0.5">{student.address || 'N/A'}</p>
           </div>
 
-          {(student.emergencyContactName || student.emergencyContactPhone) && (
-            <div className="mt-1">
-              <p style={importantInfoStyle} className="font-bold bg-muted/40 p-0.5 rounded-sm inline-block">Emergency Contact:</p>
-              <p className="font-semibold text-[8.5px] leading-tight mt-0.5">
-                {student.emergencyContactName || ''} {student.emergencyContactName && student.emergencyContactPhone ? ' - ' : ''} {student.emergencyContactPhone || ''}
-              </p>
-            </div>
-          )}
-
           <ol className="list-decimal list-inside space-y-0.5 mt-1 text-[8px] leading-tight">
             {[settings.instructionLine1, settings.instructionLine2, settings.instructionLine3, settings.instructionLine4].map((inst, idx) => (
               inst && <li key={idx} className="font-semibold">{inst}</li>
