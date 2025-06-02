@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Added Select
 import StudentIdCard from '@/components/StudentIdCard';
 import type { CardSettingsData, StudentData } from '@/lib/types';
 import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
@@ -14,7 +15,7 @@ import { getCardSettings, saveCardSettings } from '@/services/cardSettingsServic
 import { useToast } from '@/hooks/use-toast';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, Save, SettingsIcon, Palette, FileText, Clock, Image as ImageIcon, ArrowLeft } from 'lucide-react';
+import { Loader2, Save, SettingsIcon, Palette, FileText, Clock, Image as ImageIcon, ArrowLeft, Type } from 'lucide-react'; // Added Type icon
 import { Separator } from '@/components/ui/separator';
 import { useRouter } from 'next/navigation';
 
@@ -37,6 +38,17 @@ const mockStudentForPreview: StudentData = {
   allergies: 'None',
   medicalConditions: 'Healthy',
 };
+
+const availableFonts = [
+  { label: "Arial (sans-serif)", value: "Arial, sans-serif" },
+  { label: "Verdana (sans-serif)", value: "Verdana, Geneva, sans-serif" },
+  { label: "Tahoma (sans-serif)", value: "Tahoma, Geneva, sans-serif" },
+  { label: "Trebuchet MS (sans-serif)", value: "'Trebuchet MS', Helvetica, sans-serif" },
+  { label: "Georgia (serif)", value: "Georgia, serif" },
+  { label: "Times New Roman (serif)", value: "'Times New Roman', Times, serif" },
+  { label: "Courier New (monospace)", value: "'Courier New', Courier, monospace" },
+  { label: "Lucida Console (monospace)", value: "'Lucida Console', Monaco, monospace" },
+];
 
 function CardSettingsContent() {
   const [settings, setSettings] = useState<CardSettingsData>(DEFAULT_CARD_SETTINGS);
@@ -63,6 +75,10 @@ function CardSettingsContent() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    setSettings(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: keyof CardSettingsData, value: string) => {
     setSettings(prev => ({ ...prev, [name]: value }));
   };
 
@@ -107,7 +123,7 @@ function CardSettingsContent() {
           </CardTitle>
           <CardDescription>
             Customize the appearance and content of the student ID cards. Changes will apply to newly printed cards.
-            Use HSL format for colors (e.g., `hsl(221, 83%, 53%)`) or hex codes (e.g. `#3B82F6`). Fonts are currently predefined.
+            Use HSL format for colors (e.g., `hsl(221, 83%, 53%)`) or hex codes (e.g. `#3B82F6`).
           </CardDescription>
         </CardHeader>
         <CardContent className="grid md:grid-cols-2 gap-8">
@@ -131,6 +147,36 @@ function CardSettingsContent() {
                   <Input name="importantInfoBackgroundColor" value={settings.importantInfoBackgroundColor} onChange={handleInputChange} />
                 </div>
               </CardContent>
+            </Card>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-2"><Type /> Font Settings</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <div>
+                        <Label htmlFor="cardFontFamily">Card Font Family</Label>
+                        <Select
+                            name="cardFontFamily"
+                            value={settings.cardFontFamily}
+                            onValueChange={(value) => handleSelectChange('cardFontFamily', value)}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a font" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {availableFonts.map(font => (
+                                    <SelectItem key={font.value} value={font.value} style={{fontFamily: font.value}}>
+                                        {font.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Select a global font for the ID card. Ensure the font is web-safe or loaded in your application.
+                        </p>
+                    </div>
+                </CardContent>
             </Card>
 
             <Card>
@@ -181,7 +227,7 @@ function CardSettingsContent() {
               <CardContent className="space-y-3">
                 <div>
                   <Label htmlFor="validityPeriodMonths">Card Validity Period (in months)</Label>
-                  <Input type="number" name="validityPeriodMonths" value={settings.validityPeriodMonths} onChange={handleNumberInputChange} />
+                  <Input type="number" name="validityPeriodMonths" value={settings.validityPeriodMonths} onChange={handleNumberInputChange} min="1"/>
                 </div>
               </CardContent>
             </Card>

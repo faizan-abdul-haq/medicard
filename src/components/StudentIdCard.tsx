@@ -29,7 +29,8 @@ export default function StudentIdCard({
   const settings = { ...DEFAULT_CARD_SETTINGS, ...propSettings };
 
   const registrationYear = student.registrationDate ? new Date(student.registrationDate).getFullYear() : new Date().getFullYear();
-  const admissionYearEnd = registrationYear + (settings.validityPeriodMonths / 12); // Assuming validity is in whole years for this display
+  // Calculate admissionYearEnd based on the validity period in months
+  const admissionYearEnd = registrationYear + Math.ceil(settings.validityPeriodMonths / 12);
   const yearOfAdmissionDisplay = `${registrationYear}-${String(admissionYearEnd).slice(-2)}`;
 
 
@@ -49,6 +50,10 @@ export default function StudentIdCard({
   useEffect(() => {
     if (!showFlipButton) {
       setIsFrontVisible(initialSide === 'front');
+    } else {
+        // When showFlipButton is true, allow initialSide to set the first view,
+        // but subsequent flips are controlled by isFrontVisible state.
+        setIsFrontVisible(initialSide === 'front');
     }
   }, [initialSide, showFlipButton]);
 
@@ -58,7 +63,7 @@ export default function StudentIdCard({
     }
   };
 
-  const cardBaseClasses = "w-[330px] h-[210px] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative font-sans text-xs print:shadow-none print:border-gray-400";
+  const cardBaseClasses = "w-[330px] h-[210px] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative text-xs print:shadow-none print:border-gray-400";
   const headerStyle = {
     backgroundColor: settings.headerBackgroundColor,
     color: settings.headerTextColor,
@@ -67,9 +72,13 @@ export default function StudentIdCard({
     backgroundColor: settings.importantInfoBackgroundColor,
   };
 
+  const cardDynamicStyle = {
+    fontFamily: settings.cardFontFamily,
+  };
+
   if (isFrontVisible) {
     return (
-      <Card className={cardBaseClasses}>
+      <Card className={cardBaseClasses} style={cardDynamicStyle}>
         {showFlipButton && (
           <Button variant="ghost" size="icon" onClick={toggleCardSide} className="absolute top-1 right-1 z-10 h-6 w-6 print:hidden">
             <Repeat size={16} />
@@ -106,7 +115,7 @@ export default function StudentIdCard({
             />
           </div>
           <div className="flex-grow space-y-0.5 text-[10px]">
-            <div style={importantInfoStyle} className="p-1 rounded-sm mb-1">
+            <div style={{...importantInfoStyle, padding: '0.25rem'}} className="rounded-sm mb-1 bg-primary/10">
               <p className="font-bold text-[11px] text-black">{student.fullName}</p>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center">
@@ -120,7 +129,7 @@ export default function StudentIdCard({
               <p className="font-semibold text-gray-900">{student.yearOfJoining}</p>
               <span className="font-semibold text-gray-700">Roll No</span>
               <p className="font-semibold text-gray-900">{student.rollNumber}</p>
-              <div style={importantInfoStyle} className="p-0.5 rounded-sm col-span-2 mt-0.5">
+              <div style={{...importantInfoStyle, padding: '0.125rem'}} className="rounded-sm col-span-2 mt-0.5 bg-primary/10">
                 <span className="font-semibold text-gray-700">PRN No</span>
                 <p className="font-bold text-gray-900 inline ml-1">{student.prnNumber}</p>
               </div>
@@ -141,7 +150,7 @@ export default function StudentIdCard({
   } else {
     // Back Side
     return (
-      <Card className={cardBaseClasses}>
+      <Card className={cardBaseClasses} style={cardDynamicStyle}>
         {showFlipButton && (
           <Button variant="ghost" size="icon" onClick={toggleCardSide} className="absolute top-1 right-1 z-10 h-6 w-6 print:hidden">
             <Repeat size={16} />
@@ -173,7 +182,7 @@ export default function StudentIdCard({
 
           {(student.emergencyContactName || student.emergencyContactPhone) && (
             <div className="mt-1">
-              <p className="font-bold bg-muted/40 p-0.5 rounded-sm inline-block">Emergency Contact:</p>
+              <p style={importantInfoStyle} className="font-bold bg-muted/40 p-0.5 rounded-sm inline-block">Emergency Contact:</p>
               <p className="font-semibold text-[8.5px] leading-tight mt-0.5">
                 {student.emergencyContactName || ''} {student.emergencyContactName && student.emergencyContactPhone ? ' - ' : ''} {student.emergencyContactPhone || ''}
               </p>
@@ -182,7 +191,7 @@ export default function StudentIdCard({
 
           <ol className="list-decimal list-inside space-y-0.5 mt-1 text-[8px] leading-tight">
             {[settings.instructionLine1, settings.instructionLine2, settings.instructionLine3, settings.instructionLine4].map((inst, idx) => (
-              <li key={idx} className="font-semibold">{inst}</li>
+              inst && <li key={idx} className="font-semibold">{inst}</li>
             ))}
           </ol>
 

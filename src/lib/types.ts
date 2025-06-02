@@ -49,6 +49,7 @@ export interface CardSettingsData {
   instructionLine3: string;
   instructionLine4: string;
   defaultCardHolderSignatureText: string; // e.g., "Card Holder's Signature"
+  cardFontFamily: string; // New field for font family
 }
 
 export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
@@ -65,5 +66,7 @@ export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
   instructionLine2: "If found please return to office address.",
   instructionLine3: "It is not transferrable & is the property of GGMC & Sir J.J. Hospital.",
   instructionLine4: "Card validity: till you are at GGMC & Sir J.J. Hospital.",
-  defaultCardHolderSignatureText: "Card Holder's Signature"
+  defaultCardHolderSignatureText: "Card Holder's Signature",
+  cardFontFamily: "Arial, sans-serif", // Default font
 };
+
