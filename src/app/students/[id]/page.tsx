@@ -12,7 +12,8 @@ import { format, isValid, addMonths } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { getStudentById, getCardSettings, deleteStudent } from '@/services/studentService'; // Added deleteStudent
+import { getStudentById, deleteStudent } from '@/services/studentService'; 
+import { getCardSettings } from '@/services/cardSettingsService'; // Corrected import path
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import StudentIdCard from '@/components/StudentIdCard';
@@ -283,11 +284,11 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
         <CardContent className="flex flex-col sm:flex-row justify-around items-center p-4 gap-4">
             <div className="text-center">
                 <p className="text-sm font-medium mb-1">Front Side</p>
-                <StudentIdCard student={student} settings={cardSettings} showFlipButton={false} initialSide="front" />
+                <StudentIdCard student={student} settings={cardSettings} showFlipButton={true} initialSide="front" />
             </div>
             <div className="text-center">
                 <p className="text-sm font-medium mb-1">Back Side</p>
-                <StudentIdCard student={student} settings={cardSettings} showFlipButton={false} initialSide="back" />
+                <StudentIdCard student={student} settings={cardSettings} showFlipButton={true} initialSide="back" />
             </div>
         </CardContent>
         <CardFooter className="flex justify-center pb-6">
@@ -334,3 +335,4 @@ export default function StudentProfilePage({ params: paramsInput }: { params: { 
     </ProtectedRoute>
   );
 }
+
