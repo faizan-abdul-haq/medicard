@@ -25,11 +25,11 @@ export default function StudentIdCard({
 }: StudentIdCardProps) {
   const [isFrontVisible, setIsFrontVisible] = useState(initialSide === 'front');
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [logoError, setLogoError] = useState(false);
 
   const settings = { ...DEFAULT_CARD_SETTINGS, ...propSettings };
 
   const registrationYear = student.registrationDate ? new Date(student.registrationDate).getFullYear() : new Date().getFullYear();
-  // Calculate admissionYearEnd based on the validity period in months
   const admissionYearEnd = registrationYear + Math.ceil(settings.validityPeriodMonths / 12);
   const yearOfAdmissionDisplay = `${registrationYear}-${String(admissionYearEnd).slice(-2)}`;
 
@@ -51,11 +51,13 @@ export default function StudentIdCard({
     if (!showFlipButton) {
       setIsFrontVisible(initialSide === 'front');
     } else {
-        // When showFlipButton is true, allow initialSide to set the first view,
-        // but subsequent flips are controlled by isFrontVisible state.
         setIsFrontVisible(initialSide === 'front');
     }
   }, [initialSide, showFlipButton]);
+  
+  useEffect(() => {
+    setLogoError(false); // Reset logo error state when settings or logo URL changes
+  }, [settings.logoUrl]);
 
   const toggleCardSide = () => {
     if (showFlipButton) {
@@ -76,6 +78,8 @@ export default function StudentIdCard({
     fontFamily: settings.cardFontFamily,
   };
 
+  const finalLogoUrl = logoError || !settings.logoUrl ? 'https://placehold.co/30x30.png' : settings.logoUrl;
+
   if (isFrontVisible) {
     return (
       <Card className={cardBaseClasses} style={cardDynamicStyle}>
@@ -87,12 +91,12 @@ export default function StudentIdCard({
         <div style={headerStyle} className="p-1.5 flex items-center">
           <div className="w-1/5 flex justify-center items-center">
             <Image 
-              src={settings.logoUrl || 'https://placehold.co/30x30.png'} 
+              src={finalLogoUrl} 
               alt="College Logo" 
               width={30} 
               height={30} 
               data-ai-hint="college logo" 
-              onError={(e) => (e.currentTarget.src = 'https://placehold.co/30x30.png')} 
+              onError={() => setLogoError(true)}
               unoptimized
             />
           </div>

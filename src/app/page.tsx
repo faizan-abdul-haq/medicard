@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Users, BookOpenText, BadgeCheck, CalendarClock, ListChecks, UploadCloud, UserPlus, Link2, SettingsIcon as Settings, AlertTriangle } from "lucide-react";
+import { Users, BookOpenText, BadgeCheck, CalendarClock, ListChecks, UploadCloud, UserPlus, Link2, Settings as SettingsIcon } from "lucide-react"; // Renamed Settings to SettingsIcon
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import type { RecentRegistration, StudentData, CardSettingsData } from "@/lib/types";
@@ -45,6 +45,7 @@ function DashboardContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeIDCards, setActiveIDCards] = useState(0);
   const [expiringSoonCount, setExpiringSoonCount] = useState(0);
+  const [totalCourses, setTotalCourses] = useState(0); // New state for courses
   const [cardSettings, setCardSettings] = useState<CardSettingsData>(DEFAULT_CARD_SETTINGS);
   const { toast } = useToast();
 
@@ -66,7 +67,7 @@ function DashboardContent() {
           .map(s => ({
             name: s.fullName,
             date: format(new Date(s.registrationDate), 'dd MMM, yyyy'),
-            profileLink: `/students/${s.prnNumber}`,
+            profileLink: `/students/${s.prnNumber}`, // Use PRN for links to profile
             photographUrl: s.photographUrl
           }));
         setRecentRegistrations(sortedStudents);
@@ -78,6 +79,8 @@ function DashboardContent() {
         const nextMonthStart = startOfMonth(addMonths(now, 1));
         const nextMonthEnd = endOfMonth(addMonths(now, 1));
 
+        const uniqueCourses = new Set<string>();
+
         students.forEach(student => {
           const expiryDate = addMonths(new Date(student.registrationDate), settings.validityPeriodMonths);
           if (isBefore(now, expiryDate)) {
@@ -86,9 +89,13 @@ function DashboardContent() {
           if (isBefore(expiryDate, nextMonthEnd) && isBefore(nextMonthStart, expiryDate)) {
             expiringCount++;
           }
+          if (student.courseName) {
+            uniqueCourses.add(student.courseName);
+          }
         });
         setActiveIDCards(activeCount);
         setExpiringSoonCount(expiringCount);
+        setTotalCourses(uniqueCourses.size);
 
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
@@ -128,8 +135,8 @@ function DashboardContent() {
     },
     {
       title: "Courses Offered",
-      value: "15", // Placeholder, not from dynamic data yet
-      description: "Across various departments",
+      value: isLoading ? "..." : totalCourses.toString(),
+      description: "Unique courses in system",
       icon: <BookOpenText className="h-5 w-5" />,
       colorClass: "text-accent",
     },
@@ -174,7 +181,7 @@ function DashboardContent() {
         </Link>
          <Link href="/card-settings" legacyBehavior passHref>
           <Button size="lg" variant="outline" className="w-full py-6 text-base">
-            <Settings className="mr-2" /> Card Settings
+            <SettingsIcon className="mr-2" /> Card Settings
           </Button>
         </Link>
       </div>

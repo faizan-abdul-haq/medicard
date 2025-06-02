@@ -65,18 +65,20 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
 
   const [inputMode, setInputMode] = useState<'upload' | 'webcam'>('upload');
   const webcamRef = useRef<Webcam>(null);
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null); // null: not yet requested, true: granted, false: denied/error
   const [webcamError, setWebcamError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Pre-fill form data when studentToEdit changes
     setFormData({
       ...studentToEdit,
       dateOfBirth: studentToEdit.dateOfBirth ? new Date(studentToEdit.dateOfBirth) : undefined,
     });
     setPhotographPreview(studentToEdit.photographUrl || "https://placehold.co/80x100.png");
-    setNewPhotographFile(null); // Reset new photo file on student change
+    setNewPhotographFile(null);
+    setInputMode('upload');
+    setHasCameraPermission(null);
+    setWebcamError(null);
   }, [studentToEdit]);
 
   useEffect(() => {
@@ -89,7 +91,6 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
       })
       .finally(() => setIsLoadingSettings(false));
   }, [toast]);
-
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -107,23 +108,30 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
   const handleNewPhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      // Add validation for file type and size if necessary
+      const validImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (!validImageTypes.includes(file.type)) {
+        toast({ title: "Invalid File Type", description: "Please upload a valid image file (JPEG, PNG, GIF).", variant: "destructive" });
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        toast({ title: "File Too Large", description: "Image size should not exceed 2MB.", variant: "destructive" });
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
       setNewPhotographFile(file);
       setPhotographPreview(URL.createObjectURL(file));
-      setFormData(prev => ({ ...prev, photographUrl: undefined })); // Indicate new photo replaces old URL
+      setFormData(prev => ({ ...prev, photographUrl: undefined }));
     }
   };
   
   const removePhoto = () => {
     setNewPhotographFile(null);
-    setPhotographPreview("https://placehold.co/80x100.png"); // Set to placeholder
-    setFormData(prev => ({ ...prev, photographUrl: null })); // Explicitly mark for removal/placeholder
+    setPhotographPreview("https://placehold.co/80x100.png");
+    setFormData(prev => ({ ...prev, photographUrl: null }));
     if (fileInputRef.current) fileInputRef.current.value = "";
-    if (inputMode === 'webcam' && webcamRef.current) {
-        // Potentially stop webcam if active
-    }
+    // No specific action for webcam here, as capture replaces, remove clears.
   };
-
 
   const capturePhoto = () => {
     if (webcamRef.current) {
@@ -133,7 +141,7 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
         setNewPhotographFile(file);
         setPhotographPreview(imageSrc);
         if (fileInputRef.current) fileInputRef.current.value = "";
-        setFormData(prev => ({ ...prev, photographUrl: undefined })); // Indicate new photo
+        setFormData(prev => ({ ...prev, photographUrl: undefined }));
         toast({ title: "Photo Captured!", description: "Image from webcam is ready."});
       } else {
         toast({ title: "Capture Failed", description: "Could not capture image from webcam.", variant: "destructive"});
@@ -141,20 +149,52 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
     }
   };
   
+  const requestCameraPermission = async () => {
+    setWebcamError(null);
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setHasCameraPermission(false);
+        const msg = "Webcam not supported by this browser.";
+        setWebcamError(msg);
+        toast({ variant: 'destructive', title: 'Webcam Access Error', description: msg });
+        setInputMode('upload');
+        return;
+    }
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        setHasCameraPermission(true);
+        // Assign stream to videoRef if you were directly controlling a <video> element
+        // For react-webcam, its `onUserMedia` prop handles this successfully.
+        // If react-webcam's `onUserMedia` is not firing as expected, this explicit call might be needed.
+        if (webcamRef.current && webcamRef.current.video) {
+            webcamRef.current.video.srcObject = stream;
+        }
+        toast({ title: "Webcam Activated", description: "Camera is ready." });
+
+    } catch (error) {
+        handleUserMediaError(error as (String | DOMException));
+    }
+  };
+
+  useEffect(() => {
+    if (inputMode === 'webcam' && hasCameraPermission === null) { // Request permission when switching to webcam mode if not already determined
+       requestCameraPermission();
+    }
+  }, [inputMode, hasCameraPermission]);
+
+
   const handleUserMedia = () => { setHasCameraPermission(true); setWebcamError(null); };
   const handleUserMediaError = (error: String | DOMException) => {
     console.error("Webcam error:", error);
     setHasCameraPermission(false);
     let msg = "Could not access webcam. ";
     if (typeof error === 'string') msg += error;
-    else if (error.name === "NotAllowedError") msg += "Permission denied.";
-    else if (error.name === "NotFoundError") msg += "No camera found.";
+    else if (error.name === "NotAllowedError") msg += "Permission denied. Please enable camera access in your browser settings.";
+    else if (error.name === "NotFoundError") msg += "No camera found. Please ensure a webcam is connected and not in use by another app.";
     else msg += "An unknown error occurred."
     setWebcamError(msg);
     toast({ variant: 'destructive', title: 'Webcam Access Error', description: msg });
     setInputMode('upload');
   };
-
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -169,7 +209,6 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
 
     setIsSubmitting(true);
     
-    // Prepare data, PRN is not updatable from form but needed for service call context
     const { id, prnNumber, registrationDate, photograph, ...dataToSubmit } = formData; 
 
     try {
@@ -177,11 +216,11 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
         studentToEdit.id, 
         {
             ...dataToSubmit,
-            dateOfBirth: formData.dateOfBirth, // Ensure date is passed
+            dateOfBirth: formData.dateOfBirth,
             bloodGroup: formData.bloodGroup === "NO_GROUP" ? undefined : formData.bloodGroup,
         },
         newPhotographFile,
-        studentToEdit.photographUrl // Pass existing URL for potential deletion
+        studentToEdit.photographUrl 
       );
       
       toast({ title: "Update Successful!", description: `${updatedData.fullName}'s details have been updated.` });
@@ -197,18 +236,15 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
   const yearsOfStudy = ["FIRST", "SECOND", "THIRD", "FOURTH", "FINAL"];
 
-  // Student data for live card preview, merging form state with original non-editable fields
   const previewStudentData: StudentData = {
-    ...studentToEdit, // Base with original PRN, registrationDate etc.
-    ...formData,     // Overlay with current form data
+    ...studentToEdit,
+    ...formData,
     photographUrl: photographPreview || studentToEdit.photographUrl || "https://placehold.co/80x100.png",
-    dateOfBirth: formData.dateOfBirth || studentToEdit.dateOfBirth, // Prioritize form's date
-    // Ensure all fields are present for the type
+    dateOfBirth: formData.dateOfBirth || studentToEdit.dateOfBirth,
     id: studentToEdit.id,
     prnNumber: studentToEdit.prnNumber,
     registrationDate: studentToEdit.registrationDate,
   };
-
 
   return (
     <div className="space-y-8">
@@ -220,7 +256,6 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
           <CardDescription>Modify the student's details below. Click "Save Changes" to update.</CardDescription>
         </CardHeader>
         <CardContent className="grid md:grid-cols-2 gap-8">
-            {/* Form Section */}
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1">
                     <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">Personal & Academic</h3>
@@ -280,9 +315,9 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
                     <div className="space-y-1">
                         <Label>Student Photograph (Max 2MB)</Label>
                          <div className="flex gap-1 mb-1">
-                            <Button type="button" size="sm" variant={inputMode === 'upload' ? 'secondary' : 'outline'} onClick={() => setInputMode('upload')} className="text-xs px-2 py-1 h-auto"><UploadCloud className="mr-1 h-3 w-3" /> Upload</Button>
-                            <Button type="button" size="sm" variant={inputMode === 'webcam' ? 'secondary' : 'outline'} onClick={() => setInputMode('webcam')} className="text-xs px-2 py-1 h-auto"><Camera className="mr-1 h-3 w-3" /> Webcam</Button>
-                            {photographPreview && photographPreview !== "https://placehold.co/80x100.png" && (
+                            <Button type="button" size="sm" variant={inputMode === 'upload' ? 'secondary' : 'outline'} onClick={() => { setInputMode('upload'); setHasCameraPermission(true); /* Assume if they switch, they don't want to re-trigger permission prompt unless cam fails */}} className="text-xs px-2 py-1 h-auto"><UploadCloud className="mr-1 h-3 w-3" /> Upload</Button>
+                            <Button type="button" size="sm" variant={inputMode === 'webcam' ? 'secondary' : 'outline'} onClick={() => { setInputMode('webcam'); if(hasCameraPermission !== true) requestCameraPermission();}} className="text-xs px-2 py-1 h-auto"><Camera className="mr-1 h-3 w-3" /> Webcam</Button>
+                            {(photographPreview && photographPreview !== "https://placehold.co/80x100.png") && (
                                 <Button type="button" size="sm" variant="destructive" onClick={removePhoto} className="text-xs px-2 py-1 h-auto"><Trash2 className="mr-1 h-3 w-3" /> Remove</Button>
                             )}
                         </div>
@@ -290,10 +325,16 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
                         {inputMode === 'webcam' && (
                             <div className="space-y-1">
                                 <div className="border rounded-md overflow-hidden w-full aspect-[4/3] bg-muted max-h-[150px]">
-                                    <Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" videoConstraints={{ facingMode: "user", aspectRatio: 4/3 }} className="w-full h-full object-cover" onUserMedia={handleUserMedia} onUserMediaError={handleUserMediaError}/>
+                                   {hasCameraPermission === true ? (
+                                        <Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" videoConstraints={{ facingMode: "user", aspectRatio: 4/3 }} className="w-full h-full object-cover" onUserMedia={handleUserMedia} onUserMediaError={handleUserMediaError}/>
+                                   ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                                            {hasCameraPermission === false ? "Camera access denied or error." : "Requesting camera..."}
+                                        </div>
+                                   )}
                                 </div>
-                                {hasCameraPermission === false && webcamError && <Alert variant="destructive" className="p-2 text-xs"><AlertTriangle className="h-3 w-3"/><AlertTitle className="text-xs">Webcam Error</AlertTitle><ShadcnAlertDescription className="text-xs">{webcamError}</ShadcnAlertDescription></Alert>}
-                                {hasCameraPermission && <Button type="button" onClick={capturePhoto} className="w-full h-8 text-xs" variant="outline"><Camera className="mr-1 h-3 w-3" /> Capture</Button>}
+                                {webcamError && hasCameraPermission === false && <Alert variant="destructive" className="p-2 text-xs"><AlertTriangle className="h-3 w-3"/><AlertTitle className="text-xs">Webcam Error</AlertTitle><ShadcnAlertDescription className="text-xs">{webcamError}</ShadcnAlertDescription></Alert>}
+                                {hasCameraPermission === true && <Button type="button" onClick={capturePhoto} className="w-full h-8 text-xs" variant="outline"><Camera className="mr-1 h-3 w-3" /> Capture Photo</Button>}
                             </div>
                         )}
                     </div>
@@ -331,7 +372,6 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
                 </div>
             </form>
 
-            {/* Preview Section */}
             <div className="space-y-2 sticky top-8">
                 <h3 className="text-lg font-semibold text-center text-foreground">Live ID Card Preview</h3>
                 {isLoadingSettings ? (
