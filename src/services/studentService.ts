@@ -205,21 +205,48 @@ export async function registerStudent(
     return mapFirestoreDocToStudentData(newDocSnap.data(), newDocSnap.id);
 
   } catch (error: any) { 
-    console.error("Error in registerStudent service (raw error): ", error);
+    // Log more details of the raw error for server-side debugging
+    console.error(
+      "Error in registerStudent service (raw error details):", 
+      "Name:", error.name, 
+      "Message:", error.message, 
+      "Code:", error.code, 
+      "Stack:", error.stack
+    );
+
     if (error instanceof Error && error.message.startsWith("PRN_EXISTS:")) {
-      throw error;
+      throw error; // Re-throw specific PRN_EXISTS error
     }
     
-    if (error.code === 'permission-denied' || error.code === 'storage/unauthorized') {
-      const service = error.code === 'storage/unauthorized' ? "Firebase Storage (for photo upload)" : "Firestore (for saving data)";
-      // Log more details for the developer to see the specific error.
-      console.error("Detailed Firebase Permission Error:", error.name, error.message, error.stack, error.code);
-      throw new Error(`PERMISSION_ERROR: Student registration failed due to a permission issue with ${service}. Please check your Firebase Security Rules to ensure unauthenticated users are allowed to write to the 'students' collection and upload to 'student_photos/'.`);
+    // If a photograph file was part of the studentData, and an error occurred,
+    // it's highly likely a storage permission issue.
+    if (studentData.photograph instanceof File && 
+        (error.code === 'storage/unauthorized' || 
+         error.code === 'storage/unauthenticated' ||
+         (error.message && typeof error.message === 'string' && error.message.toLowerCase().includes("permission")) ||
+         (error.name && typeof error.name === 'string' && error.name.toLowerCase().includes("firebaseerror") && error.message && error.message.toLowerCase().includes("storage"))
+        )
+       ) {
+      console.error("Detailed Firebase Storage Permission Error:", error.name, error.message, error.code, error.stack);
+      throw new Error(`STORAGE_PERMISSION_ERROR: Photo upload failed. This is very likely due to Firebase Storage security rules. Please ensure unauthenticated users are allowed to upload to the 'student_photos/' path in your Firebase Storage rules.`);
     }
 
+    // Check for Firestore specific permission denied error
+    if (error.code === 'permission-denied') {
+      console.error("Detailed Firebase Firestore Permission Error:", error.name, error.message, error.code, error.stack);
+      throw new Error(`FIRESTORE_PERMISSION_ERROR: Saving student data failed due to a Firestore permission issue. Please check your Firebase Security Rules for the 'students' collection to allow unauthenticated writes if this is for student self-registration.`);
+    }
+
+    // Fallback for other errors
     const originalErrorMessage = error instanceof Error ? error.message : String(error);
-    console.error("Original error details during registration:", error.name, error.message, error.stack, error.code); 
-    throw new Error(`REGISTRATION_SERVICE_ERROR: An unexpected error occurred (${originalErrorMessage}). This is likely a Firebase Security Rule issue if you are testing unauthenticated registration. Please check server logs and Firebase rules.`);
+    let userFriendlyMessage = `REGISTRATION_SERVICE_ERROR: An unexpected error occurred (${originalErrorMessage}).`;
+    if (studentData.photograph instanceof File) {
+      userFriendlyMessage += " Since a photo was attached, please double-check Firebase Storage permissions for unauthenticated uploads to 'student_photos/'.";
+    } else {
+      userFriendlyMessage += " Please check Firestore permissions or server logs for more details.";
+    }
+    console.error("Original error details during registration (fallback):", error.name, error.message, error.code, error.stack); 
+    throw new Error(userFriendlyMessage);
   }
 }
 
@@ -396,3 +423,4 @@ export async function bulkRegisterStudents(studentsDataInput: StudentData[]): Pr
     return { successCount: 0, newStudents: [], errors }; 
   }
 }
+
