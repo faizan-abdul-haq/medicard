@@ -141,7 +141,20 @@ export default function StudentIdCard({
           </div>
         </CardContent>
         <div className="absolute bottom-1 left-0 right-0 px-3 flex justify-between items-end text-[10px]">
-          <p className="font-bold text-gray-700">{settings.deanTitle.toUpperCase()}</p>
+          
+          <div className="flex flex-col items-start">
+            {settings.deanSignatureUrl && (
+              <Image
+                src={settings.deanSignatureUrl}
+                alt="Dean's Signature"
+                width={100}
+                height={40}
+                className="object-contain"
+                unoptimized
+              />
+            )}
+            <p className="font-bold text-gray-700 mt-0.5">{settings.deanTitle.toUpperCase()}</p>
+          </div>          
           <div className="text-center">
             <div className="w-20 h-6 border-b border-gray-400 mb-0.5 flex items-center justify-center italic text-gray-500">
               {/* Signature placeholder */}

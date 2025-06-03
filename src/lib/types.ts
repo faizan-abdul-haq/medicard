@@ -1,4 +1,3 @@
-
 export interface StudentData {
   id: string; // Firestore document ID
   photograph?: File | null; // For upload form, not stored in Firestore directly
@@ -14,6 +13,11 @@ export interface StudentData {
   bloodGroup?: string;
   registrationDate: Date; // Always ensure this is a JS Date object in the application
   printHistory?: Date[]; // Array of timestamps when the card was printed
+
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  allergies?: string;
+  medicalConditions?: string;
 }
 
 export interface RecentRegistration {
@@ -39,12 +43,14 @@ export interface CardSettingsData {
   officePhoneNumber: string;
   validityPeriodMonths: number; // e.g., 12 for 1 year
   logoUrl: string; // URL for the college logo
+  deanSignatureUrl: string; // URL for the dean's signature
   instructionLine1: string;
   instructionLine2: string;
   instructionLine3: string;
   instructionLine4: string;
   defaultCardHolderSignatureText: string; // e.g., "Card Holder's Signature"
-  cardFontFamily: string; // New field for font family
+  cardFontFamily: string
+
 }
 
 export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
@@ -56,12 +62,13 @@ export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
   deanTitle: "DEAN",
   officePhoneNumber: "022-23735555",
   validityPeriodMonths: 12, // 1 year
-  logoUrl: "/ggmc_logo.png", // Path to a logo in the public folder
+  logoUrl: "https://placehold.co/160x160.png", // Path to a logo in the public folder
+  deanSignatureUrl: "", // Dean's signature will be uploaded
   instructionLine1: "This card must always be displayed while you are in premises & produced on demand for inspection.",
   instructionLine2: "If found please return to office address.",
   instructionLine3: "It is not transferrable & is the property of GGMC & Sir J.J. Hospital.",
   instructionLine4: "Card validity: till you are at GGMC & Sir J.J. Hospital.",
   defaultCardHolderSignatureText: "Card Holder's Signature",
-  cardFontFamily: "Arial, sans-serif", // Default font
-};
+  cardFontFamily:"Trebuchet MS', Helvetica, sans-serif"
 
+};

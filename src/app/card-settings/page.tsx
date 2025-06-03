@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -7,15 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Added Select
 import StudentIdCard from '@/components/StudentIdCard';
+import ImageUploadField from '@/components/ImageUploadField';
+import SignaturePad from '@/components/SignaturePad';
 import type { CardSettingsData, StudentData } from '@/lib/types';
 import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
 import { getCardSettings, saveCardSettings } from '@/services/cardSettingsService';
 import { useToast } from '@/hooks/use-toast';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, Save, SettingsIcon, Palette, FileText, Clock, Image as ImageIcon, ArrowLeft, Type } from 'lucide-react'; // Added Type icon
+import { Loader2, Save, SettingsIcon, Palette, FileText, Clock, Image as ImageIcon, ArrowLeft, PenTool } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useRouter } from 'next/navigation';
 
@@ -33,19 +33,11 @@ const mockStudentForPreview: StudentData = {
   photographUrl: 'https://placehold.co/80x100.png',
   registrationDate: new Date(),
   bloodGroup: 'O+',
-  // Removed: emergencyContactName, emergencyContactPhone, allergies, medicalConditions
+  emergencyContactName: 'Mr. Contact',
+  emergencyContactPhone: '1112223333',
+  allergies: 'None',
+  medicalConditions: 'Healthy',
 };
-
-const availableFonts = [
-  { label: "Arial (sans-serif)", value: "Arial, sans-serif" },
-  { label: "Verdana (sans-serif)", value: "Verdana, Geneva, sans-serif" },
-  { label: "Tahoma (sans-serif)", value: "Tahoma, Geneva, sans-serif" },
-  { label: "Trebuchet MS (sans-serif)", value: "'Trebuchet MS', Helvetica, sans-serif" },
-  { label: "Georgia (serif)", value: "Georgia, serif" },
-  { label: "Times New Roman (serif)", value: "'Times New Roman', Times, serif" },
-  { label: "Courier New (monospace)", value: "'Courier New', Courier, monospace" },
-  { label: "Lucida Console (monospace)", value: "'Lucida Console', Monaco, monospace" },
-];
 
 function CardSettingsContent() {
   const [settings, setSettings] = useState<CardSettingsData>(DEFAULT_CARD_SETTINGS);
@@ -62,7 +54,7 @@ function CardSettingsContent() {
         setSettings(fetchedSettings);
       } catch (error) {
         toast({ title: "Error Loading Settings", description: "Failed to fetch card settings. Using defaults.", variant: "destructive" });
-        setSettings(DEFAULT_CARD_SETTINGS); // Fallback to defaults
+        setSettings(DEFAULT_CARD_SETTINGS);
       } finally {
         setIsLoading(false);
       }
@@ -72,10 +64,6 @@ function CardSettingsContent() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setSettings(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: keyof CardSettingsData, value: string) => {
     setSettings(prev => ({ ...prev, [name]: value }));
   };
 
@@ -101,7 +89,6 @@ function CardSettingsContent() {
     toast({ title: "Settings Reset", description: "Form has been reset to default values. Click 'Save Settings' to persist."});
   };
 
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -120,7 +107,7 @@ function CardSettingsContent() {
           </CardTitle>
           <CardDescription>
             Customize the appearance and content of the student ID cards. Changes will apply to newly printed cards.
-            Use HSL format for colors (e.g., `hsl(221, 83%, 53%)`) or hex codes (e.g. `#3B82F6`).
+            Use HSL format for colors (e.g., `hsl(221, 83%, 53%)`) or hex codes (e.g. `#3B82F6`). Card size: 54mm x 86mm.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid md:grid-cols-2 gap-8">
@@ -144,36 +131,6 @@ function CardSettingsContent() {
                   <Input name="importantInfoBackgroundColor" value={settings.importantInfoBackgroundColor} onChange={handleInputChange} />
                 </div>
               </CardContent>
-            </Card>
-            
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-xl flex items-center gap-2"><Type /> Font Settings</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                    <div>
-                        <Label htmlFor="cardFontFamily">Card Font Family</Label>
-                        <Select
-                            name="cardFontFamily"
-                            value={settings.cardFontFamily}
-                            onValueChange={(value) => handleSelectChange('cardFontFamily', value)}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a font" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {availableFonts.map(font => (
-                                    <SelectItem key={font.value} value={font.value} style={{fontFamily: font.value}}>
-                                        {font.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Select a global font for the ID card. Ensure the font is web-safe or loaded in your application.
-                        </p>
-                    </div>
-                </CardContent>
             </Card>
 
             <Card>
@@ -206,14 +163,22 @@ function CardSettingsContent() {
             
             <Card>
               <CardHeader>
-                  <CardTitle className="text-xl flex items-center gap-2"><ImageIcon /> Logo</CardTitle>
+                  <CardTitle className="text-xl flex items-center gap-2"><ImageIcon /> Logo & Signature</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                  <div>
-                      <Label htmlFor="logoUrl">Logo URL (publicly accessible)</Label>
-                      <Input name="logoUrl" value={settings.logoUrl} onChange={handleInputChange} placeholder="e.g., /ggmc_logo.png or https://example.com/logo.png" />
-                      <p className="text-xs text-muted-foreground mt-1">Place local logos in the /public folder (e.g. /public/ggmc_logo.png becomes /ggmc_logo.png).</p>
-                  </div>
+              <CardContent className="space-y-4">
+                  <ImageUploadField
+                    label="College Logo"
+                    value={settings.logoUrl}
+                    onChange={(url) => setSettings(prev => ({ ...prev, logoUrl: url }))}
+                    directory="card_logo"
+                    maxSizeKB={1024}
+                  />
+                  <Separator />
+                  <SignaturePad
+                    label="Dean's Signature"
+                    value={settings.deanSignatureUrl}
+                    onChange={(dataUrl) => setSettings(prev => ({ ...prev, deanSignatureUrl: dataUrl }))}
+                  />
               </CardContent>
             </Card>
 
@@ -224,7 +189,7 @@ function CardSettingsContent() {
               <CardContent className="space-y-3">
                 <div>
                   <Label htmlFor="validityPeriodMonths">Card Validity Period (in months)</Label>
-                  <Input type="number" name="validityPeriodMonths" value={settings.validityPeriodMonths} onChange={handleNumberInputChange} min="1"/>
+                  <Input type="number" name="validityPeriodMonths" value={settings.validityPeriodMonths} onChange={handleNumberInputChange} />
                 </div>
               </CardContent>
             </Card>
@@ -257,7 +222,7 @@ function CardSettingsContent() {
 
           {/* Right Column: Live Preview */}
           <div className="space-y-4 sticky top-8">
-            <h3 className="text-xl font-semibold text-center text-foreground">Live ID Card Preview</h3>
+            <h3 className="text-xl font-semibold text-center text-foreground">Live ID Card Preview (54mm x 86mm)</h3>
             <Separator/>
             <p className="text-sm text-muted-foreground text-center">Front Side:</p>
             <StudentIdCard student={mockStudentForPreview} settings={settings} showFlipButton={false} initialSide="front" />

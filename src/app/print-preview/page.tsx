@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
@@ -17,16 +16,17 @@ import { useToast } from '@/hooks/use-toast';
 function PrintPreviewContent() {
   const searchParams = useSearchParams();
   const studentIdsParam = searchParams.get('studentIds');
+
   const { toast } = useToast();
 
   const [studentsToPrint, setStudentsToPrint] = useState<StudentData[]>([]);
   const [cardSettings, setCardSettings] = useState<CardSettingsData>(DEFAULT_CARD_SETTINGS);
-  const [isLoadingData, setIsLoadingData] = useState(true); // For student data and settings
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated, isLoading: authIsLoading } = useAuth();
 
   useEffect(() => {
-    if (authIsLoading) return; // Wait for auth check to complete
+    if (authIsLoading) return;
 
     if (!isAuthenticated) {
       setError("Authentication required to view print preview.");
@@ -47,7 +47,9 @@ function PrintPreviewContent() {
         if (!studentIdsParam) {
           errorsAcc.push("No student IDs provided for printing.");
         } else {
-          const ids = studentIdsParam.split(',');
+          const ids = studentIdsParam
+          .split(',')
+          .map(id => id.trim().split('?')[0]); // Clean input
           const printRecordingPromises: Promise<void>[] = [];
 
           for (const id of ids) {
@@ -64,7 +66,6 @@ function PrintPreviewContent() {
               errorsAcc.push(`Failed to load data for student PRN ${id}.`);
             }
           }
-          // Wait for all print recording events to complete
           await Promise.all(printRecordingPromises);
         }
       } catch (settingsError) {
@@ -83,8 +84,12 @@ function PrintPreviewContent() {
   }, [studentIdsParam, isAuthenticated, authIsLoading, toast]);
 
   const handlePrint = () => {
-    window.print();
+    console.log('Print button clicked');
+    setTimeout(() => {
+      window.print();
+    }, 200);
   };
+  
 
   if (authIsLoading || isLoadingData) {
     return (
@@ -118,7 +123,6 @@ function PrintPreviewContent() {
       </div>
     );
   }
-
   return (
     <div className="print-preview-container p-4 print:p-0">
       <div className="print:hidden flex justify-center my-4">
@@ -126,25 +130,38 @@ function PrintPreviewContent() {
           <Printer className="mr-2 h-5 w-5" /> Print All Cards ({studentsToPrint.length})
         </Button>
       </div>
-
-      <div className="grid grid-cols-1 gap-4 print:block">
+  
+      {/* Print layout: front and back cards on separate pages */}
+      <div className="print:block">
         {studentsToPrint.map(student => (
-          <div key={student.prnNumber} className="card-pair-container p-2 bg-gray-100 print:bg-transparent print:p-0 print:m-0 print:break-after-page">
-            <h3 className="text-center font-semibold text-sm mb-2 print:hidden">{student.fullName} - {student.prnNumber}</h3>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center print:flex-row print:justify-around print:items-start">
-              <div className="transform scale-95 print:scale-100">
-                 <StudentIdCard student={student} settings={cardSettings} showFlipButton={false} initialSide="front"/>
-              </div>
-              <div className="transform scale-95 print:scale-100">
-                 <StudentIdCard student={student} settings={cardSettings} showFlipButton={false} initialSide="back"/>
-              </div>
+          <div key={student.prnNumber}>
+            {/* Front side */}
+            <div className="print:id-card print:break-after-page flex justify-center items-center">
+              <StudentIdCard student={student} settings={cardSettings} showFlipButton={false} initialSide="front" />
             </div>
-            <hr className="my-4 print:hidden"/>
+            {/* Back side */}
+            <div className="print:id-card print:break-after-page flex justify-center items-center">
+              <StudentIdCard student={student} settings={cardSettings} showFlipButton={false} initialSide="back" />
+            </div>
           </div>
         ))}
       </div>
+  
+      {/* Screen preview (optional) */}
+      {/* <div className="grid grid-cols-1 gap-4 print:hidden">
+        {studentsToPrint.map(student => (
+          <div key={student.prnNumber} className="card-pair-container p-2 bg-gray-100 rounded-lg">
+            <h3 className="text-center font-semibold text-sm mb-2">{student.fullName} - {student.prnNumber}</h3>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <StudentIdCard student={student} settings={cardSettings} showFlipButton={false} initialSide="front" />
+              <StudentIdCard student={student} settings={cardSettings} showFlipButton={false} initialSide="back" />
+            </div>
+          </div>
+        ))}
+      </div> */}
     </div>
   );
+  
 }
 
 function PrintPreviewPageWrapper() {
@@ -173,5 +190,3 @@ function PrintPreviewPageWrapper() {
   );
 }
 export default PrintPreviewPageWrapper;
-
-    

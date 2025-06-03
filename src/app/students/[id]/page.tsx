@@ -277,6 +277,7 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
                 <StudentIdCard student={student} settings={cardSettings} showFlipButton={true} initialSide="front" />
             </div>
         </CardContent>
+        {student.prnNumber}
         <CardFooter className="flex justify-center pb-6">
            <Button asChild className="bg-accent hover:bg-accent/80 text-accent-foreground">
             <Link href={`/print-preview?studentIds=${student.prnNumber}`} target="_blank">

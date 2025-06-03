@@ -130,7 +130,7 @@ export async function recordCardPrint(studentPrn: string): Promise<void> {
     const studentDocRef = doc(db, STUDENTS_COLLECTION, studentDoc.id);
 
     await updateDoc(studentDocRef, {
-      printHistory: arrayUnion(serverTimestamp()) 
+      printHistory: arrayUnion(Timestamp.now()) 
     });
   } catch (error) {
     console.error(`Error recording card print for PRN ${studentPrn}: `, error);
@@ -397,3 +397,4 @@ export async function bulkRegisterStudents(studentsDataInput: StudentData[]): Pr
     return { successCount: 0, newStudents: [], errors }; 
   }
 }
+
