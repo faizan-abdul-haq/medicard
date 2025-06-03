@@ -226,7 +226,7 @@ export async function registerStudent(
 
 export async function updateStudent(
   studentDocId: string,
-  dataToUpdate: Partial<Omit<StudentData, 'id' | 'prnNumber' | 'registrationDate' | 'photograph'>>, // PRN shouldn't be updatable here
+  dataToUpdate: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'photograph'>>, // PRN shouldn't be updatable here
   newPhotographFile?: File | null,
   existingPhotographUrl?: string | null
 ): Promise<StudentData> {
@@ -238,6 +238,22 @@ export async function updateStudent(
     }
     const currentStudentData = currentDocSnap.data() as StudentData;
 
+    // --- PRN Uniqueness Check ---
+    // If prnNumber is being updated, check for uniqueness
+    if (dataToUpdate.prnNumber && dataToUpdate.prnNumber !== currentStudentData.prnNumber) {
+      const q = query(
+        collection(db, STUDENTS_COLLECTION),
+        where("prnNumber", "==", dataToUpdate.prnNumber)
+      );
+      const querySnapshot = await getDocs(q);
+      // Check if any document other than the current one has this PRN
+      if (!querySnapshot.empty && querySnapshot.docs.some(doc => doc.id !== studentDocId)) {
+        throw new Error(`Student with PRN number ${dataToUpdate.prnNumber} already exists.`);
+      }
+    }
+    // ---------------------------
+
+    
     let finalPhotographUrl = existingPhotographUrl;
 
     if (newPhotographFile instanceof File) {
@@ -263,11 +279,11 @@ export async function updateStudent(
     }
     // Ensure fields not meant to be updated are not in payload
     delete updatePayload.id;
-    delete updatePayload.prnNumber; 
+    // delete updatePayload.prnNumber; 
     delete updatePayload.registrationDate;
     
     // Ensure only valid fields are in payload
-    const validFields: (keyof StudentData)[] = ['fullName', 'address', 'dateOfBirth', 'mobileNumber', 'rollNumber', 'yearOfJoining', 'courseName', 'bloodGroup', 'photographUrl'];
+    const validFields: (keyof StudentData)[] = ['prnNumber','fullName', 'address', 'dateOfBirth', 'mobileNumber', 'rollNumber', 'yearOfJoining', 'courseName', 'bloodGroup', 'photographUrl'];
     for (const key in updatePayload) {
         if (!validFields.includes(key as keyof StudentData)) {
             delete updatePayload[key];

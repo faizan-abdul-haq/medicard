@@ -8,10 +8,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { StudentData } from '@/lib/types';
-import { format } from 'date-fns';
+import type { StudentData, CardSettingsData } from '@/lib/types'; // Import CardSettingsData
+import { format, addMonths, isBefore, startOfMonth, endOfMonth } from 'date-fns'; // Import date-fns functions
 import { Users, Eye, Search, ChevronLeft, ChevronRight, Printer, Download, Trash2, Loader2 } from 'lucide-react';
 import { getStudents, deleteStudent } from '@/services/studentService';
+import { getCardSettings } from '@/services/cardSettingsService';
+ // Import service to fetch settings
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -26,26 +28,37 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useSearchParams } from 'next/navigation';
+import { DEFAULT_CARD_SETTINGS } from '@/lib/types'; // Assuming you have a default settings
 
 const ITEMS_PER_PAGE = 10;
 
 function StudentListContent() {
+
+  const searchParams = useSearchParams();
+  const filter = searchParams.get('filter');
+
   const [students, setStudents] = useState<StudentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState<string | null>(null); // Store ID of student being deleted
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
+  const [cardSettings, setCardSettings] = useState<CardSettingsData>(DEFAULT_CARD_SETTINGS); // State for card settings
   const { toast } = useToast();
 
   const fetchStudentsData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await getStudents();
-      setStudents(data.sort((a,b) => new Date(b.registrationDate).getTime() - new Date(a.registrationDate).getTime()));
+      const [data, settings] = await Promise.all([ // Fetch students and settings concurrently
+        getStudents(),
+        getCardSettings()
+      ]);
+      setStudents(data.sort((a, b) => new Date(b.registrationDate).getTime() - new Date(a.registrationDate).getTime()));
+      setCardSettings(settings); // Set the fetched settings
     } catch (error) {
-      console.error("Failed to fetch students:", error);
-      toast({ title: "Error", description: "Failed to fetch student list.", variant: "destructive"});
+      console.error("Failed to fetch students or settings:", error);
+      toast({ title: "Error", description: "Failed to fetch student list or settings.", variant: "destructive"});
     } finally {
       setIsLoading(false);
     }
@@ -56,23 +69,58 @@ function StudentListContent() {
   }, [fetchStudentsData]);
 
   const filteredStudents = useMemo(() => {
-    if (!searchTerm) return students;
-    return students.filter(student =>
+    let studentsToFilter = students;
+
+    // Apply filter based on URL parameter
+    if (filter === 'active' && cardSettings.validityPeriodMonths) {
+      const now = new Date();
+      studentsToFilter = studentsToFilter.filter(student => {
+        // Ensure registrationDate is a valid Date object
+        const registrationDate = new Date(student.registrationDate);
+        if (!isNaN(registrationDate.getTime())) {
+          const expiryDate = addMonths(registrationDate, cardSettings.validityPeriodMonths);
+          return isBefore(now, expiryDate);
+        }
+        return false; // Exclude if registrationDate is invalid
+      });
+    } else if (filter === 'expiring' && cardSettings.validityPeriodMonths) {
+      const now = new Date();
+      const nextMonthStart = startOfMonth(addMonths(now, 1));
+      const nextMonthEnd = endOfMonth(addMonths(now, 1));
+      studentsToFilter = studentsToFilter.filter(student => {
+         // Ensure registrationDate is a valid Date object
+        const registrationDate = new Date(student.registrationDate);
+         if (!isNaN(registrationDate.getTime())) {
+            const expiryDate = addMonths(registrationDate, cardSettings.validityPeriodMonths);
+            return isBefore(expiryDate, nextMonthEnd) && isBefore(nextMonthStart, expiryDate);
+         }
+         return false; // Exclude if registrationDate is invalid
+      });
+    }
+    // If filter is not 'active' or 'expiring', or if validityPeriodMonths is not set, studentsToFilter remains the original students array
+
+    // Apply search term filter to the potentially filtered list
+    if (!searchTerm) {
+      return studentsToFilter;
+    }
+
+    return studentsToFilter.filter(student =>
       student.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.prnNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (student.courseName && student.courseName.toLowerCase().includes(searchTerm.toLowerCase()))
     );
-  }, [students, searchTerm]);
+  }, [students, searchTerm, filter, cardSettings]); // Add filter and cardSettings as dependencies
 
   const totalPages = Math.ceil(filteredStudents.length / ITEMS_PER_PAGE);
-  const paginatedStudents = useMemo(() => {
+  
+const paginatedStudents = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredStudents.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredStudents, currentPage]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   const handleSelectStudent = (prnNumber: string, checked: boolean | 'indeterminate') => {
@@ -95,7 +143,7 @@ function StudentListContent() {
       setSelectedStudents(new Set());
     }
   };
-  
+
   const isAllSelectedOnPage = paginatedStudents.length > 0 && paginatedStudents.every(s => selectedStudents.has(s.prnNumber));
   const isSomeSelectedOnPage = paginatedStudents.some(s => selectedStudents.has(s.prnNumber)) && !isAllSelectedOnPage;
 
@@ -113,7 +161,8 @@ function StudentListContent() {
       });
     } catch (error) {
       console.error("Failed to delete student:", error);
-      toast({ title: "Error", description: "Failed to delete student.", variant: "destructive" });
+      toast({
+ title: "Error", description: "Failed to delete student.", variant: "destructive" });
     } finally {
       setIsDeleting(null);
     }
@@ -126,9 +175,9 @@ function StudentListContent() {
     }
 
     const headers = [
-      "PRN Number", "Full Name", "Course", "Year of Joining", "Roll Number", 
-      "Registration Date", "Date of Birth", "Mobile Number", "Address", 
-      "Blood Group", "Emergency Contact Name", "Emergency Contact Phone", 
+      "PRN Number", "Full Name", "Course", "Year of Joining", "Roll Number",
+      "Registration Date", "Date of Birth", "Mobile Number", "Address",
+      "Blood Group", "Emergency Contact Name", "Emergency Contact Phone",
       "Allergies", "Medical Conditions", "Photograph URL"
     ];
     const csvRows = [headers.join(',')];
@@ -143,7 +192,7 @@ function StudentListContent() {
         `"${format(new Date(student.registrationDate), 'yyyy-MM-dd HH:mm')}"`,
         `"${student.dateOfBirth ? format(new Date(student.dateOfBirth), 'yyyy-MM-dd') : ''}"`,
         `"${student.mobileNumber || ''}"`,
-        `"${(student.address || '').replace(/"/g, '""')}"`, 
+        `"${(student.address || '').replace(/"/g, '""')}"`,
         `"${student.bloodGroup || ''}"`,
         `"${student.emergencyContactName || ''}"`,
         `"${student.emergencyContactPhone || ''}"`,
@@ -157,7 +206,8 @@ function StudentListContent() {
     const csvString = csvRows.join('\n');
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL
+(blob);
     link.setAttribute("href", url);
     link.setAttribute("download", `students_export_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
@@ -203,7 +253,8 @@ function StudentListContent() {
               </div>
               {selectedStudents.size > 0 && (
                 <Button asChild>
-                  <Link href={`/print-preview?studentIds=${Array.from(selectedStudents).join(',')}`} target="_blank">
+                  <Link href={`/print-preview
+?studentIds=${Array.from(selectedStudents).join(',')}`} target="_blank">
                     <Printer size={16} className="mr-2" /> Print ({selectedStudents.size})
                   </Link>
                 </Button>
@@ -229,7 +280,7 @@ function StudentListContent() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[50px]">
-                      <Checkbox 
+                      <Checkbox
                         checked={isAllSelectedOnPage ? true : (isSomeSelectedOnPage ? 'indeterminate' : false)}
                         onCheckedChange={handleSelectAll}
                         aria-label="Select all students on this page"
@@ -246,10 +297,11 @@ function StudentListContent() {
                   {paginatedStudents.map((student) => (
                     <TableRow key={student.id} data-state={selectedStudents.has(student.prnNumber) ? "selected" : undefined}>
                       <TableCell>
-                        <Checkbox 
+                        <Checkbox
                           checked={selectedStudents.has(student.prnNumber)}
                           onCheckedChange={(checked) => handleSelectStudent(student.prnNumber, checked)}
-                          aria-label={`Select student ${student.fullName}`}
+                          aria-label={`Select
+ student ${student.fullName}`}
                         />
                       </TableCell>
                       <TableCell className="font-medium">{student.prnNumber}</TableCell>
@@ -297,7 +349,8 @@ function StudentListContent() {
                     disabled={currentPage === 1}
                   >
                     <ChevronLeft className="h-4 w-4 mr-1" /> Previous
-                  </Button>
+                  </
+Button>
                   <span className="text-sm text-muted-foreground">
                     Page {currentPage} of {totalPages}
                   </span>
@@ -338,4 +391,3 @@ export default function StudentListPage() {
     </ProtectedRoute>
   );
 }
-

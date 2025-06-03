@@ -109,11 +109,11 @@ export default function StudentIdCard({
         <CardContent className="p-2 flex flex-row gap-2">
           <div className="w-[80px] flex-shrink-0 mt-1">
             <Image
-              src={student.photographUrl || "https://placehold.co/80x100.png"}
+              src={student.photographUrl || "https://placehold.co/80x80.png"}
               alt={student.fullName}
               width={80}
-              height={100}
-              className="object-cover border border-gray-400"
+              height={80}
+              className=" h-[80px] object-cover border border-gray-400"
               data-ai-hint="student portrait"
               unoptimized
             />

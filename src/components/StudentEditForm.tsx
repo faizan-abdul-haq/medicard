@@ -216,6 +216,7 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
         studentToEdit.id, 
         {
             ...dataToSubmit,
+            prnNumber: formData.prnNumber,
             dateOfBirth: formData.dateOfBirth,
             bloodGroup: formData.bloodGroup === "NO_GROUP" ? undefined : formData.bloodGroup,
         },
@@ -267,8 +268,8 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
                         <Input id="fullName" name="fullName" value={formData.fullName || ''} onChange={handleChange} required />
                     </div>
                     <div>
-                        <Label htmlFor="prnNumber">PRN Number (Read-only)</Label>
-                        <Input id="prnNumber" name="prnNumber" value={studentToEdit.prnNumber || ''} readOnly disabled className="bg-muted/50" />
+                        <Label htmlFor="prnNumber">PRN Number</Label> {/* You might want to update the label too */}
+                        <Input id="prnNumber" name="prnNumber" value={formData.prnNumber || ''} onChange={handleChange} required /> 
                     </div>
                 </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

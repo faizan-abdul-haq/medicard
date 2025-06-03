@@ -118,6 +118,7 @@ function DashboardContent() {
       description: `Currently in system`,
       icon: <Users className="h-5 w-5" />,
       colorClass: "text-primary",
+      filter: "all"
     },
     {
       title: "Active ID Cards",
@@ -125,6 +126,8 @@ function DashboardContent() {
       description: `Valid based on ${cardSettings.validityPeriodMonths}-month validity`,
       icon: <BadgeCheck className="h-5 w-5" />,
       colorClass: "text-green-600",
+      filter: "active"
+
     },
     {
       title: "Expiring Next Month",
@@ -132,14 +135,16 @@ function DashboardContent() {
       description: "Cards expiring next month",
       icon: <CalendarClock className="h-5 w-5" />,
       colorClass: "text-orange-500",
+      filter: "expiring"
+
     },
-    {
-      title: "Courses Offered",
-      value: isLoading ? "..." : totalCourses.toString(),
-      description: "Unique courses in system",
-      icon: <BookOpenText className="h-5 w-5" />,
-      colorClass: "text-accent",
-    },
+    // {
+    //   title: "Courses Offered",
+    //   value: isLoading ? "..." : totalCourses.toString(),
+    //   description: "Unique courses in system",
+    //   icon: <BookOpenText className="h-5 w-5" />,
+    //   colorClass: "text-accent",
+    // },
   ];
 
 
@@ -151,15 +156,18 @@ function DashboardContent() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      
         {stats.map((stat, index) => (
-          <StatCard
-            key={index}
-            title={stat.title}
-            value={stat.value}
-            description={stat.description}
-            icon={stat.icon}
-            colorClass={stat.colorClass}
-          />
+          <Link key={index} href={`/students/list?filter=${encodeURIComponent(stat.filter)}`} passHref>
+            <StatCard
+              key={index}
+              title={stat.title}
+              value={stat.value}
+              description={stat.description}
+              icon={stat.icon}
+              colorClass={stat.colorClass}
+            />
+          </Link>
         ))}
       </div>
 
