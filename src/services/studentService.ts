@@ -16,7 +16,7 @@ import {
   serverTimestamp,
   updateDoc,
   arrayUnion,
-  deleteDoc // Added deleteDoc
+  deleteDoc
 } from 'firebase/firestore';
 import { ref, deleteObject, uploadBytes, getDownloadURL } from 'firebase/storage'; // Added Firebase Storage functions
 
@@ -36,9 +36,8 @@ const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => 
   } else if (data.dateOfBirth instanceof Date) {
     dob = data.dateOfBirth;
   } else {
-    // Attempt to parse string; fallback to a default/invalid date if necessary
     const parsed = new Date(data.dateOfBirth);
-    dob = isNaN(parsed.getTime()) ? new Date('1900-01-01') : parsed; // Fallback for invalid date string
+    dob = isNaN(parsed.getTime()) ? new Date('1900-01-01') : parsed;
   }
 
   let regDate: Date;
@@ -48,7 +47,7 @@ const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => 
     regDate = data.registrationDate;
   } else {
     const parsed = new Date(data.registrationDate);
-    regDate = isNaN(parsed.getTime()) ? new Date() : parsed; // Fallback for invalid date string
+    regDate = isNaN(parsed.getTime()) ? new Date() : parsed;
   }
 
   let printHistoryDates: Date[] | undefined = undefined;
@@ -62,7 +61,6 @@ const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => 
   }
 
   return {
-    // Ensure all fields from StudentData are present
     fullName: data.fullName,
     address: data.address,
     mobileNumber: data.mobileNumber,
@@ -93,14 +91,12 @@ export async function getStudents(): Promise<StudentData[]> {
 
 export async function getStudentById(id: string): Promise<StudentData | null> {
   try {
-    // Try fetching by Firestore document ID first
     const studentDocRefById = doc(db, STUDENTS_COLLECTION, id);
     let studentSnap = await getDoc(studentDocRefById);
 
     if (studentSnap.exists()) {
       return mapFirestoreDocToStudentData(studentSnap.data(), studentSnap.id);
     } else {
-      // If not found by ID, try fetching by PRN number
       const q = query(collection(db, STUDENTS_COLLECTION), where("prnNumber", "==", id));
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
@@ -108,7 +104,7 @@ export async function getStudentById(id: string): Promise<StudentData | null> {
         return mapFirestoreDocToStudentData(studentDoc.data(), studentDoc.id);
       }
     }
-    return null; // Student not found by either ID or PRN
+    return null;
   } catch (error) {
     console.error(`Error fetching student by ID/PRN ${id}: `, error);
     throw new Error("Failed to fetch student data from Firestore.");
@@ -134,11 +130,9 @@ export async function recordCardPrint(studentPrn: string): Promise<void> {
     });
   } catch (error) {
     console.error(`Error recording card print for PRN ${studentPrn}: `, error);
-    // Optionally re-throw or handle as needed by the application
   }
 }
 
-// Helper to upload photograph
 async function uploadPhotograph(photoFile: File, prnNumber: string): Promise<string> {
   const filePath = `student_photos/${prnNumber}/${Date.now()}_${photoFile.name}`;
   const photoRef = ref(storage, filePath);
@@ -146,25 +140,18 @@ async function uploadPhotograph(photoFile: File, prnNumber: string): Promise<str
   return getDownloadURL(photoRef);
 }
 
-// Helper to delete photograph from Firebase Storage
 async function deletePhotograph(photographUrl: string): Promise<void> {
-  if (!photographUrl || !photographUrl.startsWith("https://firebasestorage.googleapis.com")) {
-    // Not a Firebase Storage URL, or no URL, so nothing to delete
+  if (!photographUrl || !photographUrl.startsWith("https://firebasestorage.googleapis.com") || photographUrl.includes("placehold.co")) {
     return;
   }
   try {
-    const photoRef = ref(storage, photographUrl); // This creates a reference from the full URL
+    const photoRef = ref(storage, photographUrl);
     await deleteObject(photoRef);
   } catch (error: any) {
-    // It's common for deleteObject to fail if the file doesn't exist (e.g., already deleted, or URL was wrong)
-    // Or if permissions are not set up correctly.
-    // For "object-not-found", we can often ignore it if the goal is to ensure it's gone.
     if (error.code === 'storage/object-not-found') {
       console.warn(`Photo not found for deletion (may have been already deleted): ${photographUrl}`);
     } else {
       console.error("Error deleting photograph from Firebase Storage: ", error);
-      // Decide if this error should be propagated
-      // throw new Error("Failed to delete existing photograph."); 
     }
   }
 }
@@ -177,7 +164,7 @@ export async function registerStudent(
     const q = query(collection(db, STUDENTS_COLLECTION), where("prnNumber", "==", studentData.prnNumber));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
-      throw new Error(`Student with PRN number ${studentData.prnNumber} already exists.`);
+      throw new Error(`PRN_EXISTS: Student with PRN number ${studentData.prnNumber} already exists.`);
     }
 
     let finalPhotographUrl = studentData.photographUrl || "https://placehold.co/80x100.png";
@@ -202,31 +189,32 @@ export async function registerStudent(
     if (studentData.bloodGroup) {
       docDataToSave.bloodGroup = studentData.bloodGroup;
     } else {
-      docDataToSave.bloodGroup = null; // Explicitly set to null if not provided
+      docDataToSave.bloodGroup = null;
     }
 
     const docRef = await addDoc(collection(db, STUDENTS_COLLECTION), docDataToSave);
     
     const newDocSnap = await getDoc(docRef);
     if (!newDocSnap.exists()) {
-        throw new Error("Failed to retrieve newly created student document.");
+        throw new Error("Failed to retrieve newly created student document after saving.");
     }
     
     return mapFirestoreDocToStudentData(newDocSnap.data(), newDocSnap.id);
 
   } catch (error) {
-    console.error("Error registering student: ", error);
-    if (error instanceof Error) {
-        throw error; 
+    console.error("Error in registerStudent service: ", error); 
+    if (error instanceof Error && error.message.startsWith("PRN_EXISTS:")) {
+      throw error; 
     }
-    throw new Error("Failed to register student in Firestore.");
+    // For all other errors, throw a new, simple Error object to ensure serializability
+    throw new Error("REGISTRATION_SERVICE_ERROR: An unexpected error occurred while registering the student. Please check server logs.");
   }
 }
 
 
 export async function updateStudent(
   studentDocId: string,
-  dataToUpdate: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'photograph'>>, // PRN shouldn't be updatable here
+  dataToUpdate: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'photograph'>>,
   newPhotographFile?: File | null,
   existingPhotographUrl?: string | null
 ): Promise<StudentData> {
@@ -234,41 +222,34 @@ export async function updateStudent(
     const studentDocRef = doc(db, STUDENTS_COLLECTION, studentDocId);
     const currentDocSnap = await getDoc(studentDocRef);
     if (!currentDocSnap.exists()) {
-      throw new Error("Student document not found for update.");
+      throw new Error("UPDATE_FAILED: Student document not found.");
     }
-    const currentStudentData = currentDocSnap.data() as StudentData;
+    const currentStudentData = currentDocSnap.data() as StudentData; // Assume it exists
 
-    // --- PRN Uniqueness Check ---
-    // If prnNumber is being updated, check for uniqueness
     if (dataToUpdate.prnNumber && dataToUpdate.prnNumber !== currentStudentData.prnNumber) {
       const q = query(
         collection(db, STUDENTS_COLLECTION),
         where("prnNumber", "==", dataToUpdate.prnNumber)
       );
       const querySnapshot = await getDocs(q);
-      // Check if any document other than the current one has this PRN
-      if (!querySnapshot.empty && querySnapshot.docs.some(doc => doc.id !== studentDocId)) {
-        throw new Error(`Student with PRN number ${dataToUpdate.prnNumber} already exists.`);
+      if (!querySnapshot.empty && querySnapshot.docs.some(d => d.id !== studentDocId)) {
+        throw new Error(`UPDATE_FAILED_PRN_EXISTS: Student with PRN number ${dataToUpdate.prnNumber} already exists.`);
       }
     }
-    // ---------------------------
-
     
     let finalPhotographUrl = existingPhotographUrl;
 
     if (newPhotographFile instanceof File) {
-      // If there's an existing photo and it's different, delete it
       if (existingPhotographUrl && existingPhotographUrl !== "https://placehold.co/80x100.png") {
         await deletePhotograph(existingPhotographUrl);
       }
-      finalPhotographUrl = await uploadPhotograph(newPhotographFile, currentStudentData.prnNumber);
-    } else if (dataToUpdate.photographUrl === null) { // Explicitly removing photo
+      finalPhotographUrl = await uploadPhotograph(newPhotographFile, dataToUpdate.prnNumber || currentStudentData.prnNumber);
+    } else if (dataToUpdate.photographUrl === null) { 
         if (existingPhotographUrl && existingPhotographUrl !== "https://placehold.co/80x100.png") {
             await deletePhotograph(existingPhotographUrl);
         }
-        finalPhotographUrl = "https://placehold.co/80x100.png"; // Set to placeholder
+        finalPhotographUrl = "https://placehold.co/80x100.png";
     }
-
 
     const updatePayload: any = { ...dataToUpdate };
     if (finalPhotographUrl !== undefined) {
@@ -277,34 +258,31 @@ export async function updateStudent(
     if (dataToUpdate.dateOfBirth) {
       updatePayload.dateOfBirth = Timestamp.fromDate(new Date(dataToUpdate.dateOfBirth));
     }
-    // Ensure fields not meant to be updated are not in payload
+    
     delete updatePayload.id;
-    // delete updatePayload.prnNumber; 
     delete updatePayload.registrationDate;
     
-    // Ensure only valid fields are in payload
-    const validFields: (keyof StudentData)[] = ['prnNumber','fullName', 'address', 'dateOfBirth', 'mobileNumber', 'rollNumber', 'yearOfJoining', 'courseName', 'bloodGroup', 'photographUrl'];
+    const validFields: (keyof StudentData | "photographUrl")[] = ['prnNumber','fullName', 'address', 'dateOfBirth', 'mobileNumber', 'rollNumber', 'yearOfJoining', 'courseName', 'bloodGroup', 'photographUrl'];
     for (const key in updatePayload) {
         if (!validFields.includes(key as keyof StudentData)) {
             delete updatePayload[key];
         }
     }
 
-
     await updateDoc(studentDocRef, updatePayload);
 
     const updatedDocSnap = await getDoc(studentDocRef);
      if (!updatedDocSnap.exists()) {
-        throw new Error("Failed to retrieve updated student document.");
+        throw new Error("UPDATE_FAILED: Failed to retrieve updated student document.");
     }
     return mapFirestoreDocToStudentData(updatedDocSnap.data(), updatedDocSnap.id);
 
   } catch (error) {
     console.error("Error updating student: ", error);
-    if (error instanceof Error) {
+    if (error instanceof Error && (error.message.startsWith("UPDATE_FAILED") || error.message.startsWith("PRN_EXISTS"))) {
       throw error;
     }
-    throw new Error("Failed to update student in Firestore.");
+    throw new Error("UPDATE_SERVICE_ERROR: An unexpected error occurred while updating student details.");
   }
 }
 
@@ -312,18 +290,13 @@ export async function updateStudent(
 export async function deleteStudent(studentDocId: string, photographUrl?: string): Promise<void> {
   try {
     const studentDocRef = doc(db, STUDENTS_COLLECTION, studentDocId);
-    // First, delete the photo if a URL is provided
     if (photographUrl) {
       await deletePhotograph(photographUrl);
     }
-    // Then, delete the Firestore document
     await deleteDoc(studentDocRef);
   } catch (error) {
     console.error("Error deleting student: ", error);
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error("Failed to delete student from Firestore.");
+    throw new Error("DELETE_SERVICE_ERROR: Failed to delete student.");
   }
 }
 
@@ -334,10 +307,9 @@ export async function bulkRegisterStudents(studentsDataInput: StudentData[]): Pr
   const errors: string[] = [];
   let successCount = 0;
 
-  // Ensure studentsData has all required fields and correct types from CSV parsing stage
   const studentsData = studentsDataInput.map(s => ({
     ...s,
-    dateOfBirth: s.dateOfBirth ? new Date(s.dateOfBirth) : new Date('2000-01-01') // Ensure Date object
+    dateOfBirth: s.dateOfBirth ? new Date(s.dateOfBirth) : new Date('2000-01-01') 
   }));
 
   const prnsInBatch = new Set<string>();
@@ -380,12 +352,11 @@ export async function bulkRegisterStudents(studentsDataInput: StudentData[]): Pr
       studentToSave.bloodGroup = null; 
     }
 
-
     batch.set(studentDocRef, studentToSave);
     prnsInBatch.add(data.prnNumber);
     
     newStudentsPlaceholder.push({
-        ...data, // Use the processed 'data' which has Date objects
+        ...data,
         id: studentDocRef.id, 
         registrationDate: new Date(), 
         printHistory: [],
@@ -409,7 +380,6 @@ export async function bulkRegisterStudents(studentsDataInput: StudentData[]): Pr
   } catch (error) {
     console.error("Error committing bulk student registration: ", error);
     errors.push(`Batch commit failed: ${error instanceof Error ? error.message : String(error)}`);
-    // Return successCount based on what was attempted in the batch before commit error
     return { successCount: 0, newStudents: [], errors }; 
   }
 }
