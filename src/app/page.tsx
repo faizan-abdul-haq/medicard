@@ -155,7 +155,7 @@ function DashboardContent() {
         <p className="text-muted-foreground">Overview of student registrations and ID card status.</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       
         {stats.map((stat, index) => (
           <Link key={index} href={`/students/list?filter=${encodeURIComponent(stat.filter)}`} passHref>

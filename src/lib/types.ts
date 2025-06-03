@@ -13,7 +13,7 @@ export interface StudentData {
   bloodGroup?: string;
   registrationDate: Date; // Always ensure this is a JS Date object in the application
   printHistory?: Date[]; // Array of timestamps when the card was printed
-
+  cardHolderSignature?: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
   allergies?: string;

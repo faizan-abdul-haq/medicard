@@ -37,6 +37,7 @@ const mockStudentForPreview: StudentData = {
   emergencyContactPhone: '1112223333',
   allergies: 'None',
   medicalConditions: 'Healthy',
+  cardHolderSignature: ''
 };
 
 function CardSettingsContent() {

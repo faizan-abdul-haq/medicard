@@ -23,6 +23,8 @@ import { useToast } from "@/hooks/use-toast";
 import { registerStudent } from '@/services/studentService';
 import { getCardSettings } from '@/services/cardSettingsService';
 import Webcam from 'react-webcam';
+import SignaturePad from '@/components/SignaturePad';
+
 import {
   Select,
   SelectContent,
@@ -45,6 +47,7 @@ const initialFormData: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'ph
   courseName: '',
   photograph: null,
   bloodGroup: '',
+  cardHolderSignature: '',
 };
 
 const MOBILE_REGEX = /^\d{10}$/;
@@ -265,6 +268,7 @@ export default function StudentRegistrationForm() {
         courseName: formData.courseName!,
         photograph: formData.photograph,
         bloodGroup: formData.bloodGroup === "NO_GROUP" ? undefined : formData.bloodGroup || undefined,
+        cardHolderSignature: formData.cardHolderSignature || '',
       };
 
       const newStudent = await registerStudent(studentToRegister);
@@ -496,6 +500,14 @@ export default function StudentRegistrationForm() {
                     </SelectContent>
                     </Select>
                 </div>
+            </div>
+
+            <div className="space-y-2">
+              <SignaturePad
+              label="Card Holder's Signature"
+              value={formData.cardHolderSignature || ''}
+              onChange={(dataUrl) => setFormData(prev => ({ ...prev, cardHolderSignature: dataUrl }))}
+              />
             </div>
             
             <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-base" disabled={isSubmitting || (inputMode === 'webcam' && hasCameraPermission === null && !webcamError) }>

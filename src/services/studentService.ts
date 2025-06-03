@@ -74,6 +74,7 @@ const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => 
     bloodGroup: data.bloodGroup || undefined,
     photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
     printHistory: printHistoryDates,
+    cardHolderSignature: data.cardHolderSignature
   };
 };
 
@@ -162,6 +163,7 @@ export async function registerStudent(
   studentData: Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl' | 'printHistory' | 'photograph'> & { photograph?: File | null, dateOfBirth: Date, photographUrl?: string | null }
 ): Promise<StudentData> {
   try {
+    console.log(studentData);
     const q = query(collection(db, STUDENTS_COLLECTION), where("prnNumber", "==", studentData.prnNumber));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
@@ -185,6 +187,7 @@ export async function registerStudent(
       photographUrl: finalPhotographUrl,
       registrationDate: serverTimestamp(),
       printHistory: [],
+      cardHolderSignature: studentData.cardHolderSignature
     };
 
     if (studentData.bloodGroup) {
@@ -271,7 +274,7 @@ export async function updateStudent(
     delete updatePayload.id;
     delete updatePayload.registrationDate;
     
-    const validFields: (keyof StudentData | "photographUrl")[] = ['prnNumber','fullName', 'address', 'dateOfBirth', 'mobileNumber', 'rollNumber', 'yearOfJoining', 'courseName', 'bloodGroup', 'photographUrl'];
+    const validFields: (keyof StudentData | "photographUrl")[] = ['prnNumber','fullName', 'address', 'dateOfBirth', 'mobileNumber', 'rollNumber', 'yearOfJoining', 'courseName', 'bloodGroup', 'photographUrl','cardHolderSignature'];
     for (const key in updatePayload) {
         if (!validFields.includes(key as keyof StudentData)) {
             delete updatePayload[key];
@@ -354,6 +357,7 @@ export async function bulkRegisterStudents(studentsDataInput: StudentData[]): Pr
       photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
       registrationDate: serverTimestamp(),
       printHistory: [],
+      cardHolderSignature: data.cardHolderSignature
     };
      if (data.bloodGroup) {
       studentToSave.bloodGroup = data.bloodGroup;

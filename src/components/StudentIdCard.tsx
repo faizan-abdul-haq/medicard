@@ -157,7 +157,17 @@ export default function StudentIdCard({
           </div>          
           <div className="text-center">
             <div className="w-20 h-6 border-b border-gray-400 mb-0.5 flex items-center justify-center italic text-gray-500">
-              {/* Signature placeholder */}
+            
+            {student.cardHolderSignature && (
+              <Image
+                src={student.cardHolderSignature}
+                alt=""
+                width={100}
+                height={40}
+                className="object-contain"
+                unoptimized
+              />
+            )}
             </div>
             <p className="font-bold text-gray-700">{settings.defaultCardHolderSignatureText}</p>
           </div>
