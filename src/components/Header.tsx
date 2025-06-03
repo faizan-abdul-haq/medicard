@@ -11,13 +11,16 @@ export default function Header() {
   const { isAuthenticated, logout, isLoading } = useAuth();
   const pathname = usePathname();
 
-  // Don't render header on login page, or while auth state is loading
-  if (pathname === '/login' || isLoading) {
+  // Don't render header:
+  // 1. On the login page.
+  // 2. While auth state is loading.
+  // 3. For unauthenticated users on the registration page.
+  if (pathname === '/login' || isLoading || (!isAuthenticated && pathname === '/register')) {
     return null;
   }
 
   return (
-    <header className="bg-primary text-primary-foreground shadow-md">
+    <header className="bg-primary text-primary-foreground shadow-md print:hidden">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2 text-2xl font-bold">
           <Stethoscope size={28} />

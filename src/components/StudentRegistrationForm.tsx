@@ -22,7 +22,6 @@ import { useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
 import { registerStudent } from '@/services/studentService';
 import { getCardSettings } from '@/services/cardSettingsService';
-// import { uploadStudentPhoto } from '@/services/photoUploadService'; // Not directly used here now, studentService handles it
 import Webcam from 'react-webcam';
 import {
   Select,
@@ -32,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
 
 
 const initialFormData: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl'>> & { photograph?: File | null, dateOfBirth?: Date } = {
@@ -49,7 +49,6 @@ const initialFormData: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'ph
 
 const MOBILE_REGEX = /^\d{10}$/;
 
-// Helper function to convert data URI to File object
 const dataURLtoFile = (dataurl: string, filename: string): File => {
   const arr = dataurl.split(',');
   const mimeMatch = arr[0].match(/:(.*?);/);
@@ -76,6 +75,7 @@ export default function StudentRegistrationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { isAuthenticated, isLoading: authIsLoading } = useAuth(); // Get auth state
 
   const [inputMode, setInputMode] = useState<'upload' | 'webcam'>('upload');
   const webcamRef = useRef<Webcam>(null);
@@ -85,7 +85,8 @@ export default function StudentRegistrationForm() {
 
 
   useEffect(() => {
-    if (submittedStudent) { 
+    // Fetch card settings only if an admin is logged in and a student has been submitted (for preview)
+    if (submittedStudent && isAuthenticated) { 
       setIsLoadingSettings(true);
       getCardSettings()
         .then(setCardSettings)
@@ -95,7 +96,7 @@ export default function StudentRegistrationForm() {
         })
         .finally(() => setIsLoadingSettings(false));
     }
-  }, [submittedStudent, toast]);
+  }, [submittedStudent, isAuthenticated, toast]);
 
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -135,15 +136,11 @@ export default function StudentRegistrationForm() {
       }
       setFormData(prev => ({ ...prev, photograph: file }));
       setPhotographPreview(URL.createObjectURL(file));
-      // If switching from webcam, ensure webcam state is neutral
       if (inputMode === 'webcam' && webcamRef.current) {
-        // Potentially stop webcam tracks if active, though react-webcam might handle this
+        // Potentially stop webcam tracks if active
       }
     } else {
-      // Only clear if it was an intentional clear by the user (e.g. removing the file)
-      // or if the file selection dialog was cancelled.
-      // For now, if e.target.files is null/empty, we assume a cancel or removal.
-      if (!formData.photograph) { // Only clear if there wasn't already a photo (e.g. from webcam)
+      if (!formData.photograph) { 
         setFormData(prev => ({ ...prev, photograph: null }));
         setPhotographPreview(null);
       }
@@ -157,21 +154,50 @@ export default function StudentRegistrationForm() {
         const file = dataURLtoFile(imageSrc, `webcam_capture_${Date.now()}.jpg`);
         setFormData(prev => ({ ...prev, photograph: file }));
         setPhotographPreview(imageSrc);
-        if (fileInputRef.current) { // Clear file input if webcam photo is taken
+        if (fileInputRef.current) { 
           fileInputRef.current.value = "";
         }
-        // setInputMode('upload'); // Optionally switch back to upload mode or keep webcam active
         toast({ title: "Photo Captured!", description: "Image from webcam is ready."});
       } else {
         toast({ title: "Capture Failed", description: "Could not capture image from webcam.", variant: "destructive"});
       }
     }
   };
+  
+  const requestCameraPermission = async () => {
+    setWebcamError(null);
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setHasCameraPermission(false);
+        const msg = "Webcam not supported by this browser.";
+        setWebcamError(msg);
+        toast({ variant: 'destructive', title: 'Webcam Access Error', description: msg });
+        setInputMode('upload');
+        return;
+    }
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        setHasCameraPermission(true);
+        if (webcamRef.current && webcamRef.current.video) {
+            webcamRef.current.video.srcObject = stream;
+        }
+        toast({ title: "Webcam Activated", description: "Camera is ready." });
+
+    } catch (error) {
+        handleUserMediaError(error as (String | DOMException));
+    }
+  };
+
+  useEffect(() => {
+    if (inputMode === 'webcam' && hasCameraPermission === null) { 
+       requestCameraPermission();
+    }
+  }, [inputMode, hasCameraPermission]);
+
 
   const handleUserMedia = () => {
     setHasCameraPermission(true);
     setWebcamError(null);
-    toast({ title: "Webcam Activated", description: "Camera is ready."});
+    // toast({ title: "Webcam Activated", description: "Camera is ready."}); // Already toasted in requestCameraPermission
   };
 
   const handleUserMediaError = (error: String | DOMException) => {
@@ -193,7 +219,7 @@ export default function StudentRegistrationForm() {
       title: 'Webcam Access Error',
       description: errorMessage,
     });
-    setInputMode('upload'); // Switch back to file upload if webcam fails
+    setInputMode('upload'); 
   };
 
 
@@ -227,7 +253,6 @@ export default function StudentRegistrationForm() {
 
 
     setIsSubmitting(true);
-    // photoUrl will be handled by registerStudent service
     try {
       const studentToRegister = {
         fullName: formData.fullName!,
@@ -238,24 +263,34 @@ export default function StudentRegistrationForm() {
         rollNumber: formData.rollNumber!,
         yearOfJoining: formData.yearOfJoining!,
         courseName: formData.courseName!,
-        photograph: formData.photograph, // Pass the File object
+        photograph: formData.photograph,
         bloodGroup: formData.bloodGroup === "NO_GROUP" ? undefined : formData.bloodGroup || undefined,
       };
 
       const newStudent = await registerStudent(studentToRegister);
-      setSubmittedStudent(newStudent);
+      
+      if (isAuthenticated) { // Admin submitted
+        setSubmittedStudent(newStudent);
+        toast({
+          title: "Registration Successful!",
+          description: `${newStudent.fullName}'s ID card has been generated.`,
+        });
+      } else { // Student submitted
+        setSubmittedStudent(null); // Don't show card preview for student
+         toast({
+          title: "Registration Submitted!",
+          description: "Your registration has been submitted successfully. It will be reviewed by an administrator.",
+          duration: 7000,
+        });
+      }
 
-      toast({
-        title: "Registration Successful!",
-        description: `${newStudent.fullName}'s ID card has been generated.`,
-      });
 
       setFormData(initialFormData);
       setPhotographPreview(null);
-      if (fileInputRef.current) fileInputRef.current.value = ""; // Clear file input
-      setHasCameraPermission(null); // Reset camera permission status
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      setHasCameraPermission(null); 
       setWebcamError(null);
-      setInputMode('upload'); // Reset to default input mode
+      setInputMode('upload');
       const form = e.target as HTMLFormElement;
       if (form) {
          const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement;
@@ -283,6 +318,10 @@ export default function StudentRegistrationForm() {
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
   const yearsOfStudy = ["FIRST", "SECOND", "THIRD", "FOURTH", "FINAL"];
 
+  if (authIsLoading && !isAuthenticated) { // Show a simple loading for students accessing the form
+    return <div className="flex justify-center items-center min-h-[300px]"><Loader2 className="h-6 w-6 animate-spin text-primary" /> <p className="ml-2">Loading form...</p></div>;
+  }
+
 
   return (
     <div className="space-y-8">
@@ -291,7 +330,7 @@ export default function StudentRegistrationForm() {
           <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
             <UserPlus size={28} /> Student Registration
           </CardTitle>
-          <CardDescription>Fill in the details below to register a new student and generate their ID card. Fields marked with <span className="text-destructive">*</span> are required.</CardDescription>
+          <CardDescription>Fill in the details below to register. Fields marked with <span className="text-destructive">*</span> are required.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -370,14 +409,13 @@ export default function StudentRegistrationForm() {
                 </Popover>
               </div>
               
-              {/* Photograph Section */}
               <div className="space-y-2">
                 <Label>Student Photograph (Max 2MB)</Label>
                 <div className="flex gap-2 mb-2">
                     <Button type="button" variant={inputMode === 'upload' ? 'default' : 'outline'} onClick={() => setInputMode('upload')}>
                         <UploadCloud className="mr-2 h-4 w-4" /> Upload File
                     </Button>
-                    <Button type="button" variant={inputMode === 'webcam' ? 'default' : 'outline'} onClick={() => setInputMode('webcam')}>
+                    <Button type="button" variant={inputMode === 'webcam' ? 'default' : 'outline'} onClick={() => { setInputMode('webcam'); if (hasCameraPermission !== true) requestCameraPermission();}}>
                         <Camera className="mr-2 h-4 w-4" /> Use Webcam
                     </Button>
                 </div>
@@ -414,13 +452,15 @@ export default function StudentRegistrationForm() {
                                 <ShadcnAlertDescription>{webcamError}</ShadcnAlertDescription>
                             </Alert>
                         )}
-                        {hasCameraPermission && (
+                        {hasCameraPermission === true && (
                             <Button type="button" onClick={capturePhoto} className="w-full" variant="outline">
                                 <Camera className="mr-2 h-4 w-4" /> Capture Photo
                             </Button>
                         )}
                          {hasCameraPermission === null && !webcamError && (
-                            <p className="text-sm text-muted-foreground">Requesting camera access...</p>
+                            <div className="flex items-center text-sm text-muted-foreground">
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Requesting camera access...
+                            </div>
                         )}
                     </div>
                 )}
@@ -458,20 +498,23 @@ export default function StudentRegistrationForm() {
                 </div>
             </div>
             
-            <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-base" disabled={isSubmitting}>
+            <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-base" disabled={isSubmitting || (inputMode === 'webcam' && hasCameraPermission === null && !webcamError) }>
               {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin"/> : <UserPlus className="mr-2 h-5 w-5" />}
-              {isSubmitting ? 'Registering...' : 'Register Student & Generate ID'}
+              {isSubmitting ? 'Registering...' : (isAuthenticated ? 'Register Student & Generate ID' : 'Submit Registration')}
             </Button>
           </form>
         </CardContent>
-         <CardFooter className="pt-6">
-            <Button variant="outline" onClick={() => router.back()} className="w-full">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
-            </Button>
-          </CardFooter>
+         {isAuthenticated && ( // Only show "Go Back" for authenticated admin users
+            <CardFooter className="pt-6">
+                <Button variant="outline" onClick={() => router.back()} className="w-full">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+                </Button>
+            </CardFooter>
+         )}
       </Card>
 
-      {submittedStudent && (
+      {/* Conditional rendering for submitted student card preview (only for admins) */}
+      {isAuthenticated && submittedStudent && (
         <Card className="mt-12 max-w-3xl mx-auto shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-semibold text-green-600 flex items-center justify-center gap-2">
@@ -490,7 +533,7 @@ export default function StudentRegistrationForm() {
           </CardContent>
           <CardFooter className="flex flex-col sm:flex-row justify-center items-center gap-2">
             <Button variant="outline" onClick={() => {
-              setSubmittedStudent(null);
+              setSubmittedStudent(null); // Clear submitted student to allow new admin registration
             }}>
               Register Another Student
             </Button>

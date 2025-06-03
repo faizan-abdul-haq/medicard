@@ -2,21 +2,16 @@
 'use client';
 
 import StudentRegistrationForm from '@/components/StudentRegistrationForm';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import { useAuth } from '@/contexts/AuthContext';
+// ProtectedRoute is removed as this page is now public for students.
+// Admin-specific actions within the form will be handled by checking auth state.
 
 export default function RegisterPage() {
-  const { isLoading: authIsLoading } = useAuth();
-
-  if (authIsLoading) {
-    return <div className="flex justify-center items-center min-h-screen"><p>Loading registration form...</p></div>;
-  }
-
+  // authIsLoading check removed as it was part of ProtectedRoute logic.
+  // The form itself can handle its internal loading states if necessary,
+  // and auth state for conditional UI within the form is fetched by StudentRegistrationForm.
   return (
-    <ProtectedRoute>
-      <div>
-        <StudentRegistrationForm />
-      </div>
-    </ProtectedRoute>
+    <div>
+      <StudentRegistrationForm />
+    </div>
   );
 }
