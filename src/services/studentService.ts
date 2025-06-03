@@ -130,6 +130,7 @@ export async function recordCardPrint(studentPrn: string): Promise<void> {
     });
   } catch (error) {
     console.error(`Error recording card print for PRN ${studentPrn}: `, error);
+    // Do not re-throw here to prevent breaking print preview if logging fails
   }
 }
 
@@ -173,14 +174,14 @@ export async function registerStudent(
     }
     
     const docDataToSave: any = {
-      fullName: studentData.fullName,
+      fullName: studentData.fullName!,
       address: studentData.address || "N/A",
       dateOfBirth: Timestamp.fromDate(studentData.dateOfBirth),
       mobileNumber: studentData.mobileNumber || "N/A",
-      prnNumber: studentData.prnNumber,
-      rollNumber: studentData.rollNumber,
-      yearOfJoining: studentData.yearOfJoining,
-      courseName: studentData.courseName,
+      prnNumber: studentData.prnNumber!,
+      rollNumber: studentData.rollNumber!,
+      yearOfJoining: studentData.yearOfJoining!,
+      courseName: studentData.courseName!,
       photographUrl: finalPhotographUrl,
       registrationDate: serverTimestamp(),
       printHistory: [],
@@ -201,13 +202,21 @@ export async function registerStudent(
     
     return mapFirestoreDocToStudentData(newDocSnap.data(), newDocSnap.id);
 
-  } catch (error) {
-    console.error("Error in registerStudent service: ", error); 
+  } catch (error: any) { // Catch as 'any' to inspect 'code' property
+    console.error("Error in registerStudent service (raw error): ", error);
     if (error instanceof Error && error.message.startsWith("PRN_EXISTS:")) {
-      throw error; 
+      throw error;
     }
-    // For all other errors, throw a new, simple Error object to ensure serializability
-    throw new Error("REGISTRATION_SERVICE_ERROR: An unexpected error occurred while registering the student. Please check server logs.");
+    // Check for common Firebase error codes related to permissions
+    if (error.code === 'permission-denied' || error.code === 'storage/unauthorized') {
+      let service = error.code === 'storage/unauthorized' ? "Firebase Storage" : "Firestore";
+      throw new Error(`REGISTRATION_FAILED_PERMISSION: You do not have permission for the operation with ${service}. Please check Firebase security rules.`);
+    }
+
+    const originalErrorMessage = error instanceof Error ? error.message : String(error);
+    // Log more details for the developer
+    console.error("Original error details during registration:", error.name, error.message, error.stack, error.code); 
+    throw new Error(`REGISTRATION_SERVICE_ERROR: An unexpected error occurred (${originalErrorMessage}). Please check server logs for more details.`);
   }
 }
 
