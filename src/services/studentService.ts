@@ -163,7 +163,6 @@ export async function registerStudent(
   studentData: Omit<StudentData, 'id' | 'registrationDate' | 'photographUrl' | 'printHistory' | 'photograph'> & { photograph?: File | null, dateOfBirth: Date, photographUrl?: string | null }
 ): Promise<StudentData> {
   try {
-    console.log(studentData);
     const q = query(collection(db, STUDENTS_COLLECTION), where("prnNumber", "==", studentData.prnNumber));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
@@ -177,9 +176,9 @@ export async function registerStudent(
     
     const docDataToSave: any = {
       fullName: studentData.fullName!,
-      address: studentData.address || "N/A",
+      address: studentData.address || 'N/A',
       dateOfBirth: Timestamp.fromDate(studentData.dateOfBirth),
-      mobileNumber: studentData.mobileNumber || "N/A",
+      mobileNumber: studentData.mobileNumber || 'N/A',
       prnNumber: studentData.prnNumber!,
       rollNumber: studentData.rollNumber!,
       yearOfJoining: studentData.yearOfJoining!,
@@ -205,21 +204,22 @@ export async function registerStudent(
     
     return mapFirestoreDocToStudentData(newDocSnap.data(), newDocSnap.id);
 
-  } catch (error: any) { // Catch as 'any' to inspect 'code' property
+  } catch (error: any) { 
     console.error("Error in registerStudent service (raw error): ", error);
     if (error instanceof Error && error.message.startsWith("PRN_EXISTS:")) {
       throw error;
     }
-    // Check for common Firebase error codes related to permissions
+    
     if (error.code === 'permission-denied' || error.code === 'storage/unauthorized') {
-      let service = error.code === 'storage/unauthorized' ? "Firebase Storage" : "Firestore";
-      throw new Error(`REGISTRATION_FAILED_PERMISSION: You do not have permission for the operation with ${service}. Please check Firebase security rules.`);
+      const service = error.code === 'storage/unauthorized' ? "Firebase Storage (for photo upload)" : "Firestore (for saving data)";
+      // Log more details for the developer to see the specific error.
+      console.error("Detailed Firebase Permission Error:", error.name, error.message, error.stack, error.code);
+      throw new Error(`PERMISSION_ERROR: Student registration failed due to a permission issue with ${service}. Please check your Firebase Security Rules to ensure unauthenticated users are allowed to write to the 'students' collection and upload to 'student_photos/'.`);
     }
 
     const originalErrorMessage = error instanceof Error ? error.message : String(error);
-    // Log more details for the developer
     console.error("Original error details during registration:", error.name, error.message, error.stack, error.code); 
-    throw new Error(`REGISTRATION_SERVICE_ERROR: An unexpected error occurred (${originalErrorMessage}). Please check server logs for more details.`);
+    throw new Error(`REGISTRATION_SERVICE_ERROR: An unexpected error occurred (${originalErrorMessage}). This is likely a Firebase Security Rule issue if you are testing unauthenticated registration. Please check server logs and Firebase rules.`);
   }
 }
 
@@ -236,7 +236,7 @@ export async function updateStudent(
     if (!currentDocSnap.exists()) {
       throw new Error("UPDATE_FAILED: Student document not found.");
     }
-    const currentStudentData = currentDocSnap.data() as StudentData; // Assume it exists
+    const currentStudentData = currentDocSnap.data() as StudentData; 
 
     if (dataToUpdate.prnNumber && dataToUpdate.prnNumber !== currentStudentData.prnNumber) {
       const q = query(
@@ -396,4 +396,3 @@ export async function bulkRegisterStudents(studentsDataInput: StudentData[]): Pr
     return { successCount: 0, newStudents: [], errors }; 
   }
 }
-
