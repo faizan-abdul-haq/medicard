@@ -29,7 +29,7 @@ function BulkUploadContent() {
   const router = useRouter();
 
   const csvHeaders = [
-    "fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth", 
+    "fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth",
     "bloodGroup", "mobileNumber", "address", "photographUrl"
   ];
 
@@ -42,45 +42,45 @@ function BulkUploadContent() {
   const parseCSV = (csvText: string): Partial<StudentData>[] => {
     const students: Partial<StudentData>[] = [];
     const lines = csvText.trim().split('\n');
-    const currentParsingErrors: string[] = []; 
-    
+    const currentParsingErrors: string[] = [];
+
     if (lines.length < 2) {
         currentParsingErrors.push("CSV file must contain headers and at least one data row.");
-        setUploadErrors(currentParsingErrors); 
+        setUploadErrors(currentParsingErrors);
         toast({ title: "Invalid CSV", description: "CSV file must contain headers and at least one data row.", variant: "destructive" });
         return [];
     }
 
     const headersFromFile = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-    
+
     for (const reqHeader of requiredHeadersForParsing) {
         if (!headersFromFile.includes(reqHeader)) {
             currentParsingErrors.push(`Missing required header: ${reqHeader}. Please use the template.`);
         }
     }
     if (currentParsingErrors.length > 0) {
-        setUploadErrors(currentParsingErrors); 
+        setUploadErrors(currentParsingErrors);
         toast({ title: "Invalid CSV Headers", description: currentParsingErrors.join(' '), variant: "destructive" });
         return [];
     }
 
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
-      if (!line.trim()) continue; 
+      if (!line.trim()) continue;
 
-      const data = line.split(',').map(d => d.trim().replace(/^"|"$/g, '')); 
-      
+      const data = line.split(',').map(d => d.trim().replace(/^"|"$/g, ''));
+
       const student: Partial<StudentData> = {};
       let prnFound = false;
       let dobValid = false;
-      let rowError = false; 
+      let rowError = false;
 
       headersFromFile.forEach((header, index) => {
-        const key = header as keyof StudentData; 
+        const key = header as keyof StudentData;
         let value: any = data[index] || '';
 
         if (key === 'dateOfBirth') {
-          let parsedDate = parseISO(value); 
+          let parsedDate = parseISO(value);
           if (!isValid(parsedDate)) {
              parsedDate = parse(value, 'MM/dd/yyyy', new Date());
              if (!isValid(parsedDate)) {
@@ -88,39 +88,39 @@ function BulkUploadContent() {
              }
           }
           if (isValid(parsedDate)) {
-            value = parsedDate; 
+            value = parsedDate;
             dobValid = true;
           } else {
             currentParsingErrors.push(`Row ${i+1} (PRN: ${data[headersFromFile.indexOf("prnNumber")] || 'N/A'}): Invalid Date Format '${data[index]}'. Use YYYY-MM-DD, MM/DD/YYYY, or DD/MM/YYYY. Skipping record.`);
-            value = undefined; 
+            value = undefined;
             rowError = true;
           }
         } else if (key === 'photographUrl' && !value) {
-          value = "https://placehold.co/100x120.png"; 
+          value = "https://placehold.co/100x120.png";
         } else if (key === 'prnNumber' && value) {
           prnFound = true;
         } else if (key === 'mobileNumber' && value && !MOBILE_REGEX.test(value)) {
           currentParsingErrors.push(`Row ${i+1} (PRN: ${student.prnNumber || 'N/A'}): Invalid mobileNumber '${value}'. Must be 10 digits. Field will be cleared.`);
-          value = ''; // Clear invalid phone number but don't skip entire record if other required fields are fine
+          value = '';
         }
-        
+
         if (['yearOfJoining', 'rollNumber', 'bloodGroup'].includes(key)) {
             value = String(value);
         }
         (student as any)[key] = value;
       });
 
-      if (rowError) continue; 
+      if (rowError) continue;
 
       if (!prnFound || !student.prnNumber) {
         currentParsingErrors.push(`PRN number is missing for a student at row ${i + 1}. Skipping this record.`);
-        continue; 
+        continue;
       }
       if (!dobValid && requiredHeadersForParsing.includes('dateOfBirth')) {
          currentParsingErrors.push(`Date of Birth is invalid or missing for student with PRN ${student.prnNumber} at row ${i + 1}. Skipping this record.`);
         continue;
       }
-      
+
       for(const reqHeader of requiredHeadersForParsing) {
         if (!student[reqHeader as keyof StudentData]) {
             currentParsingErrors.push(`Missing required field '${reqHeader}' for student with PRN ${student.prnNumber} at row ${i+1}. Skipping record.`);
@@ -132,13 +132,13 @@ function BulkUploadContent() {
 
       students.push(student);
     }
-    setUploadErrors(currentParsingErrors); 
+    setUploadErrors(currentParsingErrors);
     return students;
   };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setUploadErrors([]); 
-    setParsedStudents([]); 
+    setUploadErrors([]);
+    setParsedStudents([]);
 
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
@@ -148,13 +148,13 @@ function BulkUploadContent() {
         reader.onload = async (event) => {
           const text = event.target?.result as string;
           if (text) {
-            const jsonData = parseCSV(text); 
-            setParsedStudents(jsonData); 
-            if (jsonData.length > 0 && uploadErrors.length === 0) { 
+            const jsonData = parseCSV(text);
+            setParsedStudents(jsonData);
+            if (jsonData.length > 0 && uploadErrors.length === 0) {
                  toast({ title: "CSV Parsed Successfully", description: `${jsonData.length} student records ready for review.` });
             } else if (jsonData.length === 0 && uploadErrors.length === 0){
                  toast({ title: "No Data Found", description: "The CSV file seems empty or incorrectly formatted.", variant: "warning" });
-            } else if (uploadErrors.length > 0 && jsonData.length > 0) { 
+            } else if (uploadErrors.length > 0 && jsonData.length > 0) {
                  toast({ title: "Parsing Issues Found", description: `CSV parsed with ${uploadErrors.length} issues. ${jsonData.length} valid records found. Review messages and data.`, variant: "warning" });
             } else if (uploadErrors.length > 0 && jsonData.length === 0) {
                  toast({ title: "Parsing Failed", description: `CSV could not be parsed due to ${uploadErrors.length} critical issues. No valid records found.`, variant: "destructive" });
@@ -166,7 +166,7 @@ function BulkUploadContent() {
         toast({ title: "Invalid File Type", description: "Please upload a CSV file.", variant: "destructive" });
         setFile(null);
         setParsedStudents([]);
-        if (e.target) e.target.value = ''; 
+        if (e.target) e.target.value = '';
       }
     } else {
         setFile(null);
@@ -186,23 +186,23 @@ function BulkUploadContent() {
     }
 
     setIsUploading(true);
-    
+
     try {
-      const studentsToRegister = parsedStudents.filter(p => 
+      const studentsToRegister = parsedStudents.filter(p =>
         p.prnNumber && p.fullName && p.rollNumber && p.courseName && p.yearOfJoining && p.dateOfBirth && isValid(new Date(p.dateOfBirth))
       ).map(p => ({
         ...p,
         fullName: p.fullName!,
-        prnNumber: p.prnNumber!, 
+        prnNumber: p.prnNumber!,
         rollNumber: p.rollNumber!,
         courseName: p.courseName!,
         yearOfJoining: p.yearOfJoining!,
-        dateOfBirth: new Date(p.dateOfBirth!), 
+        dateOfBirth: new Date(p.dateOfBirth!),
         bloodGroup: p.bloodGroup || undefined,
         address: p.address || "N/A",
         mobileNumber: (p.mobileNumber && MOBILE_REGEX.test(p.mobileNumber)) ? p.mobileNumber : undefined,
         photographUrl: p.photographUrl || "https://placehold.co/100x120.png",
-        id: '', 
+        id: '',
         registrationDate: new Date(),
       })) as StudentData[];
 
@@ -214,7 +214,7 @@ function BulkUploadContent() {
       }
 
       const result = await bulkRegisterStudents(studentsToRegister);
-      
+
       let toastTitle = "Bulk Upload Processed";
       let toastVariant: "default" | "warning" | "destructive" = "default";
       const submissionErrors = result.errors;
@@ -235,15 +235,15 @@ function BulkUploadContent() {
       });
 
       setUploadErrors(prev => [...prev, ...submissionErrors]);
-      
+
       if(result.successCount > 0) {
         setFile(null);
         setParsedStudents([]);
         const form = e.target as HTMLFormElement;
-        form.reset(); 
+        form.reset();
         const fileInput = form.querySelector('input[type="file"]') as HTMLInputElement | null;
         if (fileInput) fileInput.value = '';
-        
+
         if (submissionErrors.length === 0) setUploadErrors([]);
       }
 
@@ -289,11 +289,11 @@ function BulkUploadContent() {
               <Label htmlFor="csvFile" className="flex items-center gap-1 mb-1">
                 <FileText size={16}/> CSV File
               </Label>
-              <Input 
-                id="csvFile" 
-                type="file" 
-                accept=".csv" 
-                onChange={handleFileChange} 
+              <Input
+                id="csvFile"
+                type="file"
+                accept=".csv"
+                onChange={handleFileChange}
                 className="file:text-primary file:font-semibold"
               />
               {file && <p className="text-sm text-muted-foreground mt-2">Selected file: {file.name}</p>}
@@ -362,7 +362,7 @@ function BulkUploadContent() {
               </CardContent>
             </Card>
           )}
-          
+
           <Card className="bg-muted/50 p-4">
             <CardHeader className="p-0 pb-2">
               <CardTitle className="text-lg">CSV Format Instructions</CardTitle>
@@ -386,7 +386,8 @@ function BulkUploadContent() {
               <p>The template includes example data. Date formats: YYYY-MM-DD, MM/DD/YYYY, or DD/MM/YYYY.</p>
               <p>For `photographUrl`, provide a direct URL to an image, or leave blank to use a default placeholder.</p>
             </CardContent>
-          </CardContent>
+          </Card>
+        </CardContent>
         <CardFooter className="pt-6">
             <Button variant="outline" onClick={() => router.back()} className="w-full">
               <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
