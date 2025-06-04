@@ -101,8 +101,8 @@ export default function StudentIdCard({
             />
           </div>
           <div className="w-4/5 text-center leading-tight">
-            <p className="font-semibold text-[10px] tracking-tighter">{settings.collegeNameLine1}</p>
-            <p className="font-semibold text-[9px] tracking-tighter">{settings.collegeNameLine2}</p>
+            <p className="font-bold text-[12px] tracking-tighter">{settings.collegeNameLine1}</p>
+            <p className="font-bold text-[11px] tracking-tighter">{settings.collegeNameLine2}</p>
           </div>
         </div>
 
@@ -118,9 +118,9 @@ export default function StudentIdCard({
               unoptimized
             />
           </div>
-          <div className="flex-grow space-y-0.5 text-[10px]">
+          <div className="flex-grow space-y-0.5 text-[12px]">
             <div style={{...importantInfoStyle, padding: '0.25rem'}} className="rounded-sm mb-1 bg-primary/10">
-              <p className="font-bold text-[11px] text-black">{student.fullName}</p>
+              <p className="uppercase font-bold text-[12px] text-black">{student.fullName}</p>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center">
               <span className="font-semibold text-gray-700">DOB</span>
@@ -140,7 +140,7 @@ export default function StudentIdCard({
             </div>
           </div>
         </CardContent>
-        <div className="absolute bottom-1 left-0 right-0 px-3 flex justify-between items-end text-[10px]">
+        <div className="absolute bottom-1 left-0 right-0 px-3 flex justify-between items-end text-[11px]">
           
           <div className="flex flex-col items-start">
             {settings.deanSignatureUrl && (
@@ -154,10 +154,10 @@ export default function StudentIdCard({
                 unoptimized
               />
             )}
-            <p className="font-bold text-gray-700 mt-0.5">{settings.deanTitle.toUpperCase()}</p>
+            <p className="font-bold text-gray-900 mt-0.5">{settings.deanTitle.toUpperCase()}</p>
           </div>          
           <div className="text-center">
-            <div className="w-20 h-6 border-b border-gray-400 mb-0.5 flex items-center justify-center italic text-gray-500">
+            <div className="w-20 h-6 border-b text-gray-900 mb-0.5 flex items-center justify-center italic">
             
             {student.cardHolderSignature && (
               <Image
@@ -171,7 +171,7 @@ export default function StudentIdCard({
               />
             )}
             </div>
-            <p className="font-bold text-gray-700">{settings.defaultCardHolderSignatureText}</p>
+            <p className="font-bold text-gray-900">{settings.defaultCardHolderSignatureText}</p>
           </div>
         </div>
       </Card>
@@ -185,37 +185,59 @@ export default function StudentIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <CardContent className="p-2 space-y-1 text-[9px] leading-snug">
-          <div className="flex justify-between items-start mb-1">
-            <div className="space-y-0.5">
-              <div style={importantInfoStyle} className="bg-muted/40 p-0.5 rounded-sm inline-block">
-                <p className="font-semibold"><span className="font-bold">Year of Admission:</span> {yearOfAdmissionDisplay}</p>
-              </div>
-              <div style={importantInfoStyle} className="bg-muted/40 p-0.5 rounded-sm inline-block mt-1">
-                <p className="font-semibold"><span className="font-bold">Valid Upto:</span> {validUptoString}</p>
-              </div>
+        <CardContent className="p-2 space-y-1 text-[10px] leading-snug">
+        <div className="flex justify-between items-start mb-1">
+          {/* Left: Text info stacked top and bottom */}
+          <div className="flex flex-col justify-between h-[50px]"> {/* Adjust height as needed */}
+            <div
+              style={importantInfoStyle}
+              className="text-gray-900 p-0.5 rounded-sm inline-block uppercase"
+            >
+              <p className="font-semibold">
+                <span className="font-bold">Year of Admission:</span> {yearOfAdmissionDisplay}
+              </p>
             </div>
-            {qrCodeUrl ? (
-              <Image src={qrCodeUrl} alt="QR Code for Profile" width={50} height={50} data-ai-hint="qr code profile" unoptimized className="border border-gray-300" />
-            ) : (
-              <div className="w-[50px] h-[50px] bg-gray-200 flex items-center justify-center border border-gray-300">
-                <QrCodeIcon size={30} className="text-gray-500" />
-              </div>
-            )}
+            <div
+              style={importantInfoStyle}
+              className="text-start text-gray-900 p-0.5 rounded-sm inline-block uppercase"
+            >
+              <p className="font-semibold">
+                <span className="font-bold">Valid Upto:</span> {validUptoString}
+              </p>
+            </div>
           </div>
 
+          {/* Right: QR Code or placeholder */}
+          {qrCodeUrl ? (
+            <Image
+              src={qrCodeUrl}
+              alt="QR Code for Profile"
+              width={50}
+              height={50}
+              data-ai-hint="qr code profile"
+              unoptimized
+              className="border border-gray-300"
+            />
+          ) : (
+            <div className="w-[50px] h-[50px] bg-gray-200 flex items-center justify-center border border-gray-300">
+              <QrCodeIcon size={30} className="text-gray-500" />
+            </div>
+          )}
+        </div>
+
+
           <div>
-            <p style={importantInfoStyle} className="font-bold bg-muted/40 p-0.5 rounded-sm inline-block">Residential Address:</p>
+            <p style={importantInfoStyle} className="font-bold text-gray-900 p-0.5 rounded-sm inline-block">Residential Address:</p>
             <p className="font-semibold whitespace-pre-line text-[8.5px] leading-tight mt-0.5">{student.address || 'N/A'}</p>
           </div>
 
-          <ol className="list-decimal list-inside space-y-0.5 mt-1 text-[8px] leading-tight">
+          <ol className="list-decimal list-inside space-y-0.5 mt-1 text-[10px] leading-tight">
             {[settings.instructionLine1, settings.instructionLine2, settings.instructionLine3, settings.instructionLine4].map((inst, idx) => (
               inst && <li key={idx} className="font-semibold">{inst}</li>
             ))}
           </ol>
 
-          <div className="border-t border-gray-300 mt-auto pt-1 flex justify-between items-center text-[9px] absolute bottom-1 left-2 right-2">
+          <div className="border-t text-gray-900 mt-auto pt-1 flex justify-between items-center text-[10px] absolute bottom-1 left-2 right-2">
             <p className="font-bold"><span className="font-semibold">Mob:</span> {student.mobileNumber || 'N/A'}</p>
             <p className="font-bold"><span className="font-semibold">Office:</span> {settings.officePhoneNumber}</p>
           </div>
