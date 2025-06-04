@@ -18,8 +18,8 @@ import {
   arrayUnion,
   deleteDoc
 } from 'firebase/firestore';
-import { ref, deleteObject, uploadBytes, getDownloadURL } from 'firebase/storage'; // Added Firebase Storage functions
-
+// import { ref, deleteObject, uploadBytes, getDownloadURL } from 'firebase/storage'; // Added Firebase Storage functions
+import { uploadStudentPhoto } from './photoUploadService'
 const STUDENTS_COLLECTION = 'students';
 
 // Helper to convert Firestore Timestamps to JS Date objects
@@ -137,25 +137,25 @@ export async function recordCardPrint(studentPrn: string): Promise<void> {
 
 async function uploadPhotograph(photoFile: File, prnNumber: string): Promise<string> {
   const filePath = `student_photos/${prnNumber}/${Date.now()}_${photoFile.name}`;
-  const photoRef = ref(storage, filePath);
-  await uploadBytes(photoRef, photoFile);
-  return getDownloadURL(photoRef);
+  // const photoRef = ref(storage, filePath);
+  // await uploadBytes(photoRef, photoFile);
+  return uploadStudentPhoto(photoFile,prnNumber);
 }
 
 async function deletePhotograph(photographUrl: string): Promise<void> {
   if (!photographUrl || !photographUrl.startsWith("https://firebasestorage.googleapis.com") || photographUrl.includes("placehold.co")) {
     return;
   }
-  try {
-    const photoRef = ref(storage, photographUrl);
-    await deleteObject(photoRef);
-  } catch (error: any) {
-    if (error.code === 'storage/object-not-found') {
-      console.warn(`Photo not found for deletion (may have been already deleted): ${photographUrl}`);
-    } else {
-      console.error("Error deleting photograph from Firebase Storage: ", error);
-    }
-  }
+  // try {
+  //   const photoRef = ref(storage, photographUrl);
+  //   await deleteObject(photoRef);
+  // } catch (error: any) {
+  //   if (error.code === 'storage/object-not-found') {
+  //     console.warn(`Photo not found for deletion (may have been already deleted): ${photographUrl}`);
+  //   } else {
+  //     console.error("Error deleting photograph from Firebase Storage: ", error);
+  //   }
+  // }
 }
 
 
@@ -247,6 +247,8 @@ export async function registerStudent(
     // }
     // console.error("Original error details during registration (fallback):", error.name, error.message, error.code, error.stack); 
     // throw new Error(userFriendlyMessage);
+    throw new Error("An unexpected error occurred during student registration."); 
+
   }
 }
 
