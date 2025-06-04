@@ -29,13 +29,16 @@ function BulkUploadContent() {
   const router = useRouter();
 
   const csvHeaders = [
-    "fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth",
+    "fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth", "cardHolderSignature",
     "bloodGroup", "mobileNumber", "address", "photographUrl"
   ];
 
+  const placeholderSignatureUrl = "https://placehold.co/100x40.png?text=Signature";
+
   const csvTemplateString = csvHeaders.join(',') + '\n' +
-    "\"John Doe\",\"PRN1001\",\"R101\",\"B.Sc. Computers\",\"FIRST\",\"2003-05-15\",\"O+\",\"9876543210\",\"123 Main St, Anytown\",\"https://placehold.co/100x120.png\"\n" +
-    "\"Jane Smith\",\"PRN1002\",\"R102\",\"B.Com. Finance\",\"SECOND\",\"2002-11-20\",\"A-\",\"9876543212\",\"456 Oak Ave, Otherville\",\"\"\n";
+    `"John Doe","PRN1001","R101","B.Sc. Computers","FIRST","2003-05-15","${placeholderSignatureUrl}","O+","9876543210","123 Main St, Anytown","https://placehold.co/100x120.png"` + '\n' +
+    `"Jane Smith","PRN1002","R102","B.Com. Finance","SECOND","2002-11-20","${placeholderSignatureUrl}","A-","9876543212","456 Oak Ave, Otherville",""`;
+  
 
   const requiredHeadersForParsing = ["fullName", "prnNumber", "rollNumber", "courseName", "yearOfJoining", "dateOfBirth"];
 
@@ -79,6 +82,8 @@ function BulkUploadContent() {
         const key = header as keyof StudentData;
         let value: any = data[index] || '';
 
+        if (key === 'cardHolderSignature') {
+        } else
         if (key === 'dateOfBirth') {
           let parsedDate = parseISO(value);
           if (!isValid(parsedDate)) {
@@ -204,6 +209,7 @@ function BulkUploadContent() {
         photographUrl: p.photographUrl || "https://placehold.co/100x120.png",
         id: '',
         registrationDate: new Date(),
+        cardHolderSignature: p.cardHolderSignature
       })) as StudentData[];
 
 

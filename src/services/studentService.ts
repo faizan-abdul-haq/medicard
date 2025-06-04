@@ -354,6 +354,7 @@ export async function bulkRegisterStudents(studentsDataInput: StudentData[]): Pr
   }));
 
   const prnsInBatch = new Set<string>();
+  console.log(studentsData)
 
   for (const data of studentsData) {
     if (!data.prnNumber) {
@@ -386,7 +387,8 @@ export async function bulkRegisterStudents(studentsDataInput: StudentData[]): Pr
       photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
       registrationDate: serverTimestamp(),
       printHistory: [],
-      cardHolderSignature: data.cardHolderSignature
+      cardHolderSignature: data.cardHolderSignature || "https://placehold.co/100x40.png?text=Signature"
+
     };
      if (data.bloodGroup) {
       studentToSave.bloodGroup = data.bloodGroup;
