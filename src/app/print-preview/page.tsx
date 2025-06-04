@@ -133,19 +133,41 @@ function PrintPreviewContent() {
   
       {/* Print layout: front and back cards on separate pages */}
       <div className="print:block">
-        {studentsToPrint.map(student => (
-          <div key={student.prnNumber}>
-            {/* Front side */}
-            <div className="print:id-card print:break-after-page flex justify-center items-center">
-              <StudentIdCard student={student} settings={cardSettings} showFlipButton={false} initialSide="front" />
-            </div>
-            {/* Back side */}
-            <div className="print:id-card print:break-after-page flex justify-center items-center">
-              <StudentIdCard student={student} settings={cardSettings} showFlipButton={false} initialSide="back" />
-            </div>
-          </div>
-        ))}
+        {studentsToPrint.flatMap((student, studentIdx) => {
+          const frontIndex = studentIdx * 2;
+          const backIndex = frontIndex + 1;
+          const totalSides = studentsToPrint.length * 2;
+
+          return [
+            // Front side
+            <div
+              key={`${student.prnNumber}-front`}
+              className={`print:id-card flex justify-center items-center ${frontIndex < totalSides - 1 ? 'print:break-after-page' : ''}`}
+            >
+              <StudentIdCard
+                student={student}
+                settings={cardSettings}
+                showFlipButton={false}
+                initialSide="front"
+              />
+            </div>,
+
+            // Back side
+            <div
+              key={`${student.prnNumber}-back`}
+              className={`print:id-card flex justify-center items-center ${backIndex < totalSides - 1 ? 'print:break-after-page' : ''}`}
+            >
+              <StudentIdCard
+                student={student}
+                settings={cardSettings}
+                showFlipButton={false}
+                initialSide="back"
+              />
+            </div>,
+          ];
+        })}
       </div>
+
   
       {/* Screen preview (optional) */}
       {/* <div className="grid grid-cols-1 gap-4 print:hidden">

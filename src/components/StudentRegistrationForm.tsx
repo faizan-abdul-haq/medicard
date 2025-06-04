@@ -24,6 +24,8 @@ import { registerStudent } from '@/services/studentService';
 import { getCardSettings } from '@/services/cardSettingsService';
 import Webcam from 'react-webcam';
 import SignaturePad from '@/components/SignaturePad';
+import ImageUploadField from '@/components/ImageUploadField';
+
 
 import {
   Select,
@@ -503,11 +505,18 @@ export default function StudentRegistrationForm() {
             </div>
 
             <div className="space-y-2">
-              <SignaturePad
+            <ImageUploadField
+                label="Card Holder's Signature"
+                value={formData.cardHolderSignature}
+                onChange={(url) => setFormData(prev => ({ ...prev, cardHolderSignature: url }))}
+                directory="signatures"
+                maxSizeKB={1024}
+              />
+              {/* <SignaturePad
               label="Card Holder's Signature"
               value={formData.cardHolderSignature || ''}
               onChange={(dataUrl) => setFormData(prev => ({ ...prev, cardHolderSignature: dataUrl }))}
-              />
+              /> */}
             </div>
             
             <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground py-3 text-base" disabled={isSubmitting || (inputMode === 'webcam' && hasCameraPermission === null && !webcamError) }>

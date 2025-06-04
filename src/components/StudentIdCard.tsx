@@ -133,7 +133,7 @@ export default function StudentIdCard({
               <p className="font-semibold text-gray-900">{student.yearOfJoining}</p>
               <span className="font-semibold text-gray-700">Roll No</span>
               <p className="font-semibold text-gray-900">{student.rollNumber}</p>
-              <div style={{...importantInfoStyle, padding: '0.125rem'}} className="rounded-sm col-span-2 mt-0.5 bg-primary/10">
+              <div style={{...importantInfoStyle, padding: '0.125rem'}} className="text-start rounded-sm col-span-2 mt-0.5 bg-primary/10">
                 <span className="font-semibold text-gray-700">PRN No</span>
                 <p className="font-bold text-gray-900 inline ml-1">{student.prnNumber}</p>
               </div>
@@ -147,9 +147,10 @@ export default function StudentIdCard({
               <Image
                 src={settings.deanSignatureUrl}
                 alt="Dean's Signature"
-                width={100}
-                height={40}
+                width={50}
+                height={30}
                 className="object-contain"
+                style={{ height: 'inherit', color: 'transparent' }}
                 unoptimized
               />
             )}
@@ -162,9 +163,10 @@ export default function StudentIdCard({
               <Image
                 src={student.cardHolderSignature}
                 alt=""
-                width={100}
-                height={40}
+                width={50}
+                height={30}
                 className="object-contain"
+                style={{ height: 'inherit', color: 'transparent' }}
                 unoptimized
               />
             )}

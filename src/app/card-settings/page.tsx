@@ -175,11 +175,18 @@ function CardSettingsContent() {
                     maxSizeKB={1024}
                   />
                   <Separator />
-                  <SignaturePad
+                  <ImageUploadField
+                    label="Dean Signature Upload"
+                    value={settings.deanSignatureUrl}
+                    onChange={(url) => setSettings(prev => ({ ...prev, deanSignatureUrl: url }))}
+                    directory="signatures"
+                    maxSizeKB={1024}
+                  />
+                  {/* <SignaturePad
                     label="Dean's Signature"
                     value={settings.deanSignatureUrl}
                     onChange={(dataUrl) => setSettings(prev => ({ ...prev, deanSignatureUrl: dataUrl }))}
-                  />
+                  /> */}
               </CardContent>
             </Card>
 

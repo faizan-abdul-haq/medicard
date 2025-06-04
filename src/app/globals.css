@@ -110,6 +110,21 @@ body {
     /* Break after each card side to force new page */
     break-after: page !important;
     page-break-after: always !important;
+
+    .print\:hidden {
+      display: none !important;
+    }
+
+    .break-after-page {
+      break-after: page !important;
+      page-break-after: always !important;
+    }
+
+    .avoid-break-inside {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+  
   }
 
   /* Center the card content */

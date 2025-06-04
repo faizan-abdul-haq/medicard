@@ -35,7 +35,7 @@ export default function RootLayout({
             {children}
           </main>
           <Toaster />
-          <footer className="bg-muted text-muted-foreground text-center py-4 text-sm">
+          <footer className="print:hidden bg-muted text-muted-foreground text-center py-4 text-sm">
             © {new Date().getFullYear()} MediCard. All rights reserved.
           </footer>
         </AuthProvider>
