@@ -220,16 +220,16 @@ export async function registerStudent(
     
     // If a photograph file was part of the studentData, and an error occurred,
     // it's highly likely a storage permission issue.
-    if (studentData.photograph instanceof File && 
-        (error.code === 'storage/unauthorized' || 
-         error.code === 'storage/unauthenticated' ||
-         (error.message && typeof error.message === 'string' && error.message.toLowerCase().includes("permission")) ||
-         (error.name && typeof error.name === 'string' && error.name.toLowerCase().includes("firebaseerror") && error.message && error.message.toLowerCase().includes("storage"))
-        )
-       ) {
-      console.error("Detailed Firebase Storage Permission Error:", error.name, error.message, error.code, error.stack);
-      throw new Error(`STORAGE_PERMISSION_ERROR: Photo upload failed. This is very likely due to Firebase Storage security rules. Please ensure unauthenticated users are allowed to upload to the 'student_photos/' path in your Firebase Storage rules.`);
-    }
+    // if (studentData.photograph instanceof File && 
+    //     (error.code === 'storage/unauthorized' || 
+    //      error.code === 'storage/unauthenticated' ||
+    //      (error.message && typeof error.message === 'string' && error.message.toLowerCase().includes("permission")) ||
+    //      (error.name && typeof error.name === 'string' && error.name.toLowerCase().includes("firebaseerror") && error.message && error.message.toLowerCase().includes("storage"))
+    //     )
+    //    ) {
+    //   console.error("Detailed Firebase Storage Permission Error:", error.name, error.message, error.code, error.stack);
+    //   throw new Error(`STORAGE_PERMISSION_ERROR: Photo upload failed. This is very likely due to Firebase Storage security rules. Please ensure unauthenticated users are allowed to upload to the 'student_photos/' path in your Firebase Storage rules.`);
+    // }
 
     // Check for Firestore specific permission denied error
     if (error.code === 'permission-denied') {
@@ -238,15 +238,15 @@ export async function registerStudent(
     }
 
     // Fallback for other errors
-    const originalErrorMessage = error instanceof Error ? error.message : String(error);
-    let userFriendlyMessage = `REGISTRATION_SERVICE_ERROR: An unexpected error occurred (${originalErrorMessage}).`;
-    if (studentData.photograph instanceof File) {
-      userFriendlyMessage += " Since a photo was attached, please double-check Firebase Storage permissions for unauthenticated uploads to 'student_photos/'.";
-    } else {
-      userFriendlyMessage += " Please check Firestore permissions or server logs for more details.";
-    }
-    console.error("Original error details during registration (fallback):", error.name, error.message, error.code, error.stack); 
-    throw new Error(userFriendlyMessage);
+    // const originalErrorMessage = error instanceof Error ? error.message : String(error);
+    // let userFriendlyMessage = `REGISTRATION_SERVICE_ERROR: An unexpected error occurred (${originalErrorMessage}).`;
+    // if (studentData.photograph instanceof File) {
+    //   userFriendlyMessage += " Since a photo was attached, please double-check Firebase Storage permissions for unauthenticated uploads to 'student_photos/'.";
+    // } else {
+    //   userFriendlyMessage += " Please check Firestore permissions or server logs for more details.";
+    // }
+    // console.error("Original error details during registration (fallback):", error.name, error.message, error.code, error.stack); 
+    // throw new Error(userFriendlyMessage);
   }
 }
 
