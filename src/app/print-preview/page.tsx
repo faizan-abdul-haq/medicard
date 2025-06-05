@@ -124,13 +124,13 @@ function PrintPreviewContent() {
     );
   }
   return (
-    <div className="print-preview-container p-4 print:p-0">
+    <div className="print-preview-container print:m-0 print:p-0">
       <div className="print:hidden flex justify-center my-4">
         <Button onClick={handlePrint} size="lg" className="bg-accent hover:bg-accent/80">
           <Printer className="mr-2 h-5 w-5" /> Print All Cards ({studentsToPrint.length})
         </Button>
       </div>
-  
+
       {/* Print layout: front and back cards on separate pages */}
       <div className="print:block">
         {studentsToPrint.flatMap((student, studentIdx) => {
@@ -142,7 +142,9 @@ function PrintPreviewContent() {
             // Front side
             <div
               key={`${student.prnNumber}-front`}
-              className={`print:id-card flex justify-center items-center ${frontIndex < totalSides - 1 ? 'print:break-after-page' : ''}`}
+              className={`print:id-card flex justify-center items-center avoid-break-inside ${
+                frontIndex < totalSides - 1 ? 'print:break-after-page' : ''
+              }`}
             >
               <StudentIdCard
                 student={student}
@@ -155,7 +157,9 @@ function PrintPreviewContent() {
             // Back side
             <div
               key={`${student.prnNumber}-back`}
-              className={`print:id-card flex justify-center items-center ${backIndex < totalSides - 1 ? 'print:break-after-page' : ''}`}
+              className={`print:id-card flex justify-center items-center avoid-break-inside ${
+                backIndex < totalSides - 1 ? 'print:break-after-page' : ''
+              }`}
             >
               <StudentIdCard
                 student={student}
@@ -167,20 +171,6 @@ function PrintPreviewContent() {
           ];
         })}
       </div>
-
-  
-      {/* Screen preview (optional) */}
-      {/* <div className="grid grid-cols-1 gap-4 print:hidden">
-        {studentsToPrint.map(student => (
-          <div key={student.prnNumber} className="card-pair-container p-2 bg-gray-100 rounded-lg">
-            <h3 className="text-center font-semibold text-sm mb-2">{student.fullName} - {student.prnNumber}</h3>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <StudentIdCard student={student} settings={cardSettings} showFlipButton={false} initialSide="front" />
-              <StudentIdCard student={student} settings={cardSettings} showFlipButton={false} initialSide="back" />
-            </div>
-          </div>
-        ))}
-      </div> */}
     </div>
   );
   

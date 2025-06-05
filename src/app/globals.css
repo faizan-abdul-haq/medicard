@@ -97,51 +97,51 @@ body {
 
 /* Print specific styles */
 @media print {
-  /* Set CR80 card size and center it */
   .print\:id-card {
     width: 86mm !important;
     height: 54mm !important;
-    margin: auto !important;
+    margin: 0 auto !important;
     padding: 0 !important;
     box-sizing: border-box !important;
-    /* Optional: remove shadows and backgrounds */
     background-color: white !important;
     box-shadow: none !important;
-    /* Break after each card side to force new page */
-    break-after: page !important;
-    page-break-after: always !important;
+  }
 
-    .print\:hidden {
-      display: none !important;
-    }
-
-    .break-after-page {
-      break-after: page !important;
-      page-break-after: always !important;
-    }
-
-    .avoid-break-inside {
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-  
+  /* Ensure no break after the last card */
+  .print\:id-card:last-child {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
   }
 
   /* Center the card content */
   .print\:id-card > * {
     width: 100%;
     height: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
-  /* Hide everything else not needed for print */
+  /* Hide non-print elements */
   .print\:hidden {
     display: none !important;
   }
 
-  /* Remove padding/margins from body and container */
+  /* Reset body and html margins/padding */
   body, html {
-    margin: 0;
-    padding: 0;
+    margin: 0 !important;
+    padding: 0 !important;
     background: white !important;
+  }
+
+  /* Ensure container has no extra space */
+  .print-preview-container {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Avoid breaks inside cards */
+  .avoid-break-inside {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 }
