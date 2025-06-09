@@ -104,13 +104,15 @@ body {
   .print\:id-card {
     width: 85.6mm !important;
     height: 53.98mm !important;
-    margin: 0 auto !important;
+    margin: 0 !important; /* Remove all margins */
     padding: 0 !important;
     box-sizing: border-box !important;
     background-color: white !important;
-    box-shadow: none !important;
-    transform: scale(1) !important; /* Prevent browser scaling */
-    overflow: hidden !important; /* Prevent content overflow */
+    border: none !important; /* Remove borders */
+    box-shadow: none !important; /* Remove shadows */
+    transform: scale(1) !important; /* Prevent scaling */
+    overflow: hidden !important;
+    position: relative !important; /* Ensure proper positioning */
   }
 
   /* Prevent page break after the last card */
@@ -126,9 +128,10 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box !important;
+    border: none !important;
   }
 
-  /* Target StudentIdCard specifically (adjust class name if different) */
+  /* Target StudentIdCard specifically */
   .student-id-card {
     width: 85.6mm !important;
     height: 53.98mm !important;
@@ -136,6 +139,8 @@ body {
     padding: 0 !important;
     box-sizing: border-box !important;
     background: white !important;
+    border: none !important; /* Remove borders */
+    box-shadow: none !important;
     overflow: hidden !important;
     display: block !important;
   }
@@ -147,6 +152,22 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box !important;
+    border: none !important;
+  }
+
+  /* Ensure images and other elements fill correctly */
+  .student-id-card img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  /* Remove inherited borders from Tailwind */
+  * {
+    border: none !important;
   }
 
   /* Hide non-print elements */
