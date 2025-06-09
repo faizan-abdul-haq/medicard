@@ -125,13 +125,15 @@ function PrintPreviewContent() {
   }
   return (
     <div className="print-preview-container print:m-0 print:p-0">
+      <p className="text-center text-sm text-muted-foreground mt-2 print:hidden">
+          For accurate CR80 size (85.6mm x 53.98mm), set print margins to "None" and scale to "100%" in the print dialog.
+      </p>
       <div className="print:hidden flex justify-center my-4">
         <Button onClick={handlePrint} size="lg" className="bg-accent hover:bg-accent/80">
           <Printer className="mr-2 h-5 w-5" /> Print All Cards ({studentsToPrint.length})
         </Button>
       </div>
 
-      {/* Print layout: front and back cards on separate pages */}
       <div className="print:block">
         {studentsToPrint.flatMap((student, studentIdx) => {
           const frontIndex = studentIdx * 2;
@@ -139,7 +141,6 @@ function PrintPreviewContent() {
           const totalSides = studentsToPrint.length * 2;
 
           return [
-            // Front side
             <div
               key={`${student.prnNumber}-front`}
               className={`print:id-card flex justify-center items-center avoid-break-inside ${
@@ -151,10 +152,9 @@ function PrintPreviewContent() {
                 settings={cardSettings}
                 showFlipButton={false}
                 initialSide="front"
+                className="student-id-card" // Add explicit class
               />
             </div>,
-
-            // Back side
             <div
               key={`${student.prnNumber}-back`}
               className={`print:id-card flex justify-center items-center avoid-break-inside ${
@@ -166,6 +166,7 @@ function PrintPreviewContent() {
                 settings={cardSettings}
                 showFlipButton={false}
                 initialSide="back"
+                className="student-id-card" // Add explicit class
               />
             </div>,
           ];

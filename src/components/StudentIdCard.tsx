@@ -156,8 +156,8 @@ export default function StudentIdCard({
             )}
             <p className="font-bold text-gray-900 mt-0.5">{settings.deanTitle.toUpperCase()}</p>
           </div>          
-          <div className="text-center">
-            <div className="w-20 h-6 border-b text-gray-900 mb-0.5 flex items-center justify-center italic">
+          <div className="text-right">
+            <div className="w-30 h-6 border-b text-gray-900 mb-0.5 flex justify-end">
             
             {student.cardHolderSignature && (
               <Image
