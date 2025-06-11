@@ -17,6 +17,7 @@ interface ImageUploadFieldProps {
   accept?: string;
   maxSizeKB?: number;
   className?: string;
+  note?: string;
 }
 
 export default function ImageUploadField({
@@ -26,7 +27,8 @@ export default function ImageUploadField({
   directory,
   accept = "image/*",
   maxSizeKB = 2048,
-  className = ""
+  className = "",
+  note=""
 }: ImageUploadFieldProps) {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -99,7 +101,9 @@ export default function ImageUploadField({
   return (
     <div className={`space-y-3 ${className}`}>
       <Label>{label}</Label>
-      
+      <p className="text-xs text-gray-500 mb-1">
+        {note}
+      </p>
       {value ? (
         <div className="flex items-center gap-4">
           <div className="relative w-20 h-20 border border-gray-300 rounded overflow-hidden">

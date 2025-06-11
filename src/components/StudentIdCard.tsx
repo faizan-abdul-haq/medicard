@@ -107,16 +107,20 @@ export default function StudentIdCard({
         </div>
 
         <CardContent className="p-1.5 flex flex-row gap-4">
-          <div className="w-[80px] flex-shrink-0 mt-1">
-            <Image
-              src={student.photographUrl || "https://placehold.co/80x80.png"}
-              alt={student.fullName}
-              width={90}
-              height={90}
-              className=" h-[90px] object-cover border-2 border-black rounded"
-              data-ai-hint="student portrait"
-              unoptimized
-            />
+          <div className="h-[28mm] w-[23mm] flex-shrink-0 mt-1">
+            <div className="w-full h-full relative">
+              <Image
+                src={
+                  student.photographUrl ||
+                  "https://placehold.co/80x80.png"
+                }
+                alt={student.fullName}
+                fill
+                className="object-cover border-2 border-black rounded"
+                data-ai-hint="student portrait"
+                unoptimized
+              />
+            </div>
           </div>
           <div className="flex-grow space-y-0.5 text-[12px]">
             <div style={{...importantInfoStyle}} className="rounded-sm mb-1 bg-primary/10">

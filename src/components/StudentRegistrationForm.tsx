@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription as ShadcnAlertDescription } from '@/components/ui/alert';
-import { CalendarIcon, UserPlus, Droplets, Printer, AlertTriangle, ShieldCheck, Loader2, ArrowLeft, Camera, UploadCloud } from 'lucide-react';
+import { CalendarIcon, UserPlus, Droplets, Printer, AlertTriangle, ShieldCheck, Loader2, ArrowLeft, Camera, UploadCloud,Book  } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -323,6 +323,7 @@ export default function StudentRegistrationForm() {
 
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
   const yearsOfStudy = ["FIRST", "SECOND", "THIRD", "FOURTH", "FINAL"];
+  const courseNames = ["MBBS", "BPMT-BLD TRANS", "BPMT-CARDIO", "BPMT-CM", "BPMT-EM", "BPMT-ENDO", "BPMT-FM", "BPMT-LAB", "BPMT-NEURO", "BPMT-OT", "BPMT-OPT", "BPMT-PERF", "BPMT-RADIOGR", "PG-ANAES", "PG-ANATOMY", "PG-BIOCHEM", "PG-CM", "PG-DERMAT", "PG-EM", "PG-FM & TOXICOLOGY", "PG-GerMed", "PG-IHBT", "PG-MED", "PG-MICRO", "PG-OBGY", "PG-OPTH", "PG-ORTHO", "PG-ENT", "PG-PAEDS", "PG-PATH", "PG-PHARMA", "PG-PHYSIO", "PG-PSYCHIATRY", "PG-PulMed", "PG-RADIODIAGNOSIS", "PG-SURGERY", , "SUPS-CARDIOLOGY", "SUPS-CVTS", "SUPS-IntRad", "SUPS-NEPHRO", "SUPS-NEURO SX", "SUPS-NEUROLOGY", "SUPS-PAEDS SX", "SUPS-Plast SX", "SUPS-UROLOGY", "FLW-CARDIO-ANAES", "FLW-CNEPHRO", "FLW-DEADDICTION", "FLW-HIGH RISK OBST", "FLW-JTR SX", "FLW-LD & NEURO PAED", "FLW-MASX – GYNAE", "FLW-NEONATOLOGY", "FLW-NEURO-ANAEST", "FLW-PAED-ANAES", "FLW-SPINE SX", "FLW-VR SURGERY", , "MPH-N", , "Ph.D-FM & TOXICOLOGY", "Ph.D-GS", "Ph.D-MEDI BIOCHEM", "Ph.D-MEDI MICROB", "Ph.D-ORTHOPAEDICS", "Ph.D-ENT"]
 
   if (authIsLoading && !isAuthenticated) { // Show a simple loading for students accessing the form
     return <div className="flex justify-center items-center min-h-[300px]"><Loader2 className="h-6 w-6 animate-spin text-primary" /> <p className="ml-2">Loading form...</p></div>;
@@ -370,8 +371,19 @@ export default function StudentRegistrationForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="courseName">Course Name <span className="text-destructive">*</span></Label>
-                <Input id="courseName" name="courseName" value={formData.courseName || ''} onChange={handleChange} required />
+                {/* <Input id="courseName" name="courseName" value={formData.courseName || ''} onChange={handleChange} required /> */}
+                <Select required value={formData.courseName || 'MBBS'} onValueChange={(value) => handleSelectChange('courseName', value)}>
+                  <SelectTrigger id="courseName" className="w-full">
+                      <SelectValue placeholder="Select Course Name" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {courseNames.map((course) => (
+                      <SelectItem key={course} value={course}> <Book size={14} className="inline mr-2 text-green-500"/> {course}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="yearOfJoining">Year of Study <span className="text-destructive">*</span></Label>
                  <Select value={formData.yearOfJoining || 'FIRST'} onValueChange={(value) => handleSelectChange('yearOfJoining', value)} required>
@@ -505,12 +517,13 @@ export default function StudentRegistrationForm() {
             </div>
 
             <div className="space-y-2">
-            <ImageUploadField
+              <ImageUploadField
                 label="Card Holder's Signature"
                 value={formData.cardHolderSignature}
                 onChange={(url) => setFormData(prev => ({ ...prev, cardHolderSignature: url }))}
                 directory="signatures"
                 maxSizeKB={1024}
+                note="Sign with a blue marker on white paper, remove background, and upload in landscape."
               />
               {/* <SignaturePad
               label="Card Holder's Signature"
