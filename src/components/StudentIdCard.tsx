@@ -65,7 +65,7 @@ export default function StudentIdCard({
     }
   };
 
-  const cardBaseClasses = "w-[330px] h-[210px] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative text-xs print:shadow-none print:border-gray-400";
+  const cardBaseClasses = "w-[85.6mm] h-[53.98mm] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative text-xs print:shadow-none print:border-gray-400";
   const headerStyle = {
     backgroundColor: settings.headerBackgroundColor,
     color: settings.headerTextColor,
@@ -88,55 +88,57 @@ export default function StudentIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <div style={headerStyle} className="p-1.5 flex items-center">
+        <div style={headerStyle} className="pt-1.5 pr-1.5 pl-1.5 flex items-center">
           <div className="w-1/5 flex justify-center items-center">
             <Image 
               src={finalLogoUrl} 
               alt="College Logo" 
-              width={30} 
-              height={30} 
+              width={50} 
+              height={40} 
               data-ai-hint="college logo" 
               onError={() => setLogoError(true)}
               unoptimized
             />
           </div>
           <div className="w-4/5 text-center leading-tight">
-            <p className="font-bold text-[12px] tracking-tighter">{settings.collegeNameLine1}</p>
-            <p className="font-bold text-[11px] tracking-tighter">{settings.collegeNameLine2}</p>
+            <p className="font-black text-[15px] tracking-tighter">{settings.collegeNameLine1}</p>
+            <p className="font-black text-[13px] tracking-tighter">{settings.collegeNameLine2}</p>
           </div>
         </div>
 
-        <CardContent className="p-2 flex flex-row gap-2">
+        <CardContent className="p-1.5 flex flex-row gap-4">
           <div className="w-[80px] flex-shrink-0 mt-1">
             <Image
               src={student.photographUrl || "https://placehold.co/80x80.png"}
               alt={student.fullName}
-              width={80}
-              height={80}
-              className=" h-[80px] object-cover border border-gray-400"
+              width={90}
+              height={90}
+              className=" h-[80px] object-cover border-2 border-black rounded"
               data-ai-hint="student portrait"
               unoptimized
             />
           </div>
           <div className="flex-grow space-y-0.5 text-[12px]">
-            <div style={{...importantInfoStyle, padding: '0.25rem'}} className="rounded-sm mb-1 bg-primary/10">
+            <div style={{...importantInfoStyle}} className="rounded-sm mb-1 bg-primary/10">
               <p className="uppercase font-bold text-[12px] text-black">{student.fullName}</p>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center">
               <span className="font-semibold text-gray-700">DOB</span>
-              <p className="font-semibold text-gray-900">{student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'dd/MM/yyyy') : 'N/A'}</p>
-              <span className="font-semibold text-gray-700">Blood Group</span>
-              <p className="font-semibold text-gray-900">{student.bloodGroup || 'N/A'}</p>
+              <p className="font-semibold text-black">{student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'dd/MM/yyyy') : 'N/A'}</p>
+              <span className="font-semibold text-gray-700">Blood Grp</span>
+              <p className="font-semibold text-black">{student.bloodGroup || 'N/A'}</p>
               <span className="font-semibold text-gray-700">Course</span>
-              <p className="font-semibold text-gray-900">{student.courseName}</p>
+              <p className="font-semibold text-black">{student.courseName}</p>
               <span className="font-semibold text-gray-700">Year</span>
-              <p className="font-semibold text-gray-900">{student.yearOfJoining}</p>
+              <p className="font-semibold text-black">{student.yearOfJoining}</p>
               <span className="font-semibold text-gray-700">Roll No</span>
-              <p className="font-semibold text-gray-900">{student.rollNumber}</p>
-              <div style={{...importantInfoStyle, padding: '0.125rem'}} className="text-start rounded-sm col-span-2 mt-0.5 bg-primary/10">
+              <p className="font-semibold text-black">{student.rollNumber}</p>
+              <span className="font-semibold text-gray-700">PRN No</span>
+              <p className="font-semibold text-black">{student.prnNumber}</p>
+              {/* <div style={{...importantInfoStyle, padding: '0.125rem'}} className="text-start rounded-sm col-span-2 mt-0.5 bg-primary/10">
                 <span className="font-semibold text-gray-700">PRN No</span>
-                <p className="font-bold text-gray-900 inline ml-1">{student.prnNumber}</p>
-              </div>
+                <p className="font-bold text-black inline ml-1">{student.prnNumber}</p>
+              </div> */}
             </div>
           </div>
         </CardContent>
@@ -157,7 +159,7 @@ export default function StudentIdCard({
             <p className="font-bold text-gray-900 mt-0.5">{settings.deanTitle.toUpperCase()}</p>
           </div>          
           <div className="text-right">
-            <div className="w-30 h-6 border-b text-gray-900 mb-0.5 flex justify-end">
+            <div className="w-30 h-6 text-gray-900 mb-0.5 flex justify-end">
             
             {student.cardHolderSignature && (
               <Image
@@ -228,7 +230,7 @@ export default function StudentIdCard({
 
           <div>
             <p style={importantInfoStyle} className="font-bold text-gray-900 p-0.5 rounded-sm inline-block">Residential Address:</p>
-            <p className="font-semibold whitespace-pre-line text-[8.5px] leading-tight mt-0.5">{student.address || 'N/A'}</p>
+            <p className="font-semibold text-[8.5px] leading-tight mt-0.5">{student.address || 'N/A'}</p>
           </div>
 
           <ol className="list-decimal list-inside space-y-0.5 mt-1 text-[10px] leading-tight">

@@ -94,7 +94,6 @@ body {
   }
 }
 
-
 @page {
   size: 85.6mm 53.98mm !important; /* Exact CR80 size */
   margin: 0 !important; /* Remove all page margins */
@@ -107,8 +106,8 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box !important;
-    background-color: white !important;
-    border: none !important;
+    /* background-color: white !important; */
+    /* border: none !important; */
     box-shadow: none !important;
     transform: scale(1) !important;
     overflow: hidden !important;
@@ -126,10 +125,10 @@ body {
   .print\:id-card > * {
     width: 85.6mm !important; /* Explicit CR80 width */
     height: 53.98mm !important; /* Explicit CR80 height */
-    margin: 0 !important;
-    padding: 0 !important;
+    /* margin: 0 !important; */
+    /* padding: 0 !important; */
     box-sizing: border-box !important;
-    border: none !important;
+    /* border: none !important; */
   }
 
   /* Target StudentIdCard specifically */
@@ -139,8 +138,8 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box !important;
-    background: white !important;
-    border: none !important;
+    /* background: white !important; */
+    /* border: none !important; */
     box-shadow: none !important;
     overflow: hidden !important;
     display: block !important;
@@ -150,10 +149,10 @@ body {
   .student-id-card > * {
     width: 100% !important;
     height: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    /* margin: 0 !important; */
+    /* padding: 0 !important; */
     box-sizing: border-box !important;
-    border: none !important;
+    /* border: none !important; */
   }
 
   /* Ensure images and other elements fill correctly */
@@ -163,7 +162,7 @@ body {
     object-fit: cover !important; /* Fill container without gaps */
     margin: 0 !important;
     padding: 0 !important;
-    border: none !important;
+    /* border: none !important; */
   }
 
   /* Remove inherited borders and margins */
@@ -182,7 +181,7 @@ body {
   body, html, .print-preview-container {
     margin: 0 !important;
     padding: 0 !important;
-    background: white !important;
+    /* background: white !important; */
   }
 
   /* Prevent content from breaking across pages */
