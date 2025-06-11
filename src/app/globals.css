@@ -167,7 +167,7 @@ body {
 
   /* Remove inherited borders and margins */
   * {
-    border: none !important;
+    /* border: none !important; */
     margin: 0 !important;
     padding: 0 !important;
   }

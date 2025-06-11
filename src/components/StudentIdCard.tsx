@@ -113,7 +113,7 @@ export default function StudentIdCard({
               alt={student.fullName}
               width={90}
               height={90}
-              className=" h-[80px] object-cover border-2 border-black rounded"
+              className=" h-[90px] object-cover border-2 border-black rounded"
               data-ai-hint="student portrait"
               unoptimized
             />
