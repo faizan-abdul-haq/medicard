@@ -100,11 +100,19 @@ body {
 }
 
 @media print {
+
+  /* Remove inherited borders and margins */
+  * {
+    /* border: none !important; */
+    margin: 0 !important;
+    padding: 0.5px !important;
+  }
+    
   .print\:id-card {
     width: 85.6mm !important;
     height: 53.98mm !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    /* margin: 0 !important;
+    padding: 0 !important; */
     box-sizing: border-box !important;
     /* background-color: white !important; */
     /* border: none !important; */
@@ -112,8 +120,10 @@ body {
     transform: scale(1) !important;
     overflow: hidden !important;
     position: relative !important;
-    display: block !important; /* Remove flex to avoid centering issues */
+    display: block !important;
   }
+
+
 
   /* Prevent page break after the last card */
   .print\:id-card:last-child {
@@ -135,8 +145,8 @@ body {
   .student-id-card {
     width: 85.6mm !important;
     height: 53.98mm !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    /* margin: 0 !important;
+    padding: 0 !important; */
     box-sizing: border-box !important;
     /* background: white !important; */
     /* border: none !important; */
@@ -153,6 +163,7 @@ body {
     /* padding: 0 !important; */
     box-sizing: border-box !important;
     /* border: none !important; */
+    
   }
 
   /* Ensure images and other elements fill correctly */
@@ -160,16 +171,9 @@ body {
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important; /* Fill container without gaps */
-    margin: 0 !important;
-    padding: 0 !important;
+    /* margin: 0 !important;
+    padding: 0 !important; */
     /* border: none !important; */
-  }
-
-  /* Remove inherited borders and margins */
-  * {
-    /* border: none !important; */
-    margin: 0 !important;
-    padding: 0 !important;
   }
 
   /* Hide non-print elements */
@@ -179,8 +183,8 @@ body {
 
   /* Reset body and container */
   body, html, .print-preview-container {
-    margin: 0 !important;
-    padding: 0 !important;
+    /* margin: 0 !important;
+    padding: 0 !important; */
     /* background: white !important; */
   }
 

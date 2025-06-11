@@ -75,7 +75,7 @@ export default function StudentIdCard({
   };
 
   const cardDynamicStyle = {
-    fontFamily: settings.cardFontFamily,
+    // fontFamily: settings.cardFontFamily,
   };
 
   const finalLogoUrl = logoError || !settings.logoUrl ? 'https://placehold.co/30x30.png' : settings.logoUrl;
@@ -101,8 +101,8 @@ export default function StudentIdCard({
             />
           </div>
           <div className="w-4/5 text-center leading-tight">
-            <p className="font-black text-[15px] tracking-tighter">{settings.collegeNameLine1}</p>
-            <p className="font-black text-[13px] tracking-tighter">{settings.collegeNameLine2}</p>
+            <p className="font-black text-[14px] tracking-tighter">{settings.collegeNameLine1}</p>
+            <p className="font-black text-[12px] tracking-tighter">{settings.collegeNameLine2}</p>
           </div>
         </div>
 
@@ -127,17 +127,17 @@ export default function StudentIdCard({
               <p className="uppercase font-bold text-[12px] text-black">{student.fullName}</p>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center">
-              <span className="font-semibold text-gray-700">DOB</span>
+              <span className="font-semibold text-black">DOB</span>
               <p className="font-semibold text-black">{student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'dd/MM/yyyy') : 'N/A'}</p>
-              <span className="font-semibold text-gray-700">Blood Grp</span>
+              <span className="font-semibold text-black">Blood Grp</span>
               <p className="font-semibold text-black">{student.bloodGroup || 'N/A'}</p>
-              <span className="font-semibold text-gray-700">Course</span>
+              <span className="font-semibold text-black">Course</span>
               <p className="font-semibold text-black">{student.courseName}</p>
-              <span className="font-semibold text-gray-700">Year</span>
+              <span className="font-semibold text-black">Year</span>
               <p className="font-semibold text-black">{student.yearOfJoining}</p>
-              <span className="font-semibold text-gray-700">Roll No</span>
+              <span className="font-semibold text-black">Roll No</span>
               <p className="font-semibold text-black">{student.rollNumber}</p>
-              <span className="font-semibold text-gray-700">PRN No</span>
+              <span className="font-semibold text-black">PRN No</span>
               <p className="font-semibold text-black">{student.prnNumber}</p>
               {/* <div style={{...importantInfoStyle, padding: '0.125rem'}} className="text-start rounded-sm col-span-2 mt-0.5 bg-primary/10">
                 <span className="font-semibold text-gray-700">PRN No</span>
@@ -146,7 +146,7 @@ export default function StudentIdCard({
             </div>
           </div>
         </CardContent>
-        <div className="absolute bottom-1 left-0 right-0 px-3 flex justify-between items-end text-[11px]">
+        <div className="absolute bottom-1 left-5 right-3 px-3 flex justify-between items-end text-[11px]">
           
           <div className="flex flex-col items-start">
             {settings.deanSignatureUrl && (
@@ -197,7 +197,7 @@ export default function StudentIdCard({
           <div className="flex flex-col justify-between h-[50px]"> {/* Adjust height as needed */}
             <div
               style={importantInfoStyle}
-              className="text-gray-900 p-0.5 rounded-sm inline-block uppercase"
+              className="text-black p-0.5 rounded-sm inline-block uppercase"
             >
               <p className="font-semibold">
                 <span className="font-bold">Year of Admission:</span> {yearOfAdmissionDisplay}
@@ -205,7 +205,7 @@ export default function StudentIdCard({
             </div>
             <div
               style={importantInfoStyle}
-              className="text-start text-gray-900 p-0.5 rounded-sm inline-block uppercase"
+              className="text-start text-black p-0.5 rounded-sm inline-block uppercase"
             >
               <p className="font-semibold">
                 <span className="font-bold">Valid Upto:</span> {validUptoString}
@@ -225,7 +225,7 @@ export default function StudentIdCard({
               className="border border-gray-300"
             />
           ) : (
-            <div className="w-[50px] h-[50px] bg-gray-200 flex items-center justify-center border border-gray-300">
+            <div className="w-[50px] h-[50px] text-black flex items-center justify-center border border-gray-300">
               <QrCodeIcon size={30} className="text-gray-500" />
             </div>
           )}
@@ -233,19 +233,19 @@ export default function StudentIdCard({
 
 
           <div>
-            <p style={importantInfoStyle} className="font-bold text-gray-900 p-0.5 rounded-sm inline-block">Residential Address:</p>
-            <p className="font-semibold text-[8.5px] leading-tight mt-0.5">{student.address || 'N/A'}</p>
+            <p style={importantInfoStyle} className="font-bold text-black p-0.5 rounded-sm inline-block">Residential Address:</p>
+            <p className="font-semibold text-black leading-tight mt-0.5">{student.address || 'N/A'}</p>
           </div>
 
-          <ol className="list-decimal list-inside space-y-0.5 mt-1 text-[10px] leading-tight">
+          <ol className="list-decimal list-inside space-y-0.5 mt-1 text-black leading-tight">
             {[settings.instructionLine1, settings.instructionLine2, settings.instructionLine3, settings.instructionLine4].map((inst, idx) => (
-              inst && <li key={idx} className="font-semibold">{inst}</li>
+              inst && <li key={idx} className="font-semibold text-black">{inst}</li>
             ))}
           </ol>
 
-          <div className="border-t text-gray-900 mt-auto pt-1 flex justify-between items-center text-[10px] absolute bottom-1 left-2 right-2">
-            <p className="font-bold"><span className="font-semibold">Mob:</span> {student.mobileNumber || 'N/A'}</p>
-            <p className="font-bold"><span className="font-semibold">Office:</span> {settings.officePhoneNumber}</p>
+          <div className="border-t text-black mt-auto pt-1 flex justify-between items-center text-[10px] absolute bottom-1 left-2 right-2">
+            <p className="font-bold text-black"><span className="font-semibold">Mob:</span> {student.mobileNumber || 'N/A'}</p>
+            <p className="font-bold text-black"><span className="font-semibold">Office:</span> {settings.officePhoneNumber}</p>
           </div>
         </CardContent>
       </Card>
