@@ -75,7 +75,7 @@ export default function StudentIdCard({
   };
 
   const cardDynamicStyle = {
-    // fontFamily: settings.cardFontFamily,
+    //fontFamily: settings.cardFontFamily,
   };
 
   const finalLogoUrl = logoError || !settings.logoUrl ? 'https://placehold.co/30x30.png' : settings.logoUrl;
@@ -89,7 +89,7 @@ export default function StudentIdCard({
           </Button>
         )}
         <div style={headerStyle} className="pt-1.5 pr-1.5 pl-1.5 flex items-center">
-          <div className="w-1/5 flex justify-center items-center">
+          <div className="w-1/5 flex justify-center items-center print:pl-2">
             <Image 
               src={finalLogoUrl} 
               alt="College Logo" 
@@ -100,55 +100,54 @@ export default function StudentIdCard({
               unoptimized
             />
           </div>
-          <div className="w-4/5 text-center leading-tight">
-            <p className="font-black text-[14px] tracking-tighter">{settings.collegeNameLine1}</p>
-            <p className="font-black text-[12px] tracking-tighter">{settings.collegeNameLine2}</p>
+          <div className="w-4/5 text-center leading-tight print:pr-2">
+            <p className="font-black text-[13px] tracking-tighter">{settings.collegeNameLine1}</p>
+            <p className="font-black text-[11px] tracking-tighter">{settings.collegeNameLine2}</p>
           </div>
         </div>
 
-        <CardContent className="p-1.5 flex flex-row gap-4">
+        <CardContent className="p-1.5 flex flex-row gap-4 print:pl-2">
           <div className="h-[28mm] w-[23mm] flex-shrink-0 mt-1">
             <div className="w-full h-full relative">
               <Image
-                src={
-                  student.photographUrl ||
-                  "https://placehold.co/80x80.png"
-                }
+                  src={
+                    student.photographUrl ||
+                    "https://placehold.co/80x80.png"
+                  }
                 alt={student.fullName}
-                fill
-                className="object-cover border-2 border-black rounded"
+                  fill
+                  className="object-cover border-2 border-[#004AAD] rounded"
                 data-ai-hint="student portrait"
                 unoptimized
               />
             </div>
           </div>
-          <div className="flex-grow space-y-0.5 text-[12px]">
+          <div className="flex-grow space-y-0.5 text-[11px]">
             <div style={{...importantInfoStyle}} className="rounded-sm mb-1 bg-primary/10">
-              <p className="uppercase font-bold text-[12px] text-black">{student.fullName}</p>
+              <p className="uppercase font-bold text-[14px] text-[#004AAD]">{student.fullName}</p>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center">
-              <span className="font-semibold text-black">DOB</span>
-              <p className="font-semibold text-black">{student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'dd/MM/yyyy') : 'N/A'}</p>
-              <span className="font-semibold text-black">Blood Grp</span>
-              <p className="font-semibold text-black">{student.bloodGroup || 'N/A'}</p>
-              <span className="font-semibold text-black">Course</span>
-              <p className="font-semibold text-black">{student.courseName}</p>
-              <span className="font-semibold text-black">Year</span>
-              <p className="font-semibold text-black">{student.yearOfJoining}</p>
-              <span className="font-semibold text-black">Roll No</span>
-              <p className="font-semibold text-black">{student.rollNumber}</p>
-              <span className="font-semibold text-black">PRN No</span>
-              <p className="font-semibold text-black">{student.prnNumber}</p>
+              <span className="font-bold text-black">DOB</span>
+              <p className="font-bold text-black">{student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'dd/MM/yyyy') : 'N/A'}</p>
+              <span className="font-bold text-black">Blood Grp</span>
+              <p className="font-bold text-black">{student.bloodGroup || 'N/A'}</p>
+              <span className="font-bold text-black">Course</span>
+              <p className="font-bold text-black">{student.courseName}</p>
+              <span className="font-bold text-black">Year</span>
+              <p className="font-bold text-black">{student.yearOfJoining}</p>
+              <span className="font-bold text-black">Roll No</span>
+              <p className="font-bold text-black">{student.rollNumber}</p>
+              <span className="font-bold text-black">PRN No</span>
+              <p className="font-bold text-black">{student.prnNumber}</p>
               {/* <div style={{...importantInfoStyle, padding: '0.125rem'}} className="text-start rounded-sm col-span-2 mt-0.5 bg-primary/10">
-                <span className="font-semibold text-gray-700">PRN No</span>
+                <span className="font-bold text-gray-700">PRN No</span>
                 <p className="font-bold text-black inline ml-1">{student.prnNumber}</p>
               </div> */}
             </div>
           </div>
         </CardContent>
-        <div className="absolute bottom-1 left-5 right-3 px-3 flex justify-between items-end text-[11px]">
-          
-          <div className="flex flex-col items-start">
+        <div className="absolute bottom-1 left-0 right-0 px-3 flex justify-between items-end text-[11px]">
+          <div className="flex flex-col items-start print:pl-2">
             {settings.deanSignatureUrl && (
               <Image
                 src={settings.deanSignatureUrl}
@@ -160,9 +159,9 @@ export default function StudentIdCard({
                 unoptimized
               />
             )}
-            <p className="font-bold text-gray-900 mt-0.5">{settings.deanTitle.toUpperCase()}</p>
+            <p className="font-bold text-[#004AAD] mt-0.5">{settings.deanTitle.toUpperCase()}</p>
           </div>          
-          <div className="text-right">
+          <div className="text-right print:pr-2">
             <div className="w-30 h-6 text-gray-900 mb-0.5 flex justify-end">
             
             {student.cardHolderSignature && (
@@ -177,7 +176,7 @@ export default function StudentIdCard({
               />
             )}
             </div>
-            <p className="font-bold text-gray-900">{settings.defaultCardHolderSignatureText}</p>
+            <p className="font-bold text-[#004AAD]">{settings.defaultCardHolderSignatureText}</p>
           </div>
         </div>
       </Card>
@@ -192,14 +191,14 @@ export default function StudentIdCard({
           </Button>
         )}
         <CardContent className="p-2 space-y-1 text-[10px] leading-snug">
-        <div className="flex justify-between items-start mb-1">
+        <div className="flex justify-between items-start mb-1 print:pt-2">
           {/* Left: Text info stacked top and bottom */}
-          <div className="flex flex-col justify-between h-[50px]"> {/* Adjust height as needed */}
+          <div className="flex flex-col justify-between h-[50px] print:pl-2"> {/* Adjust height as needed */}
             <div
               style={importantInfoStyle}
-              className="text-black p-0.5 rounded-sm inline-block uppercase"
+              className="text-gray-900 p-0.5 rounded-sm inline-block uppercase"
             >
-              <p className="font-semibold">
+              <p className="font-bold">
                 <span className="font-bold">Year of Admission:</span> {yearOfAdmissionDisplay}
               </p>
             </div>
@@ -207,7 +206,7 @@ export default function StudentIdCard({
               style={importantInfoStyle}
               className="text-start text-black p-0.5 rounded-sm inline-block uppercase"
             >
-              <p className="font-semibold">
+              <p className="font-bold">
                 <span className="font-bold">Valid Upto:</span> {validUptoString}
               </p>
             </div>
@@ -222,30 +221,30 @@ export default function StudentIdCard({
               height={50}
               data-ai-hint="qr code profile"
               unoptimized
-              className="border border-gray-300"
+              className="border border-gray-300 print:pr-2"
             />
           ) : (
-            <div className="w-[50px] h-[50px] text-black flex items-center justify-center border border-gray-300">
+            <div className="w-[50px] h-[50px] text-black flex items-center justify-center border border-gray-300 print:pr-2">
               <QrCodeIcon size={30} className="text-gray-500" />
             </div>
           )}
         </div>
 
 
-          <div>
-            <p style={importantInfoStyle} className="font-bold text-black p-0.5 rounded-sm inline-block">Residential Address:</p>
-            <p className="font-semibold text-black leading-tight mt-0.5">{student.address || 'N/A'}</p>
+          <div className='print:pl-2 print:pr-2'>
+            <p style={importantInfoStyle} className="font-bold text-gray-900 p-0.5 rounded-sm inline-block">Residential Address:</p>
+            <p className="font-bold text-[8.5px] leading-tight mt-0.5">{student.address || 'N/A'}</p>
           </div>
 
-          <ol className="list-decimal list-inside space-y-0.5 mt-1 text-black leading-tight">
+          <ol className="list-decimal list-inside space-y-0.5 mt-1 text-[10px] leading-tight  print:pl-2  print:pr-2">
             {[settings.instructionLine1, settings.instructionLine2, settings.instructionLine3, settings.instructionLine4].map((inst, idx) => (
-              inst && <li key={idx} className="font-semibold text-black">{inst}</li>
+              inst && <li key={idx} className="font-bold">{inst}</li>
             ))}
           </ol>
 
-          <div className="border-t text-black mt-auto pt-1 flex justify-between items-center text-[10px] absolute bottom-1 left-2 right-2">
-            <p className="font-bold text-black"><span className="font-semibold">Mob:</span> {student.mobileNumber || 'N/A'}</p>
-            <p className="font-bold text-black"><span className="font-semibold">Office:</span> {settings.officePhoneNumber}</p>
+          <div className="border-t text-gray-900 mt-auto pt-1 flex justify-between items-center text-[10px] absolute bottom-1 left-2 right-2">
+            <p className="font-bold text-black"><span className="font-bold">Mob:</span> {student.mobileNumber || 'N/A'}</p>
+            <p className="font-bold text-black"><span className="font-bold">Office:</span> {settings.officePhoneNumber}</p>
           </div>
         </CardContent>
       </Card>
