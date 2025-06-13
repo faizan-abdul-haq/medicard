@@ -88,7 +88,7 @@ export default function StudentIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <div style={headerStyle} className="pt-1.5 pr-1.5 pl-1.5 flex items-center">
+        <div style={headerStyle} className="pt-1.5 pr-1.5 pl-1.5 flex items-center print:pt-2">
           <div className="w-1/5 flex justify-center items-center print:pl-2">
             <Image 
               src={finalLogoUrl} 
@@ -152,8 +152,8 @@ export default function StudentIdCard({
               <Image
                 src={settings.deanSignatureUrl}
                 alt="Dean's Signature"
-                width={50}
-                height={30}
+                width={60}
+                height={40}
                 className="object-contain"
                 style={{ height: 'inherit', color: 'transparent' }}
                 unoptimized
@@ -162,14 +162,14 @@ export default function StudentIdCard({
             <p className="font-bold text-[#004AAD] mt-0.5">{settings.deanTitle.toUpperCase()}</p>
           </div>          
           <div className="text-right print:pr-2">
-            <div className="w-30 h-6 text-gray-900 mb-0.5 flex justify-end">
+            <div className="w-30 h-6 text-black mb-0.5 flex justify-end">
             
             {student.cardHolderSignature && (
               <Image
                 src={student.cardHolderSignature}
                 alt=""
-                width={50}
-                height={30}
+                width={60}
+                height={40}
                 className="object-contain"
                 style={{ height: 'inherit', color: 'transparent' }}
                 unoptimized
@@ -193,10 +193,10 @@ export default function StudentIdCard({
         <CardContent className="p-2 space-y-1 text-[10px] leading-snug">
         <div className="flex justify-between items-start mb-1 print:pt-2">
           {/* Left: Text info stacked top and bottom */}
-          <div className="flex flex-col justify-between h-[50px] print:pl-2"> {/* Adjust height as needed */}
+          <div className="flex flex-col justify-between h-[50px] print:pl-2 print:pt-2"> {/* Adjust height as needed */}
             <div
               style={importantInfoStyle}
-              className="text-gray-900 p-0.5 rounded-sm inline-block uppercase"
+              className="text-black p-0.5 rounded-sm inline-block uppercase"
             >
               <p className="font-bold">
                 <span className="font-bold">Year of Admission:</span> {yearOfAdmissionDisplay}
@@ -224,15 +224,15 @@ export default function StudentIdCard({
               className="border border-gray-300 print:pr-2"
             />
           ) : (
-            <div className="w-[50px] h-[50px] text-black flex items-center justify-center border border-gray-300 print:pr-2">
-              <QrCodeIcon size={30} className="text-gray-500" />
+            <div className="w-[50px] h-[50px] text-black flex items-center justify-center border border-gray-300 print:pr-2 print:pt-3">
+              <QrCodeIcon size={30} className="text-black" />
             </div>
           )}
         </div>
 
 
           <div className='print:pl-2 print:pr-2'>
-            <p style={importantInfoStyle} className="font-bold text-gray-900 p-0.5 rounded-sm inline-block">Residential Address:</p>
+            <p style={importantInfoStyle} className="font-bold text-black p-0.5 rounded-sm inline-block">Residential Address:</p>
             <p className="font-bold text-[8.5px] leading-tight mt-0.5">{student.address || 'N/A'}</p>
           </div>
 
@@ -242,7 +242,7 @@ export default function StudentIdCard({
             ))}
           </ol>
 
-          <div className="border-t text-gray-900 mt-auto pt-1 flex justify-between items-center text-[10px] absolute bottom-1 left-2 right-2">
+          <div className="border-t text-black mt-auto pt-1 flex justify-between items-center text-[10px] absolute bottom-2 left-2 right-2">
             <p className="font-bold text-black"><span className="font-bold">Mob:</span> {student.mobileNumber || 'N/A'}</p>
             <p className="font-bold text-black"><span className="font-bold">Office:</span> {settings.officePhoneNumber}</p>
           </div>

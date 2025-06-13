@@ -46,7 +46,7 @@ const initialFormData: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'ph
   prnNumber: '',
   rollNumber: '',
   yearOfJoining: 'FIRST',
-  courseName: '',
+  courseName: 'MBBS',
   photograph: null,
   bloodGroup: '',
   cardHolderSignature: '',
