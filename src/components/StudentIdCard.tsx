@@ -193,7 +193,7 @@ export default function StudentIdCard({
         <CardContent className="p-2 space-y-1 text-[10px] leading-snug">
         <div className="flex justify-between items-start mb-1 print:pt-2">
           {/* Left: Text info stacked top and bottom */}
-          <div className="flex flex-col justify-between h-[50px] print:pl-2 print:pt-2"> {/* Adjust height as needed */}
+          <div className="flex flex-col justify-between print:pl-2 print:pt-2"> {/* Adjust height as needed */}
             <div
               style={importantInfoStyle}
               className="text-black p-0.5 rounded-sm inline-block uppercase"
@@ -221,11 +221,11 @@ export default function StudentIdCard({
               height={50}
               data-ai-hint="qr code profile"
               unoptimized
-              className="border border-gray-300 print:pr-2"
+              className="border border-gray-300 print:pr-2 print:mt-[20px]"
             />
           ) : (
-            <div className="w-[50px] h-[50px] text-black flex items-center justify-center border border-gray-300 print:pr-2 print:pt-3">
-              <QrCodeIcon size={30} className="text-black" />
+            <div className="w-[50px] h-[50px] text-black flex items-center justify-center border border-gray-300 print:pr-2 print:pt-3 print:mt-[10]]20px]">
+              {/* <QrCodeIcon size={30} className="text-black" /> */}
             </div>
           )}
         </div>
@@ -236,7 +236,7 @@ export default function StudentIdCard({
             <p className="font-bold text-[8.5px] leading-tight mt-0.5">{student.address || 'N/A'}</p>
           </div>
 
-          <ol className="list-decimal list-inside space-y-0.5 mt-1 text-[10px] leading-tight  print:pl-2  print:pr-2">
+          <ol className="list-decimal list-inside space-y-0.5 mt-1 text-[10px]  leading-tight  print:pl-2  print:pr-2">
             {[settings.instructionLine1, settings.instructionLine2, settings.instructionLine3, settings.instructionLine4].map((inst, idx) => (
               inst && <li key={idx} className="font-bold">{inst}</li>
             ))}

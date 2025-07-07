@@ -317,7 +317,7 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
-                            <Calendar mode="single" selected={formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined} onSelect={handleDateChange} initialFocus captionLayout="dropdown-buttons" fromYear={1950} toYear={new Date().getFullYear() - 10} required/>
+                            <Calendar mode="single" selected={formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined} onSelect={handleDateChange} initialFocus captionLayout="dropdown-buttons" fromYear={1950} toYear={new Date().getFullYear()} required/>
                         </PopoverContent>
                         </Popover>
                     </div>

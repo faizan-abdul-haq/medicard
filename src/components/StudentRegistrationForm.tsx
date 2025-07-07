@@ -420,7 +420,7 @@ export default function StudentRegistrationForm() {
                       initialFocus
                       captionLayout="dropdown-buttons"
                       fromYear={1950}
-                      toYear={new Date().getFullYear() - 10}
+                      toYear={new Date().getFullYear()}
                       required
                     />
                   </PopoverContent>
@@ -430,9 +430,9 @@ export default function StudentRegistrationForm() {
               <div className="space-y-2">
                 <Label>Student Photograph (Max 2MB)</Label>
                 <div className="flex gap-2 mb-2">
-                    <Button type="button" variant={inputMode === 'upload' ? 'default' : 'outline'} onClick={() => setInputMode('upload')}>
+                    {/* <Button type="button" variant={inputMode === 'upload' ? 'default' : 'outline'} onClick={() => setInputMode('upload')}>
                         <UploadCloud className="mr-2 h-4 w-4" /> Upload File
-                    </Button>
+                    </Button> */}
                     <Button type="button" variant={inputMode === 'webcam' ? 'default' : 'outline'} onClick={() => { setInputMode('webcam'); if (hasCameraPermission !== true) requestCameraPermission();}}>
                         <Camera className="mr-2 h-4 w-4" /> Use Webcam
                     </Button>
