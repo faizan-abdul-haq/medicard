@@ -16,6 +16,8 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
+const appName = process.env.NEXT_PUBLIC_APP_NAME || 'MediCard';
+
 interface StatCardProps {
   title: string;
   value: string;
@@ -45,7 +47,7 @@ function DashboardContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeIDCards, setActiveIDCards] = useState(0);
   const [expiringSoonCount, setExpiringSoonCount] = useState(0);
-  const [totalCourses, setTotalCourses] = useState(0); // New state for courses
+  const [totalCourses, setTotalCourses] = useState(0);
   const [cardSettings, setCardSettings] = useState<CardSettingsData>(DEFAULT_CARD_SETTINGS);
   const { toast } = useToast();
 
@@ -138,24 +140,25 @@ function DashboardContent() {
       filter: "expiring"
 
     },
-    // {
-    //   title: "Courses Offered",
-    //   value: isLoading ? "..." : totalCourses.toString(),
-    //   description: "Unique courses in system",
-    //   icon: <BookOpenText className="h-5 w-5" />,
-    //   colorClass: "text-accent",
-    // },
+    {
+      title: "Courses Offered",
+      value: isLoading ? "..." : totalCourses.toString(),
+      description: "Unique courses in system",
+      icon: <BookOpenText className="h-5 w-5" />,
+      colorClass: "text-accent",
+      filter: "all"
+    },
   ];
 
 
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-primary">MediCard Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">{appName} Dashboard</h1>
         <p className="text-muted-foreground">Overview of student registrations and ID card status.</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       
         {stats.map((stat, index) => (
           <Link key={index} href={`/students/list?filter=${encodeURIComponent(stat.filter)}`} passHref>

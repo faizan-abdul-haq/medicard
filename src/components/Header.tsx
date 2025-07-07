@@ -7,6 +7,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
+const appName = process.env.NEXT_PUBLIC_APP_NAME || 'MediCard';
+
 export default function Header() {
   const { isAuthenticated, logout, isLoading } = useAuth();
   const pathname = usePathname();
@@ -26,7 +28,7 @@ export default function Header() {
       <div className="container mx-auto px-2 sm:px-4 py-2 flex justify-between items-center max-w-full">
         <Link href="/" className="flex items-center gap-1 text-base sm:text-lg font-bold shrink-0">
           <Stethoscope size={20} className="sm:h-6 sm:w-6" />
-          <span>MediCard</span>
+          <span>{appName}</span>
         </Link>
         <nav className="flex items-center">
           {isAuthenticated ? (

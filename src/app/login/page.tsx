@@ -12,6 +12,8 @@ import { useRouter } from 'next/navigation';
 import { LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+const appName = process.env.NEXT_PUBLIC_APP_NAME || 'MediCard';
+
 export default function LoginPage() {
   const [email, setEmail] = useState(''); // Changed from username to email
   const [password, setPassword] = useState('');
@@ -50,9 +52,9 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm shadow-xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center gap-2">
-            <LogIn size={28}/> Admin Login
+            <LogIn size={28}/> {appName} Admin Login
           </CardTitle>
-          <CardDescription>Enter your credentials to access the i9 ID Card System dashboard.</CardDescription>
+          <CardDescription>Enter your credentials to access the {appName} dashboard.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">

@@ -16,8 +16,10 @@ import { AuthProvider } from '@/contexts/AuthContext';
 //   subsets: ['latin'],
 // });
 
+const appName = process.env.NEXT_PUBLIC_APP_NAME || 'MediCard';
+
 export const metadata: Metadata = {
-  title: 'MediCard - Student Health ID',
+  title: `${appName} - Student Health ID`,
   description: 'Student ID Card Generation System',
 };
 
@@ -37,7 +39,7 @@ export default function RootLayout({
           </main>
           <Toaster />
           <footer className="print:hidden bg-muted text-muted-foreground text-center py-4 text-sm">
-            © {new Date().getFullYear()} MediCard. All rights reserved.
+            © {new Date().getFullYear()} {appName}. All rights reserved.
           </footer>
         </AuthProvider>
       </body>

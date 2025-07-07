@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/lib/supabaseClient';
 import Image from 'next/image';
 
+const BUCKET_NAME = process.env.NEXT_PUBLIC_SUPABASE_BUCKET_NAME || 'medicare';
+
 interface ImageUploadFieldProps {
   label: string;
   value: string;
@@ -55,7 +57,7 @@ export default function ImageUploadField({
       const filePath = `${directory}/${fileName}`;
 
       const { data, error } = await supabase.storage
-        .from('medicare')
+        .from(BUCKET_NAME)
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false
@@ -66,7 +68,7 @@ export default function ImageUploadField({
       }
 
       const { data: publicUrlData } = supabase.storage
-        .from('medicare')
+        .from(BUCKET_NAME)
         .getPublicUrl(filePath);
 
       if (!publicUrlData?.publicUrl) {
