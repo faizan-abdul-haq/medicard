@@ -29,7 +29,7 @@ const mockStudentForPreview: StudentData = {
   prnNumber: 'PRN000',
   rollNumber: 'R000',
   yearOfJoining: 'FIRST',
-  courseName: 'Aerospace Engineering',
+  courseName: 'MBBS',
   photographUrl: 'https://placehold.co/80x100.png',
   registrationDate: new Date(),
   bloodGroup: 'O+',

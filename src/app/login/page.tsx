@@ -52,7 +52,7 @@ export default function LoginPage() {
           <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center gap-2">
             <LogIn size={28}/> Admin Login
           </CardTitle>
-          <CardDescription>Enter your credentials to access the MediCard dashboard.</CardDescription>
+          <CardDescription>Enter your credentials to access the i9 ID Card System dashboard.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">

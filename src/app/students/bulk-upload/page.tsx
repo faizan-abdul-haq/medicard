@@ -20,6 +20,7 @@ import { Alert, AlertDescription as ShadcnAlertDescription, AlertTitle as Shadcn
 
 const MOBILE_REGEX = /^\d{10}$/;
 
+
 function BulkUploadContent() {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);

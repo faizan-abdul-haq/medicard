@@ -45,8 +45,8 @@ const initialFormData: Partial<Omit<StudentData, 'id' | 'registrationDate' | 'ph
   mobileNumber: '',
   prnNumber: '',
   rollNumber: '',
-  yearOfJoining: 'FIRST',
-  courseName: 'MBBS',
+  yearOfJoining: '',
+  courseName: '',
   photograph: null,
   bloodGroup: '',
   cardHolderSignature: '',
@@ -372,7 +372,7 @@ export default function StudentRegistrationForm() {
               <div className="space-y-2">
                 <Label htmlFor="courseName">Course Name <span className="text-destructive">*</span></Label>
                 {/* <Input id="courseName" name="courseName" value={formData.courseName || ''} onChange={handleChange} required /> */}
-                <Select required value={formData.courseName || 'MBBS'} onValueChange={(value) => handleSelectChange('courseName', value)}>
+                <Select required value={formData.courseName} onValueChange={(value) => handleSelectChange('courseName', value)}>
                   <SelectTrigger id="courseName" className="w-full">
                       <SelectValue placeholder="Select Course Name" />
                   </SelectTrigger>
@@ -386,7 +386,7 @@ export default function StudentRegistrationForm() {
 
               <div className="space-y-2">
                 <Label htmlFor="yearOfJoining">Year of Study <span className="text-destructive">*</span></Label>
-                 <Select value={formData.yearOfJoining || 'FIRST'} onValueChange={(value) => handleSelectChange('yearOfJoining', value)} required>
+                 <Select value={formData.yearOfJoining} onValueChange={(value) => handleSelectChange('yearOfJoining', value)} required>
                   <SelectTrigger id="yearOfJoining">
                     <SelectValue placeholder="Select year" />
                   </SelectTrigger>
@@ -430,9 +430,9 @@ export default function StudentRegistrationForm() {
               <div className="space-y-2">
                 <Label>Student Photograph (Max 2MB)</Label>
                 <div className="flex gap-2 mb-2">
-                    {/* <Button type="button" variant={inputMode === 'upload' ? 'default' : 'outline'} onClick={() => setInputMode('upload')}>
+                    <Button type="button" variant={inputMode === 'upload' ? 'default' : 'outline'} onClick={() => setInputMode('upload')}>
                         <UploadCloud className="mr-2 h-4 w-4" /> Upload File
-                    </Button> */}
+                    </Button>
                     <Button type="button" variant={inputMode === 'webcam' ? 'default' : 'outline'} onClick={() => { setInputMode('webcam'); if (hasCameraPermission !== true) requestCameraPermission();}}>
                         <Camera className="mr-2 h-4 w-4" /> Use Webcam
                     </Button>

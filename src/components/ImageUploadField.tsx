@@ -26,7 +26,7 @@ export default function ImageUploadField({
   onChange,
   directory,
   accept = "image/*",
-  maxSizeKB = 2048,
+  maxSizeKB = 100000, //2048
   className = "",
   note=""
 }: ImageUploadFieldProps) {

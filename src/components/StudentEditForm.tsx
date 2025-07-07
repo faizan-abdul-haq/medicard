@@ -68,7 +68,7 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null); // null: not yet requested, true: granted, false: denied/error
   const [webcamError, setWebcamError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+ 
   useEffect(() => {
     setFormData({
       ...studentToEdit,
@@ -98,7 +98,9 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (value !== '') {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }  
   };
 
   const handleDateChange = (date: Date | undefined) => {
@@ -282,10 +284,9 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
                         <Label htmlFor="mobileNumber">Mobile Number (10 digits)</Label>
                         <Input id="mobileNumber" name="mobileNumber" type="tel" value={formData.mobileNumber || ''} onChange={handleChange} pattern="\d{10}" title="Mobile number must be 10 digits"/>
                     </div>
-                </div>
+                </div>  
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                    {formData.courseName}
                         <Label htmlFor="courseName">Course Name <span className="text-destructive">*</span></Label>
                         {/* <Input id="courseName" name="courseName" value={formData.courseName || ''} onChange={handleChange} required /> */}
                         <Select required value={formData.courseName} onValueChange={(value) => handleSelectChange('courseName', value)}>
@@ -297,7 +298,7 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
                     </div>
                      <div>
                         <Label htmlFor="yearOfJoining">Year of Study <span className="text-destructive">*</span></Label>
-                        <Select value={formData.yearOfJoining || 'FIRST'} onValueChange={(value) => handleSelectChange('yearOfJoining', value)} required>
+                        <Select value={formData.yearOfJoining} onValueChange={(value) => handleSelectChange('yearOfJoining', value)} required>
                         <SelectTrigger id="yearOfJoining"><SelectValue placeholder="Select year" /></SelectTrigger>
                         <SelectContent>
                             {yearsOfStudy.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
