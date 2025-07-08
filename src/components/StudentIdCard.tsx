@@ -15,13 +15,15 @@ interface StudentIdCardProps {
   settings?: CardSettingsData;
   showFlipButton?: boolean;
   initialSide?: 'front' | 'back';
+  className?: string;
 }
 
 export default function StudentIdCard({
   student,
   settings: propSettings,
   showFlipButton = true,
-  initialSide = 'front'
+  initialSide = 'front',
+  className = ''
 }: StudentIdCardProps) {
   const [isFrontVisible, setIsFrontVisible] = useState(initialSide === 'front');
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
@@ -65,17 +67,20 @@ export default function StudentIdCard({
     }
   };
 
-  const cardBaseClasses = "w-[85.6mm] h-[53.98mm] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative text-xs print:shadow-none print:border-gray-400";
-  const headerStyle = {
+  const cardBaseClasses = `w-[85.6mm] h-[53.98mm] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative print:shadow-none print:border-gray-400 ${className}`;
+  
+  const headerStyle: React.CSSProperties = {
     backgroundColor: settings.headerBackgroundColor,
     color: settings.headerTextColor,
   };
-  const importantInfoStyle = {
+  
+  const importantInfoStyle: React.CSSProperties = {
     backgroundColor: settings.importantInfoBackgroundColor,
   };
 
-  const cardDynamicStyle = {
-    //fontFamily: settings.cardFontFamily,
+  const cardDynamicStyle: React.CSSProperties = {
+    fontFamily: settings.cardFontFamily,
+    fontSize: `${settings.cardFontSize || 11}px`, // Apply dynamic font size with a fallback
   };
 
   const finalLogoUrl = logoError || !settings.logoUrl ? 'https://placehold.co/30x30.png' : settings.logoUrl;
@@ -101,8 +106,8 @@ export default function StudentIdCard({
             />
           </div>
           <div className="w-4/5 text-center leading-tight print:pr-2">
-            <p className="font-black text-[13px] tracking-tighter">{settings.collegeNameLine1}</p>
-            <p className="font-black text-[11px] tracking-tighter">{settings.collegeNameLine2}</p>
+            <p className="font-black text-[1.18em] tracking-tighter">{settings.collegeNameLine1}</p>
+            <p className="font-black text-[1em] tracking-tighter">{settings.collegeNameLine2}</p>
           </div>
         </div>
 
@@ -122,11 +127,11 @@ export default function StudentIdCard({
               />
             </div>
           </div>
-          <div className="flex-grow space-y-0.5 text-[11px]">
+          <div className="flex-grow space-y-0.5">
             <div style={{...importantInfoStyle}} className="rounded-sm mb-1 bg-primary/10">
-              <p className="uppercase font-bold text-[14px] text-[#004AAD]">{student.fullName}</p>
+              <p className="uppercase font-bold text-[1.27em] text-[#004AAD]">{student.fullName}</p>
             </div>
-            <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center">
+            <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center text-[1em]">
               <span className="font-bold text-black">DOB</span>
               <p className="font-bold text-black">{student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'dd/MM/yyyy') : 'N/A'}</p>
               <span className="font-bold text-black">Blood Grp</span>
@@ -139,14 +144,10 @@ export default function StudentIdCard({
               <p className="font-bold text-black">{student.rollNumber}</p>
               <span className="font-bold text-black">PRN No</span>
               <p className="font-bold text-black">{student.prnNumber}</p>
-              {/* <div style={{...importantInfoStyle, padding: '0.125rem'}} className="text-start rounded-sm col-span-2 mt-0.5 bg-primary/10">
-                <span className="font-bold text-gray-700">PRN No</span>
-                <p className="font-bold text-black inline ml-1">{student.prnNumber}</p>
-              </div> */}
             </div>
           </div>
         </CardContent>
-        <div className="absolute bottom-1 left-0 right-0 px-3 flex justify-between items-end text-[11px]">
+        <div className="absolute bottom-1 left-0 right-0 px-3 flex justify-between items-end text-[1em]">
           <div className="flex flex-col items-start print:pl-2">
             {settings.deanSignatureUrl && (
               <Image
@@ -155,7 +156,7 @@ export default function StudentIdCard({
                 width={60}
                 height={40}
                 className="object-contain"
-                style={{ height: 'inherit', color: 'transparent' }}
+                style={{ height: 'auto', maxHeight: '24px', color: 'transparent' }}
                 unoptimized
               />
             )}
@@ -171,7 +172,7 @@ export default function StudentIdCard({
                 width={70}
                 height={40}
                 className="object-contain"
-                style={{ height: 'inherit', color: 'transparent' }}
+                style={{ height: 'auto', maxHeight: '24px', color: 'transparent' }}
                 unoptimized
               />
             )}
@@ -190,7 +191,7 @@ export default function StudentIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <CardContent className="p-2 space-y-1 text-[10px] leading-snug">
+        <CardContent className="p-2 space-y-1 leading-snug">
         <div className="flex justify-between items-start mb-1 print:pt-2">
           {/* Left: Text info stacked top and bottom */}
           <div className="flex flex-col justify-between h-[50px] print:pl-2 print:pt-2"> {/* Adjust height as needed */}
@@ -233,16 +234,16 @@ export default function StudentIdCard({
 
           <div className='print:pl-2 print:pr-2'>
             <p style={importantInfoStyle} className="font-bold text-black p-0.5 rounded-sm inline-block">Residential Address:</p>
-            <p className="text-black font-bold text-[8.5px] leading-tight mt-0.5">{student.address || 'N/A'}</p>
+            <p className="text-black font-bold text-[0.77em] leading-tight mt-0.5">{student.address || 'N/A'}</p>
           </div>
 
-          <ol className="text-black list-decimal list-inside space-y-0.5 mt-1 text-[10px] leading-tight  print:pl-2  print:pr-2">
+          <ol className="text-black list-decimal list-inside space-y-0.5 mt-1 text-[0.9em] leading-tight print:pl-2 print:pr-2">
             {[settings.instructionLine1, settings.instructionLine2, settings.instructionLine3, settings.instructionLine4].map((inst, idx) => (
               inst && <li key={idx} className="font-bold text-black">{inst}</li>
             ))}
           </ol>
 
-          <div className="border-t text-black mt-auto pt-1 flex justify-between items-center text-[10px] absolute bottom-2 left-2 right-2">
+          <div className="border-t text-black mt-auto pt-1 flex justify-between items-center text-[0.9em] absolute bottom-2 left-2 right-2">
             <p className="font-bold text-black"><span className="font-bold">Mob:</span> {student.mobileNumber || 'N/A'}</p>
             <p className="font-bold text-black"><span className="font-bold">Office:</span> {settings.officePhoneNumber}</p>
           </div>

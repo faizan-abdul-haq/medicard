@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -8,16 +9,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from '@/components/ui/textarea';
 import StudentIdCard from '@/components/StudentIdCard';
 import ImageUploadField from '@/components/ImageUploadField';
-import SignaturePad from '@/components/SignaturePad';
 import type { CardSettingsData, StudentData } from '@/lib/types';
 import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
 import { getCardSettings, saveCardSettings } from '@/services/cardSettingsService';
 import { useToast } from '@/hooks/use-toast';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, Save, SettingsIcon, Palette, FileText, Clock, Image as ImageIcon, ArrowLeft, PenTool } from 'lucide-react';
+import { Loader2, Save, SettingsIcon, Palette, FileText, Clock, Image as ImageIcon, ArrowLeft, Type } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useRouter } from 'next/navigation';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // A mock student for preview purposes. In a real scenario, you might want a more dynamic preview.
 const mockStudentForPreview: StudentData = {
@@ -33,12 +34,24 @@ const mockStudentForPreview: StudentData = {
   photographUrl: 'https://placehold.co/80x100.png',
   registrationDate: new Date(),
   bloodGroup: 'O+',
-  emergencyContactName: 'Mr. Contact',
-  emergencyContactPhone: '1112223333',
-  allergies: 'None',
-  medicalConditions: 'Healthy',
   cardHolderSignature: ''
 };
+
+const popularFonts = [
+  "Arial, sans-serif",
+  "'Arial Black', sans-serif",
+  "'Courier New', monospace",
+  "Georgia, serif",
+  "'Helvetica Neue', sans-serif",
+  "Impact, sans-serif",
+  "'Lucida Console', monospace",
+  "'Lucida Sans Unicode', sans-serif",
+  "'Palatino Linotype', serif",
+  "Tahoma, sans-serif",
+  "'Times New Roman', serif",
+  "'Trebuchet MS', sans-serif",
+  "Verdana, sans-serif",
+];
 
 function CardSettingsContent() {
   const [settings, setSettings] = useState<CardSettingsData>(DEFAULT_CARD_SETTINGS);
@@ -65,6 +78,10 @@ function CardSettingsContent() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    setSettings(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleSelectChange = (name: string, value: string) => {
     setSettings(prev => ({ ...prev, [name]: value }));
   };
 
@@ -136,6 +153,29 @@ function CardSettingsContent() {
 
             <Card>
               <CardHeader>
+                <CardTitle className="text-xl flex items-center gap-2"><Type /> Font & Size</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label htmlFor="cardFontFamily">Font Family</Label>
+                  <Select value={settings.cardFontFamily} onValueChange={(value) => handleSelectChange('cardFontFamily', value)}>
+                    <SelectTrigger id="cardFontFamily">
+                      <SelectValue placeholder="Select font family" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {popularFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font.split(',')[0].replace(/'/g, '')}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="cardFontSize">Base Font Size (in px)</Label>
+                  <Input type="number" name="cardFontSize" value={settings.cardFontSize} onChange={handleNumberInputChange} />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle className="text-xl flex items-center gap-2"><FileText /> Header & Footer Text</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -182,11 +222,6 @@ function CardSettingsContent() {
                     directory="signatures"
                     maxSizeKB={1024}
                   />
-                  {/* <SignaturePad
-                    label="Dean's Signature"
-                    value={settings.deanSignatureUrl}
-                    onChange={(dataUrl) => setSettings(prev => ({ ...prev, deanSignatureUrl: dataUrl }))}
-                  /> */}
               </CardContent>
             </Card>
 

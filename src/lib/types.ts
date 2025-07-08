@@ -1,3 +1,4 @@
+
 export interface StudentData {
   id: string; // Firestore document ID
   photograph?: File | null; // For upload form, not stored in Firestore directly
@@ -14,10 +15,6 @@ export interface StudentData {
   registrationDate: Date; // Always ensure this is a JS Date object in the application
   printHistory?: Date[]; // Array of timestamps when the card was printed
   cardHolderSignature?: string;
-  emergencyContactName?: string;
-  emergencyContactPhone?: string;
-  allergies?: string;
-  medicalConditions?: string;
 }
 
 export interface RecentRegistration {
@@ -49,8 +46,8 @@ export interface CardSettingsData {
   instructionLine3: string;
   instructionLine4: string;
   defaultCardHolderSignatureText: string; // e.g., "Card Holder's Signature"
-  cardFontFamily: string
-
+  cardFontFamily: string;
+  cardFontSize: number; // Base font size in pixels
 }
 
 export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
@@ -69,6 +66,6 @@ export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
   instructionLine3: "It is not transferrable & is the property of GGMC & Sir J.J. Hospital.",
   instructionLine4: "Card validity: till you are at GGMC & Sir J.J. Hospital.",
   defaultCardHolderSignatureText: "Card Holder's Signature",
-  cardFontFamily:"Trebuchet MS', Helvetica, sans-serif"
-
+  cardFontFamily: "'Trebuchet MS', Helvetica, sans-serif",
+  cardFontSize: 11, // Default base font size
 };
