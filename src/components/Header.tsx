@@ -87,7 +87,7 @@ export default function Header() {
                   </li>
                   <li>
                     <Button variant="ghost" asChild className="w-full lg:w-auto justify-start lg:justify-center">
-                      <Link href="/students/bulk-upload" className="flex items-center gap-1" onClick={closeMenu}>
+                      <Link href="/bulk-upload" className="flex items-center gap-1" onClick={closeMenu}>
                         <UploadCloud size={14} /> Bulk Upload
                       </Link>
                     </Button>
