@@ -1,7 +1,8 @@
+
 'use client';
 
 import Link from 'next/link';
-import { Stethoscope, Users, UserPlus, UploadCloud, LogIn, LogOut, LayoutDashboard, Settings, Menu, X } from 'lucide-react';
+import { Stethoscope, Users, UserPlus, UploadCloud, LogIn, LogOut, LayoutDashboard, Settings, Menu, X, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePathname } from 'next/navigation';
@@ -22,18 +23,19 @@ export default function Header() {
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
+  
+  const closeMenu = () => setIsMenuOpen(false);
 
   return (
     <header className="bg-primary text-primary-foreground shadow-md print:hidden w-full">
       <div className="container mx-auto px-2 sm:px-4 py-2 flex justify-between items-center max-w-full">
-        <Link href="/" className="flex items-center gap-1 text-base sm:text-lg font-bold shrink-0">
+        <Link href="/" className="flex items-center gap-1 text-base sm:text-lg font-bold shrink-0" onClick={closeMenu}>
           <Stethoscope size={20} className="sm:h-6 sm:w-6" />
           <span>{appName}</span>
         </Link>
         <nav className="flex items-center">
           {isAuthenticated ? (
             <>
-              {/* Hamburger button for mobile and tablet (up to lg) */}
               <Button
                 variant="ghost"
                 className="lg:hidden p-1 text-primary-foreground hover:bg-primary/80"
@@ -42,7 +44,6 @@ export default function Header() {
               >
                 {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
               </Button>
-              {/* Navigation menu */}
               <div
                 className={`${
                   isMenuOpen ? 'block' : 'hidden'
@@ -50,80 +51,66 @@ export default function Header() {
               >
                 <ul className="flex flex-col lg:flex-row space-y-1 lg:space-y-0 lg:space-x-1">
                   <li>
-                    <Button
-                      variant="ghost"
-                      asChild
-                      className="w-full lg:w-auto text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground px-2 py-1 text-xs sm:text-sm justify-start lg:justify-center"
-                    >
-                      <Link href="/" className="flex items-center gap-1">
-                        <LayoutDashboard size={14} className="sm:h-4 sm:w-4" /> Dashboard
+                    <Button variant="ghost" asChild className="w-full lg:w-auto justify-start lg:justify-center">
+                      <Link href="/" className="flex items-center gap-1" onClick={closeMenu}>
+                        <LayoutDashboard size={14} /> Dashboard
                       </Link>
                     </Button>
                   </li>
                   <li>
-                    <Button
-                      variant="ghost"
-                      asChild
-                      className="w-full lg:w-auto text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground px-2 py-1 text-xs sm:text-sm justify-start lg:justify-center"
-                    >
-                      <Link href="/register" className="flex items-center gap-1">
-                        <UserPlus size={14} className="sm:h-4 sm:w-4" /> Register
+                    <Button variant="ghost" asChild className="w-full lg:w-auto justify-start lg:justify-center">
+                      <Link href="/register" className="flex items-center gap-1" onClick={closeMenu}>
+                        <UserPlus size={14} /> Register Student
                       </Link>
                     </Button>
                   </li>
                   <li>
-                    <Button
-                      variant="ghost"
-                      asChild
-                      className="w-full lg:w-auto text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground px-2 py-1 text-xs sm:text-sm justify-start lg:justify-center"
-                    >
-                      <Link href="/students/list" className="flex items-center gap-1">
-                        <Users size={14} className="sm:h-4 sm:w-4" /> Students
+                    <Button variant="ghost" asChild className="w-full lg:w-auto justify-start lg:justify-center">
+                      <Link href="/students/list" className="flex items-center gap-1" onClick={closeMenu}>
+                        <Users size={14} /> Students
+                      </Link>
+                    </Button>
+                  </li>
+                   <li>
+                    <Button variant="ghost" asChild className="w-full lg:w-auto justify-start lg:justify-center">
+                      <Link href="/employees/register" className="flex items-center gap-1" onClick={closeMenu}>
+                        <Briefcase size={14} /> Register Employee
                       </Link>
                     </Button>
                   </li>
                   <li>
-                    <Button
-                      variant="ghost"
-                      asChild
-                      className="w-full lg:w-auto text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground px-2 py-1 text-xs sm:text-sm justify-start lg:justify-center"
-                    >
-                      <Link href="/students/bulk-upload" className="flex items-center gap-1">
-                        <UploadCloud size={14} className="sm:h-4 sm:w-4" /> Bulk Upload
+                    <Button variant="ghost" asChild className="w-full lg:w-auto justify-start lg:justify-center">
+                      <Link href="/employees/list" className="flex items-center gap-1" onClick={closeMenu}>
+                        <Users size={14} /> Employees
                       </Link>
                     </Button>
                   </li>
                   <li>
-                    <Button
-                      variant="ghost"
-                      asChild
-                      className="w-full lg:w-auto text-primary-foreground hover:bg-primary/80 hover:text-accent-foreground px-2 py-1 text-xs sm:text-sm justify-start lg:justify-center"
-                    >
-                      <Link href="/card-settings" className="flex items-center gap-1">
-                        <Settings size={14} className="sm:h-4 sm:w-4" /> Card Settings
+                    <Button variant="ghost" asChild className="w-full lg:w-auto justify-start lg:justify-center">
+                      <Link href="/students/bulk-upload" className="flex items-center gap-1" onClick={closeMenu}>
+                        <UploadCloud size={14} /> Bulk Upload
                       </Link>
                     </Button>
                   </li>
                   <li>
-                    <Button
-                      variant="ghost"
-                      onClick={logout}
-                      className="w-full lg:w-auto text-primary-foreground hover:bg-red-500 hover:text-white px-2 py-1 text-xs sm:text-sm justify-start lg:justify-center"
-                    >
-                      <LogOut size={14} className="mr-1 sm:h-4 sm:w-4" /> Logout
+                    <Button variant="ghost" asChild className="w-full lg:w-auto justify-start lg:justify-center">
+                      <Link href="/card-settings" className="flex items-center gap-1" onClick={closeMenu}>
+                        <Settings size={14} /> Card Settings
+                      </Link>
+                    </Button>
+                  </li>
+                  <li>
+                    <Button variant="ghost" onClick={() => { logout(); closeMenu(); }} className="w-full lg:w-auto justify-start lg:justify-center hover:bg-red-500 hover:text-white">
+                      <LogOut size={14} className="mr-1" /> Logout
                     </Button>
                   </li>
                 </ul>
               </div>
             </>
           ) : (
-            <Button
-              variant="outline"
-              asChild
-              className="text-primary-foreground border-primary-foreground hover:bg-primary/80 hover:text-accent-foreground px-2 sm:px-3 py-1 text-xs sm:text-sm"
-            >
+            <Button variant="outline" asChild className="text-primary-foreground border-primary-foreground hover:bg-primary/80 hover:text-accent-foreground">
               <Link href="/login" className="flex items-center gap-1">
-                <LogIn size={14} className="sm:h-4 sm:w-4" /> Login
+                <LogIn size={14} /> Login
               </Link>
             </Button>
           )}

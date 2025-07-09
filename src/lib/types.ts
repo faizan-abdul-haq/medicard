@@ -17,12 +17,37 @@ export interface StudentData {
   cardHolderSignature?: string;
 }
 
+export interface EmployeeData {
+  id: string; // Firestore document ID
+  photograph?: File | null; // For upload form
+  photographUrl?: string; // URL to the photo from Storage
+  fullName: string;
+  address: string;
+  dateOfJoining: Date;
+  mobileNumber: string;
+  employeeId: string; // Should be unique
+  department: string;
+  designation: string;
+  bloodGroup?: string;
+  registrationDate: Date; // Timestamp of record creation
+  printHistory?: Date[];
+  cardHolderSignature?: string;
+}
+
 export interface RecentRegistration {
   name: string;
   date: string; // Formatted date string
   profileLink: string;
   photographUrl?: string;
 }
+
+export interface RecentEmployeeRegistration {
+  name: string;
+  date: string; // Formatted date string
+  profileLink: string;
+  photographUrl?: string;
+}
+
 
 // Used for print preview page query parameters
 export interface PrintPreviewParams {
@@ -66,6 +91,6 @@ export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
   instructionLine3: "It is not transferrable & is the property of GGMC & Sir J.J. Hospital.",
   instructionLine4: "Card validity: till you are at GGMC & Sir J.J. Hospital.",
   defaultCardHolderSignatureText: "Card Holder's Signature",
-  cardFontFamily: "'Trebuchet MS', Helvetica, sans-serif",
+  cardFontFamily: "'Trebuchet MS', sans-serif",
   cardFontSize: 11, // Default base font size
 };

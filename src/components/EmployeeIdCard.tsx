@@ -1,0 +1,184 @@
+
+'use client';
+
+import type { EmployeeData, CardSettingsData } from '@/lib/types';
+import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
+import Image from 'next/image';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Repeat, QrCodeIcon } from 'lucide-react';
+import { format, isValid } from 'date-fns';
+import { useState, useEffect } from 'react';
+
+interface EmployeeIdCardProps {
+  employee: EmployeeData;
+  settings?: CardSettingsData;
+  showFlipButton?: boolean;
+  initialSide?: 'front' | 'back';
+  className?: string;
+}
+
+export default function EmployeeIdCard({
+  employee,
+  settings: propSettings,
+  showFlipButton = true,
+  initialSide = 'front',
+  className,
+}: EmployeeIdCardProps) {
+  const [isFrontVisible, setIsFrontVisible] = useState(initialSide === 'front');
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [logoError, setLogoError] = useState(false);
+
+  const settings = { ...DEFAULT_CARD_SETTINGS, ...propSettings };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && employee.employeeId) {
+      const profileUrl = `${window.location.origin}/employees/${employee.id}`;
+      setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(profileUrl)}&margin=0`);
+    }
+  }, [employee.id, employee.employeeId]);
+
+  useEffect(() => {
+    setIsFrontVisible(initialSide === 'front');
+  }, [initialSide]);
+
+  useEffect(() => {
+    setLogoError(false);
+  }, [settings.logoUrl]);
+
+  const toggleCardSide = () => {
+    if (showFlipButton) {
+      setIsFrontVisible(!isFrontVisible);
+    }
+  };
+
+  const cardBaseClasses = `w-[85.6mm] h-[53.98mm] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative print:shadow-none print:border-gray-400 ${className || ''}`;
+  
+  const headerStyle: React.CSSProperties = {
+    backgroundColor: settings.headerBackgroundColor,
+    color: settings.headerTextColor,
+  };
+  
+  const importantInfoStyle: React.CSSProperties = {
+    backgroundColor: settings.importantInfoBackgroundColor,
+  };
+
+  const cardDynamicStyle: React.CSSProperties = {
+    fontFamily: settings.cardFontFamily,
+    fontSize: `${settings.cardFontSize || 11}px`,
+  };
+
+  const finalLogoUrl = logoError || !settings.logoUrl ? 'https://placehold.co/30x30.png' : settings.logoUrl;
+
+  if (isFrontVisible) {
+    return (
+      <Card className={cardBaseClasses} style={cardDynamicStyle}>
+        {showFlipButton && (
+          <Button variant="ghost" size="icon" onClick={toggleCardSide} className="absolute top-1 right-1 z-10 h-6 w-6 print:hidden">
+            <Repeat size={16} />
+          </Button>
+        )}
+        <div style={headerStyle} className="pt-1.5 pr-1.5 pl-1.5 flex items-center print:pt-2">
+          <div className="w-1/5 flex justify-center items-center print:pl-2">
+            <Image 
+              src={finalLogoUrl} 
+              alt="Company Logo" 
+              width={50} 
+              height={40} 
+              data-ai-hint="company logo" 
+              onError={() => setLogoError(true)}
+              unoptimized
+            />
+          </div>
+          <div className="w-4/5 text-center leading-tight print:pr-2">
+            <p className="font-black text-[1.18em] tracking-tighter">{settings.collegeNameLine1}</p>
+            <p className="font-black text-[1em] tracking-tighter">{settings.collegeNameLine2}</p>
+          </div>
+        </div>
+
+        <CardContent className="p-1.5 flex flex-row gap-4 print:pl-2">
+          <div className="h-[28mm] w-[23mm] flex-shrink-0 mt-1">
+            <div className="w-full h-full relative">
+              <Image
+                src={employee.photographUrl || "https://placehold.co/80x80.png"}
+                alt={employee.fullName}
+                fill
+                className="object-cover border-2 border-primary rounded"
+                data-ai-hint="employee portrait"
+                unoptimized
+              />
+            </div>
+          </div>
+          <div className="flex-grow space-y-0.5">
+            <div style={importantInfoStyle} className="rounded-sm mb-1 bg-primary/10">
+              <p className="uppercase font-bold text-[1.27em] text-primary">{employee.fullName}</p>
+            </div>
+            <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center text-[1em]">
+              <span className="font-bold">Designation</span>
+              <p>{employee.designation}</p>
+              <span className="font-bold">Department</span>
+              <p>{employee.department}</p>
+              <span className="font-bold">Joining Dt.</span>
+              <p>{employee.dateOfJoining && isValid(new Date(employee.dateOfJoining)) ? format(new Date(employee.dateOfJoining), 'dd/MM/yyyy') : 'N/A'}</p>
+              <span className="font-bold">Blood Grp</span>
+              <p>{employee.bloodGroup || 'N/A'}</p>
+              <span className="font-bold">Emp. ID</span>
+              <p>{employee.employeeId}</p>
+            </div>
+          </div>
+        </CardContent>
+        <div className="absolute bottom-1 left-0 right-0 px-3 flex justify-between items-end text-[1em]">
+          <div className="flex flex-col items-start print:pl-2">
+            {settings.deanSignatureUrl && (
+              <Image src={settings.deanSignatureUrl} alt="Authority Signature" width={60} height={40} className="object-contain h-auto max-h-[24px]" unoptimized />
+            )}
+            <p className="font-bold text-primary mt-0.5">{settings.deanTitle.toUpperCase()}</p>
+          </div>          
+          <div className="text-right print:pr-2">
+            <div className="w-30 h-6 text-black mb-0.5 flex justify-end">
+              {employee.cardHolderSignature && (
+                <Image src={employee.cardHolderSignature} alt="" width={70} height={40} className="object-contain h-auto max-h-[24px]" unoptimized />
+              )}
+            </div>
+            <p className="font-bold text-primary">{settings.defaultCardHolderSignatureText}</p>
+          </div>
+        </div>
+      </Card>
+    );
+  } else {
+    // Back Side
+    return (
+      <Card className={cardBaseClasses} style={cardDynamicStyle}>
+        {showFlipButton && (
+          <Button variant="ghost" size="icon" onClick={toggleCardSide} className="absolute top-1 right-1 z-10 h-6 w-6 print:hidden">
+            <Repeat size={16} />
+          </Button>
+        )}
+        <CardContent className="p-2 space-y-1 leading-snug">
+          <div className="flex justify-end items-start mb-1 print:pt-2">
+            {qrCodeUrl ? (
+              <Image src={qrCodeUrl} alt="QR Code" width={50} height={50} data-ai-hint="qr code" unoptimized className="border border-gray-300" />
+            ) : (
+              <div className="w-[50px] h-[50px] flex items-center justify-center border border-gray-300">
+                <QrCodeIcon size={30} />
+              </div>
+            )}
+          </div>
+          <div className='print:pl-2 print:pr-2'>
+            <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">Residential Address:</p>
+            <p className="font-bold text-[0.77em] leading-tight mt-0.5">{employee.address || 'N/A'}</p>
+          </div>
+          <ol className="list-decimal list-inside space-y-0.5 mt-1 text-[0.9em] leading-tight print:pl-2 print:pr-2">
+            {[settings.instructionLine1, settings.instructionLine2, settings.instructionLine3, settings.instructionLine4].map((inst, idx) => (
+              inst && <li key={idx} className="font-bold">{inst}</li>
+            ))}
+          </ol>
+          <div className="border-t mt-auto pt-1 flex justify-between items-center text-[0.9em] absolute bottom-2 left-2 right-2">
+            <p className="font-bold">Mob: {employee.mobileNumber || 'N/A'}</p>
+            <p className="font-bold">Office: {settings.officePhoneNumber}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+}

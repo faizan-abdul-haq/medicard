@@ -1,0 +1,187 @@
+
+'use server';
+
+import { db, storage } from '@/lib/firebase';
+import type { EmployeeData } from '@/lib/types';
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  doc, 
+  getDoc, 
+  query, 
+  where, 
+  Timestamp,
+  writeBatch,
+  serverTimestamp,
+  updateDoc,
+  arrayUnion,
+  deleteDoc
+} from 'firebase/firestore';
+import { uploadStudentPhoto } from './photoUploadService'; // Can be reused
+
+const EMPLOYEES_COLLECTION = 'employees';
+
+const mapFirestoreDocToEmployeeData = (docData: any, id: string): EmployeeData => {
+  const data = docData as Omit<EmployeeData, 'id' | 'dateOfJoining' | 'registrationDate' | 'printHistory'> & {
+    dateOfJoining: Timestamp | Date | string;
+    registrationDate: Timestamp | Date | string;
+    printHistory?: Array<Timestamp | Date | string>;
+  };
+  
+  const parseDate = (dateField: any): Date => {
+    if (dateField instanceof Timestamp) return dateField.toDate();
+    if (dateField instanceof Date) return dateField;
+    const parsed = new Date(dateField);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  };
+
+  return {
+    id,
+    fullName: data.fullName,
+    address: data.address,
+    mobileNumber: data.mobileNumber,
+    employeeId: data.employeeId,
+    department: data.department,
+    designation: data.designation,
+    dateOfJoining: parseDate(data.dateOfJoining),
+    registrationDate: parseDate(data.registrationDate),
+    bloodGroup: data.bloodGroup || undefined,
+    photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
+    printHistory: data.printHistory?.map(parseDate).sort((a,b) => b.getTime() - a.getTime()),
+    cardHolderSignature: data.cardHolderSignature
+  };
+};
+
+export async function getEmployees(): Promise<EmployeeData[]> {
+  try {
+    const employeesCollection = collection(db, EMPLOYEES_COLLECTION);
+    const employeeSnapshot = await getDocs(employeesCollection);
+    return employeeSnapshot.docs.map(doc => mapFirestoreDocToEmployeeData(doc.data(), doc.id));
+  } catch (error) {
+    console.error("Error fetching employees: ", error);
+    throw new Error("Failed to fetch employees from Firestore.");
+  }
+}
+
+export async function getEmployeeById(id: string): Promise<EmployeeData | null> {
+  try {
+    const employeeDocRef = doc(db, EMPLOYEES_COLLECTION, id);
+    let employeeSnap = await getDoc(employeeDocRef);
+
+    if (employeeSnap.exists()) {
+      return mapFirestoreDocToEmployeeData(employeeSnap.data(), employeeSnap.id);
+    } else {
+      const q = query(collection(db, EMPLOYEES_COLLECTION), where("employeeId", "==", id));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const employeeDoc = querySnapshot.docs[0];
+        return mapFirestoreDocToEmployeeData(employeeDoc.data(), employeeDoc.id);
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error(`Error fetching employee by ID ${id}: `, error);
+    throw new Error("Failed to fetch employee data from Firestore.");
+  }
+}
+
+async function uploadEmployeePhotograph(photoFile: File, employeeId: string): Promise<string> {
+    const filePath = `employee_photos/${employeeId}/${Date.now()}_${photoFile.name}`;
+    // Reusing the generic uploader service
+    return uploadStudentPhoto(photoFile, filePath);
+}
+
+async function deletePhotograph(photographUrl: string): Promise<void> {
+  if (!photographUrl || photographUrl.includes("placehold.co")) {
+    return;
+  }
+  // Logic to delete from Supabase/Firebase Storage
+}
+
+
+export async function registerEmployee(
+  employeeData: Omit<EmployeeData, 'id' | 'registrationDate' | 'photographUrl' | 'printHistory' | 'photograph'> & { photograph?: File | null, dateOfJoining: Date, photographUrl?: string | null }
+): Promise<EmployeeData> {
+  try {
+    const q = query(collection(db, EMPLOYEES_COLLECTION), where("employeeId", "==", employeeData.employeeId));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      throw new Error(`Employee with ID ${employeeData.employeeId} already exists.`);
+    }
+
+    let finalPhotographUrl = employeeData.photographUrl || "https://placehold.co/80x100.png";
+    if (employeeData.photograph instanceof File) {
+      finalPhotographUrl = await uploadEmployeePhotograph(employeeData.photograph, employeeData.employeeId);
+    }
+    
+    const docDataToSave: any = {
+      fullName: employeeData.fullName,
+      address: employeeData.address || 'N/A',
+      dateOfJoining: Timestamp.fromDate(employeeData.dateOfJoining),
+      mobileNumber: employeeData.mobileNumber || 'N/A',
+      employeeId: employeeData.employeeId,
+      department: employeeData.department,
+      designation: employeeData.designation,
+      photographUrl: finalPhotographUrl,
+      registrationDate: serverTimestamp(),
+      printHistory: [],
+      cardHolderSignature: employeeData.cardHolderSignature
+    };
+    if (employeeData.bloodGroup) docDataToSave.bloodGroup = employeeData.bloodGroup;
+
+    const docRef = await addDoc(collection(db, EMPLOYEES_COLLECTION), docDataToSave);
+    const newDocSnap = await getDoc(docRef);
+    if (!newDocSnap.exists()) throw new Error("Failed to retrieve newly created employee.");
+    
+    return mapFirestoreDocToEmployeeData(newDocSnap.data(), newDocSnap.id);
+
+  } catch (error) {
+    console.error("Error registering employee: ", error);
+    throw new Error(error instanceof Error ? error.message : "An unexpected error occurred during registration.");
+  }
+}
+
+export async function updateEmployee(
+  employeeDocId: string,
+  dataToUpdate: Partial<Omit<EmployeeData, 'id' | 'registrationDate' | 'photograph'>>,
+  newPhotographFile?: File | null,
+  existingPhotographUrl?: string | null
+): Promise<EmployeeData> {
+  try {
+    const employeeDocRef = doc(db, EMPLOYEES_COLLECTION, employeeDocId);
+    let finalPhotographUrl = existingPhotographUrl;
+
+    if (newPhotographFile instanceof File) {
+      if (existingPhotographUrl && !existingPhotographUrl.includes("placehold.co")) {
+        await deletePhotograph(existingPhotographUrl);
+      }
+      finalPhotographUrl = await uploadEmployeePhotograph(newPhotographFile, dataToUpdate.employeeId!);
+    }
+    
+    const updatePayload: any = { ...dataToUpdate };
+    if (finalPhotographUrl !== undefined) updatePayload.photographUrl = finalPhotographUrl;
+    if (dataToUpdate.dateOfJoining) updatePayload.dateOfJoining = Timestamp.fromDate(new Date(dataToUpdate.dateOfJoining));
+    
+    await updateDoc(employeeDocRef, updatePayload);
+
+    const updatedDocSnap = await getDoc(employeeDocRef);
+    if (!updatedDocSnap.exists()) throw new Error("Failed to retrieve updated employee.");
+    return mapFirestoreDocToEmployeeData(updatedDocSnap.data(), updatedDocSnap.id);
+
+  } catch (error) {
+    console.error("Error updating employee: ", error);
+    throw new Error("Failed to update employee details.");
+  }
+}
+
+export async function deleteEmployee(employeeDocId: string, photographUrl?: string): Promise<void> {
+  try {
+    const employeeDocRef = doc(db, EMPLOYEES_COLLECTION, employeeDocId);
+    if (photographUrl) await deletePhotograph(photographUrl);
+    await deleteDoc(employeeDocRef);
+  } catch (error) {
+    console.error("Error deleting employee: ", error);
+    throw new Error("Failed to delete employee.");
+  }
+}
