@@ -187,3 +187,52 @@ export async function deleteEmployee(employeeDocId: string, photographUrl?: stri
     throw new Error("Failed to delete employee.");
   }
 }
+
+export async function bulkRegisterEmployees(employeesData: Partial<EmployeeData>[]): Promise<{ successCount: number; errors: string[] }> {
+  const batch = writeBatch(db);
+  const errors: string[] = [];
+  let successCount = 0;
+
+  const idsInBatch = new Set<string>();
+
+  for (const data of employeesData) {
+    if (!data.employeeId) {
+      errors.push(`Skipping employee with missing ID: ${data.fullName || 'Unknown Name'}`);
+      continue;
+    }
+    if (idsInBatch.has(data.employeeId)) {
+      errors.push(`Duplicate Employee ID ${data.employeeId} in this batch for ${data.fullName}. Skipped.`);
+      continue;
+    }
+
+    const q = query(collection(db, EMPLOYEES_COLLECTION), where("employeeId", "==", data.employeeId));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      errors.push(`Employee with ID ${data.employeeId} (${data.fullName || 'N/A'}) already exists. Skipped.`);
+      continue;
+    }
+    
+    const employeeDocRef = doc(collection(db, EMPLOYEES_COLLECTION));
+    idsInBatch.add(data.employeeId);
+
+    const employeeToSave: any = {
+      ...data,
+      dateOfJoining: data.dateOfJoining ? Timestamp.fromDate(new Date(data.dateOfJoining)) : Timestamp.now(),
+      registrationDate: serverTimestamp(),
+      printHistory: [],
+      photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
+    };
+
+    batch.set(employeeDocRef, employeeToSave);
+    successCount++;
+  }
+
+  try {
+    await batch.commit();
+    return { successCount, errors };
+  } catch (error) {
+    console.error("Error committing bulk employee registration: ", error);
+    errors.push(`Batch commit failed: ${error instanceof Error ? error.message : String(error)}`);
+    return { successCount: 0, errors };
+  }
+}

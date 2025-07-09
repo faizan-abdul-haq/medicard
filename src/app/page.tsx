@@ -205,6 +205,7 @@ function DashboardContent() {
         </CardHeader>
         <CardContent className="flex flex-wrap justify-center gap-4">
            <QuickAction href="/students/bulk-upload" icon={<UploadCloud className="mr-2" />} label="Bulk Upload Students" />
+           <QuickAction href="/employees/bulk-upload" icon={<UploadCloud className="mr-2" />} label="Bulk Upload Employees" />
            <QuickAction href="/card-settings/student" icon={<SettingsIcon className="mr-2" />} label="Student Card Settings" />
            <QuickAction href="/card-settings/faculty" icon={<SettingsIcon className="mr-2" />} label="Faculty Card Settings" />
            <QuickAction href="/card-settings/staff" icon={<SettingsIcon className="mr-2" />} label="Staff Card Settings" />
