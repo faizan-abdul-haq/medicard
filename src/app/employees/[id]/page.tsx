@@ -169,12 +169,13 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
 }
 
 export default function EmployeeProfilePage({ params }: { params: { id: string } }) {
+  const resolvedParams = React.use(params as unknown as Promise<{ id: string }>);
   const { isLoading: authIsLoading } = useAuth();
   if (authIsLoading) return <div className="flex justify-center items-center min-h-screen"><p>Loading authentication...</p></div>;
   
   return (
     <ProtectedRoute>
-      <EmployeeProfileContent employeeId={params.id} />
+      <EmployeeProfileContent employeeId={resolvedParams.id} />
     </ProtectedRoute>
   );
 }
