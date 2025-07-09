@@ -1,11 +1,14 @@
+
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import StudentIdCard from '@/components/StudentIdCard';
-import type { StudentData, CardSettingsData } from '@/lib/types';
+import EmployeeIdCard from '@/components/EmployeeIdCard';
+import type { StudentData, EmployeeData, CardSettingsData } from '@/lib/types';
 import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
 import { getStudentById, recordCardPrint } from '@/services/studentService';
+import { getEmployeeById } from '@/services/employeeService'; // Assuming no print recording for employees yet
 import { getCardSettings } from '@/services/cardSettingsService';
 import { Button } from '@/components/ui/button';
 import { Printer, Loader2, AlertTriangle } from 'lucide-react';
@@ -13,14 +16,18 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
+type PrintableItem = 
+  | { type: 'student', data: StudentData, settings: CardSettingsData }
+  | { type: 'employee', data: EmployeeData, settings: CardSettingsData };
+
 function PrintPreviewContent() {
   const searchParams = useSearchParams();
   const studentIdsParam = searchParams.get('studentIds');
+  const employeeIdsParam = searchParams.get('employeeIds');
 
   const { toast } = useToast();
 
-  const [studentsToPrint, setStudentsToPrint] = useState<StudentData[]>([]);
-  const [cardSettings, setCardSettings] = useState<CardSettingsData>(DEFAULT_CARD_SETTINGS);
+  const [itemsToPrint, setItemsToPrint] = useState<PrintableItem[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated, isLoading: authIsLoading } = useAuth();
@@ -37,66 +44,75 @@ function PrintPreviewContent() {
     async function loadInitialData() {
       setIsLoadingData(true);
       setError(null);
-      let fetchedStudents: StudentData[] = [];
+      const fetchedItems: PrintableItem[] = [];
       const errorsAcc: string[] = [];
 
       try {
-        const settings = await getCardSettings();
-        setCardSettings(settings);
-
-        if (!studentIdsParam) {
-          errorsAcc.push("No student IDs provided for printing.");
-        } else {
-          const ids = studentIdsParam
-          .split(',')
-          .map(id => id.trim().split('?')[0]); // Clean input
+        if (studentIdsParam) {
+          const studentSettings = await getCardSettings('student');
+          const ids = studentIdsParam.split(',').map(id => id.trim());
           const printRecordingPromises: Promise<void>[] = [];
 
           for (const id of ids) {
             try {
               const student = await getStudentById(id.trim());
               if (student) {
-                fetchedStudents.push(student);
+                fetchedItems.push({ type: 'student', data: student, settings: studentSettings });
                 printRecordingPromises.push(recordCardPrint(student.prnNumber));
               } else {
                 errorsAcc.push(`Student with PRN ${id} not found.`);
               }
             } catch (err) {
-              console.error(`Failed to fetch student ${id}:`, err);
               errorsAcc.push(`Failed to load data for student PRN ${id}.`);
             }
           }
           await Promise.all(printRecordingPromises);
         }
+        
+        if (employeeIdsParam) {
+           const facultySettings = await getCardSettings('faculty');
+           const staffSettings = await getCardSettings('staff');
+           const ids = employeeIdsParam.split(',').map(id => id.trim());
+
+           for (const id of ids) {
+              try {
+                const employee = await getEmployeeById(id);
+                if (employee) {
+                  const settings = employee.employeeType === 'FACULTY' ? facultySettings : staffSettings;
+                  fetchedItems.push({ type: 'employee', data: employee, settings });
+                } else {
+                  errorsAcc.push(`Employee with ID ${id} not found.`);
+                }
+              } catch(err) {
+                 errorsAcc.push(`Failed to load data for employee ID ${id}.`);
+              }
+           }
+        }
+
       } catch (settingsError) {
         toast({ title: "Error Loading Settings", description: "Failed to fetch card settings. Using defaults.", variant: "destructive" });
-        setCardSettings(DEFAULT_CARD_SETTINGS);
       } finally {
         if (errorsAcc.length > 0) {
           setError(errorsAcc.join(' '));
         }
-        setStudentsToPrint(fetchedStudents);
+        setItemsToPrint(fetchedItems);
         setIsLoadingData(false);
       }
     }
 
     loadInitialData();
-  }, [studentIdsParam, isAuthenticated, authIsLoading, toast]);
+  }, [studentIdsParam, employeeIdsParam, isAuthenticated, authIsLoading, toast]);
 
   const handlePrint = () => {
-    console.log('Print button clicked');
-    setTimeout(() => {
-      window.print();
-    }, 200);
+    setTimeout(() => { window.print(); }, 200);
   };
-  
 
   if (authIsLoading || isLoadingData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 print:hidden">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
         <p className="text-lg text-muted-foreground">
-          {authIsLoading ? "Verifying authentication..." : isLoadingData ? "Loading cards and settings..." : "Preparing preview..."}
+          {authIsLoading ? "Verifying authentication..." : "Loading cards..."}
         </p>
       </div>
     );
@@ -113,68 +129,60 @@ function PrintPreviewContent() {
     );
   }
 
-  if (studentsToPrint.length === 0 && !isLoadingData) {
+  if (itemsToPrint.length === 0 && !isLoadingData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 print:hidden text-center">
         <AlertTriangle className="h-12 w-12 text-yellow-500 mb-4" />
         <h2 className="text-xl font-semibold text-yellow-600 mb-2">No Cards to Print</h2>
-        <p className="text-muted-foreground">No student data found for the provided IDs, or no IDs were specified.</p>
+        <p className="text-muted-foreground">No valid student or employee data found for the provided IDs.</p>
         <Button onClick={() => window.history.back()} variant="outline" className="mt-6">Go Back</Button>
       </div>
     );
   }
+
   return (
     <div className="print-preview-container print:m-0 print:p-0">
       <p className="text-center text-sm text-muted-foreground mt-2 print:hidden">
-          For accurate CR80 size (85.6mm x 53.98mm), set print margins to "None" and scale to "100%" in the print dialog.
+        For accurate CR80 size (85.6mm x 53.98mm), set print margins to "None" and scale to "100%" in the print dialog.
       </p>
       <div className="print:hidden flex justify-center my-4">
         <Button onClick={handlePrint} size="lg" className="bg-accent hover:bg-accent/80">
-          <Printer className="mr-2 h-5 w-5" /> Print All Cards ({studentsToPrint.length})
+          <Printer className="mr-2 h-5 w-5" /> Print All Cards ({itemsToPrint.length})
         </Button>
       </div>
 
       <div className="print:block">
-        {studentsToPrint.flatMap((student, studentIdx) => {
-          const frontIndex = studentIdx * 2;
+        {itemsToPrint.flatMap((item, itemIdx) => {
+          const frontIndex = itemIdx * 2;
           const backIndex = frontIndex + 1;
-          const totalSides = studentsToPrint.length * 2;
+          const totalSides = itemsToPrint.length * 2;
+          
+          const commonFrontClasses = `print:id-card flex justify-center items-center avoid-break-inside ${frontIndex < totalSides - 1 ? 'print:break-after-page' : ''}`;
+          const commonBackClasses = `print:id-card flex justify-center items-center avoid-break-inside ${backIndex < totalSides - 1 ? 'print:break-after-page' : ''}`;
 
-          return [
-            <div
-              key={`${student.prnNumber}-front`}
-              className={`print:id-card flex justify-center items-center avoid-break-inside ${
-                frontIndex < totalSides - 1 ? 'print:break-after-page' : ''
-              }`}
-            >
-              <StudentIdCard
-                student={student}
-                settings={cardSettings}
-                showFlipButton={false}
-                initialSide="front"
-                className="student-id-card" // Add explicit class
-              />
-            </div>,
-            <div
-              key={`${student.prnNumber}-back`}
-              className={`print:id-card flex justify-center items-center avoid-break-inside ${
-                backIndex < totalSides - 1 ? 'print:break-after-page' : ''
-              }`}
-            >
-              <StudentIdCard
-                student={student}
-                settings={cardSettings}
-                showFlipButton={false}
-                initialSide="back"
-                className="student-id-card" // Add explicit class
-              />
-            </div>,
-          ];
+          if (item.type === 'student') {
+            return [
+              <div key={`${item.data.prnNumber}-front`} className={commonFrontClasses}>
+                <StudentIdCard student={item.data} settings={item.settings} showFlipButton={false} initialSide="front" className="student-id-card" />
+              </div>,
+              <div key={`${item.data.prnNumber}-back`} className={commonBackClasses}>
+                <StudentIdCard student={item.data} settings={item.settings} showFlipButton={false} initialSide="back" className="student-id-card" />
+              </div>
+            ];
+          } else { // item.type === 'employee'
+             return [
+              <div key={`${item.data.employeeId}-front`} className={commonFrontClasses}>
+                <EmployeeIdCard employee={item.data} settings={item.settings} showFlipButton={false} initialSide="front" className="employee-id-card" />
+              </div>,
+              <div key={`${item.data.employeeId}-back`} className={commonBackClasses}>
+                <EmployeeIdCard employee={item.data} settings={item.settings} showFlipButton={false} initialSide="back" className="employee-id-card" />
+              </div>
+            ];
+          }
         })}
       </div>
     </div>
   );
-  
 }
 
 function PrintPreviewPageWrapper() {
@@ -183,8 +191,7 @@ function PrintPreviewPageWrapper() {
   if (authIsLoadingFromContext) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-2 text-muted-foreground">Initializing...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="ml-2 text-muted-foreground">Initializing...</p>
       </div>
     );
   }
@@ -193,8 +200,7 @@ function PrintPreviewPageWrapper() {
     <ProtectedRoute>
       <Suspense fallback={
           <div className="flex justify-center items-center min-h-screen">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="ml-2 text-muted-foreground">Loading preview...</p>
+            <Loader2 className="h-8 w-8 animate-spin text-primary" /><p className="ml-2 text-muted-foreground">Loading preview...</p>
           </div>
         }>
         <PrintPreviewContent />
@@ -202,4 +208,5 @@ function PrintPreviewPageWrapper() {
     </ProtectedRoute>
   );
 }
+
 export default PrintPreviewPageWrapper;

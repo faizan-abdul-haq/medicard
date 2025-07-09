@@ -57,10 +57,10 @@ function DashboardContent() {
     async function fetchData() {
       setIsLoading(true);
       try {
-        const [students, employees, settings] = await Promise.all([
+        const [students, employees, studentSettings] = await Promise.all([
           getStudents(),
           getEmployees(),
-          getCardSettings()
+          getCardSettings('student') // Fetch student settings for stats
         ]);
 
         // Student Stats
@@ -72,7 +72,7 @@ function DashboardContent() {
         const uniqueCourses = new Set<string>();
 
         students.forEach(student => {
-          const expiryDate = addMonths(new Date(student.registrationDate), settings.validityPeriodMonths);
+          const expiryDate = addMonths(new Date(student.registrationDate), studentSettings.validityPeriodMonths);
           if (isBefore(now, expiryDate)) activeCount++;
           if (isBefore(expiryDate, nextMonthEnd) && isBefore(nextMonthStart, expiryDate)) expiringCount++;
           if (student.courseName) uniqueCourses.add(student.courseName);
@@ -103,7 +103,7 @@ function DashboardContent() {
 
         setStats([
           { title: "Total Students", value: students.length.toString(), description: "Currently in system", icon: <Users className="h-5 w-5" />, colorClass: "text-blue-500" },
-          { title: "Active ID Cards", value: activeCount.toString(), description: `${settings.validityPeriodMonths}-month validity`, icon: <BadgeCheck className="h-5 w-5" />, colorClass: "text-green-600" },
+          { title: "Active ID Cards", value: activeCount.toString(), description: `${studentSettings.validityPeriodMonths}-month validity`, icon: <BadgeCheck className="h-5 w-5" />, colorClass: "text-green-600" },
           { title: "Expiring Next Month", value: expiringCount.toString(), description: "Student cards expiring", icon: <CalendarClock className="h-5 w-5" />, colorClass: "text-orange-500" },
           { title: "Total Employees", value: employees.length.toString(), description: "Currently in system", icon: <Briefcase className="h-5 w-5" />, colorClass: "text-indigo-500" },
         ]);
@@ -205,7 +205,9 @@ function DashboardContent() {
         </CardHeader>
         <CardContent className="flex flex-wrap justify-center gap-4">
            <QuickAction href="/students/bulk-upload" icon={<UploadCloud className="mr-2" />} label="Bulk Upload Students" />
-           <QuickAction href="/card-settings" icon={<SettingsIcon className="mr-2" />} label="Card Settings" />
+           <QuickAction href="/card-settings/student" icon={<SettingsIcon className="mr-2" />} label="Student Card Settings" />
+           <QuickAction href="/card-settings/faculty" icon={<SettingsIcon className="mr-2" />} label="Faculty Card Settings" />
+           <QuickAction href="/card-settings/staff" icon={<SettingsIcon className="mr-2" />} label="Staff Card Settings" />
         </CardContent>
       </Card>
     </div>

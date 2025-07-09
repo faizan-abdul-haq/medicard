@@ -47,16 +47,25 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [employeeData, settingsData] = await Promise.all([ getEmployeeById(employeeId), getCardSettings() ]);
-      if (employeeData) setEmployee(employeeData);
-      else setError(`Employee with identifier ${employeeId} not found.`);
-      setCardSettings(settingsData);
+      const employeeData = await getEmployeeById(employeeId);
+      
+      if (employeeData) {
+        setEmployee(employeeData);
+        // Fetch settings based on employee type
+        const settingsData = await getCardSettings(employeeData.employeeType.toLowerCase() as 'faculty' | 'staff');
+        setCardSettings(settingsData);
+      } else {
+        setError(`Employee with identifier ${employeeId} not found.`);
+      }
+
     } catch (err) {
+      console.error(err);
       setError("Failed to load employee data or settings.");
     } finally {
       setIsLoading(false);
     }
   }, [employeeId]);
+
 
   useEffect(() => {
     fetchData();
@@ -71,6 +80,7 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
   const handleUpdateSuccess = (updatedEmployee: EmployeeData) => {
     setEmployee(updatedEmployee);
     setIsEditing(false);
+    fetchData(); // Refetch all data to get potentially new card settings
     toast({ title: "Profile Updated" });
   };
 
