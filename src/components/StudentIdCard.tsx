@@ -15,7 +15,6 @@ interface StudentIdCardProps {
   settings?: CardSettingsData;
   showFlipButton?: boolean;
   initialSide?: 'front' | 'back';
-  className?: string;
 }
 
 export default function StudentIdCard({
@@ -23,7 +22,6 @@ export default function StudentIdCard({
   settings: propSettings,
   showFlipButton = true,
   initialSide = 'front',
-  className = ''
 }: StudentIdCardProps) {
   const [isFrontVisible, setIsFrontVisible] = useState(initialSide === 'front');
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
@@ -67,7 +65,7 @@ export default function StudentIdCard({
     }
   };
 
-  const cardBaseClasses = `w-[85.6mm] h-[53.98mm] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative print:shadow-none print:border-gray-400 ${className}`;
+  const cardBaseClasses = `w-[85.6mm] h-[53.98mm] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative print:shadow-none print:border-gray-400`;
   
   const headerStyle: React.CSSProperties = {
     backgroundColor: settings.headerBackgroundColor,
