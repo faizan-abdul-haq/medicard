@@ -15,6 +15,7 @@ interface StudentIdCardProps {
   settings?: CardSettingsData;
   showFlipButton?: boolean;
   initialSide?: 'front' | 'back';
+  className?: string;
 }
 
 export default function StudentIdCard({
@@ -22,6 +23,7 @@ export default function StudentIdCard({
   settings: propSettings,
   showFlipButton = true,
   initialSide = 'front',
+  className,
 }: StudentIdCardProps) {
   const [isFrontVisible, setIsFrontVisible] = useState(initialSide === 'front');
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
@@ -65,7 +67,7 @@ export default function StudentIdCard({
     }
   };
 
-  const cardBaseClasses = `w-[85.6mm] h-[53.98mm] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative print:shadow-none print:border-gray-400`;
+  const cardBaseClasses = `w-[85.6mm] h-[53.98mm] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative print:shadow-none print:border-gray-400 ${className || ''}`;
   
   const headerStyle: React.CSSProperties = {
     backgroundColor: settings.headerBackgroundColor,
@@ -78,7 +80,7 @@ export default function StudentIdCard({
 
   const cardDynamicStyle: React.CSSProperties = {
     fontFamily: settings.cardFontFamily,
-    fontSize: `${settings.cardFontSize || 11}px`, // Apply dynamic font size with a fallback
+    fontSize: `${settings.cardFontSize || 11}px`,
   };
 
   const finalLogoUrl = logoError || !settings.logoUrl ? 'https://placehold.co/30x30.png' : settings.logoUrl;
