@@ -3,7 +3,7 @@
 
 import type { ChangeEvent, FormEvent } from 'react';
 import { useState, useEffect, useRef } from 'react';
-import type { EmployeeData, CardSettingsData } from '@/lib/types';
+import type { EmployeeData, CardSettingsData, EmployeeType } from '@/lib/types';
 import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
 import EmployeeIdCard from './EmployeeIdCard';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,7 @@ const initialFormData: Partial<Omit<EmployeeData, 'id' | 'registrationDate' | 'p
   employeeId: '',
   department: '',
   designation: '',
+  employeeType: 'STAFF',
   photograph: null,
   bloodGroup: '',
   cardHolderSignature: '',
@@ -93,6 +94,10 @@ function EmployeeRegistrationFormContent() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value as any }));
+  };
+
   const handleDateChange = (date: Date | undefined) => {
     setFormData(prev => ({ ...prev, dateOfJoining: date }));
   };
@@ -135,8 +140,8 @@ function EmployeeRegistrationFormContent() {
   
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData.dateOfJoining || !formData.fullName || !formData.employeeId) {
-      toast({ title: "Validation Error", description: "Please fill all required fields.", variant: "destructive" });
+    if (!formData.dateOfJoining || !formData.fullName || !formData.employeeId || !formData.employeeType) {
+      toast({ title: "Validation Error", description: "Please fill all required fields, including employee type.", variant: "destructive" });
       return;
     }
     
@@ -147,6 +152,7 @@ function EmployeeRegistrationFormContent() {
         dateOfJoining: formData.dateOfJoining,
         fullName: formData.fullName,
         employeeId: formData.employeeId,
+        employeeType: formData.employeeType as EmployeeType,
       });
       
       setSubmittedEmployee(newEmployee);
@@ -163,6 +169,7 @@ function EmployeeRegistrationFormContent() {
   };
 
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  const employeeTypes: EmployeeType[] = ["FACULTY", "STAFF"];
 
   if (submittedEmployee) {
     return (
@@ -227,6 +234,15 @@ function EmployeeRegistrationFormContent() {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             <div className="space-y-2">
+              <Label htmlFor="employeeType">Employee Type <span className="text-destructive">*</span></Label>
+              <Select value={formData.employeeType || ''} onValueChange={(value) => handleSelectChange('employeeType', value)} required>
+                <SelectTrigger><SelectValue placeholder="Select employee type" /></SelectTrigger>
+                <SelectContent>
+                  {employeeTypes.map(type => <SelectItem key={type} value={type}>{type.charAt(0) + type.slice(1).toLowerCase()}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="dateOfJoining">Date of Joining <span className="text-destructive">*</span></Label>
               <Popover>
@@ -239,27 +255,29 @@ function EmployeeRegistrationFormContent() {
                 <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={formData.dateOfJoining} onSelect={handleDateChange} initialFocus /></PopoverContent>
               </Popover>
             </div>
+          </div>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="mobileNumber">Mobile Number</Label>
               <Input id="mobileNumber" name="mobileNumber" type="tel" value={formData.mobileNumber || ''} onChange={handleChange} />
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Photograph (Max 2MB)</Label>
-            <div className="flex gap-2 mb-2">
-              <Button type="button" variant={inputMode === 'upload' ? 'default' : 'outline'} onClick={() => setInputMode('upload')}><UploadCloud className="mr-2 h-4 w-4" /> Upload</Button>
-              <Button type="button" variant={inputMode === 'webcam' ? 'default' : 'outline'} onClick={() => setInputMode('webcam')}><Camera className="mr-2 h-4 w-4" /> Webcam</Button>
-            </div>
-            {inputMode === 'upload' && <Input id="photographFile" name="photographFile" type="file" accept="image/*" onChange={handlePhotoChange} ref={fileInputRef}/>}
-            {inputMode === 'webcam' && (
-              <div className="space-y-2">
-                <div className="border rounded-md overflow-hidden w-full aspect-video bg-muted">
-                  {hasCameraPermission ? <Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" /> : <p className="text-destructive p-4">{webcamError || "Requesting camera..."}</p>}
-                </div>
-                {hasCameraPermission && <Button type="button" onClick={capturePhoto} className="w-full" variant="outline"><Camera className="mr-2 h-4 w-4" /> Capture</Button>}
+            <div className="space-y-2">
+              <Label>Photograph (Max 2MB)</Label>
+              <div className="flex gap-2 mb-2">
+                <Button type="button" variant={inputMode === 'upload' ? 'default' : 'outline'} onClick={() => setInputMode('upload')}><UploadCloud className="mr-2 h-4 w-4" /> Upload</Button>
+                <Button type="button" variant={inputMode === 'webcam' ? 'default' : 'outline'} onClick={() => setInputMode('webcam')}><Camera className="mr-2 h-4 w-4" /> Webcam</Button>
               </div>
-            )}
-            {photographPreview && <Image src={photographPreview} alt="Photograph preview" width={100} height={120} className="rounded-md border mt-2" data-ai-hint="employee portrait" unoptimized/>}
+              {inputMode === 'upload' && <Input id="photographFile" name="photographFile" type="file" accept="image/*" onChange={handlePhotoChange} ref={fileInputRef}/>}
+              {inputMode === 'webcam' && (
+                <div className="space-y-2">
+                  <div className="border rounded-md overflow-hidden w-full aspect-video bg-muted">
+                    {hasCameraPermission ? <Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" /> : <p className="text-destructive p-4">{webcamError || "Requesting camera..."}</p>}
+                  </div>
+                  {hasCameraPermission && <Button type="button" onClick={capturePhoto} className="w-full" variant="outline"><Camera className="mr-2 h-4 w-4" /> Capture</Button>}
+                </div>
+              )}
+              {photographPreview && <Image src={photographPreview} alt="Photograph preview" width={100} height={120} className="rounded-md border mt-2" data-ai-hint="employee portrait" unoptimized/>}
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="address">Address</Label>
@@ -268,7 +286,7 @@ function EmployeeRegistrationFormContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="bloodGroup">Blood Group</Label>
-              <Select value={formData.bloodGroup || ''} onValueChange={(value) => setFormData(p => ({...p, bloodGroup: value}))}>
+              <Select value={formData.bloodGroup || ''} onValueChange={(value) => handleSelectChange('bloodGroup', value)}>
                 <SelectTrigger><SelectValue placeholder="Select blood group" /></SelectTrigger>
                 <SelectContent>
                   {bloodGroups.map(group => <SelectItem key={group} value={group}><Droplets size={14} className="inline mr-2 text-red-500"/>{group}</SelectItem>)}

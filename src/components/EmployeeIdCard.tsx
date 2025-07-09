@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { EmployeeData, CardSettingsData } from '@/lib/types';
+import type { EmployeeData, CardSettingsData, EmployeeType } from '@/lib/types';
 import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
@@ -70,6 +70,11 @@ export default function EmployeeIdCard({
 
   const finalLogoUrl = logoError || !settings.logoUrl ? 'https://placehold.co/30x30.png' : settings.logoUrl;
 
+  const employeeTypeStyles: Record<EmployeeType, string> = {
+    FACULTY: 'bg-purple-600 text-white',
+    STAFF: 'bg-green-600 text-white'
+  };
+
   if (isFrontVisible) {
     return (
       <Card className={cardBaseClasses} style={cardDynamicStyle}>
@@ -110,8 +115,9 @@ export default function EmployeeIdCard({
             </div>
           </div>
           <div className="flex-grow space-y-0.5">
-            <div style={importantInfoStyle} className="rounded-sm mb-1 bg-primary/10">
+            <div style={importantInfoStyle} className="rounded-sm mb-1 bg-primary/10 flex justify-between items-center">
               <p className="uppercase font-bold text-[1.27em] text-primary">{employee.fullName}</p>
+              <span className={`text-[0.8em] font-bold px-1.5 py-0.5 rounded-sm mr-1 ${employeeTypeStyles[employee.employeeType]}`}>{employee.employeeType}</span>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center text-[1em]">
               <span className="font-bold">Designation</span>

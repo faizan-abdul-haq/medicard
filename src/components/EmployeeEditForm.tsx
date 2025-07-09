@@ -3,7 +3,7 @@
 
 import type { ChangeEvent, FormEvent } from 'react';
 import { useState, useEffect, useRef } from 'react';
-import type { EmployeeData, CardSettingsData } from '@/lib/types';
+import type { EmployeeData, CardSettingsData, EmployeeType } from '@/lib/types';
 import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
 import EmployeeIdCard from './EmployeeIdCard';
 import { Button } from '@/components/ui/button';
@@ -69,6 +69,10 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+  
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value as any }));
+  };
 
   const handleDateChange = (date: Date | undefined) => {
     setFormData(prev => ({ ...prev, dateOfJoining: date }));
@@ -103,8 +107,8 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData.dateOfJoining) {
-      toast({ title: "Validation Error", description: "Date of joining is required.", variant: "destructive" });
+    if (!formData.dateOfJoining || !formData.employeeType) {
+      toast({ title: "Validation Error", description: "Date of joining and employee type are required.", variant: "destructive" });
       return;
     }
     
@@ -126,6 +130,8 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
   };
 
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  const employeeTypes: EmployeeType[] = ["FACULTY", "STAFF"];
+
 
   const previewEmployeeData: EmployeeData = {
     ...employeeToEdit,
@@ -134,6 +140,7 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
     dateOfJoining: formData.dateOfJoining || employeeToEdit.dateOfJoining,
     id: employeeToEdit.id,
     registrationDate: employeeToEdit.registrationDate,
+    employeeType: formData.employeeType || employeeToEdit.employeeType,
   };
 
   return (
@@ -169,6 +176,24 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
                     </div>
                     <div><Label htmlFor="mobileNumber">Mobile Number</Label><Input id="mobileNumber" name="mobileNumber" type="tel" value={formData.mobileNumber || ''} onChange={handleChange}/></div>
                 </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                      <Label htmlFor="employeeType">Employee Type</Label>
+                      <Select value={formData.employeeType || ''} onValueChange={(value) => handleSelectChange('employeeType', value)} required>
+                        <SelectTrigger><SelectValue placeholder="Select employee type" /></SelectTrigger>
+                        <SelectContent>
+                          {employeeTypes.map(type => <SelectItem key={type} value={type}>{type.charAt(0) + type.slice(1).toLowerCase()}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                  </div>
+                  <div>
+                      <Label htmlFor="bloodGroup">Blood Group</Label>
+                      <Select value={formData.bloodGroup || 'NO_GROUP'} onValueChange={(value) => handleSelectChange('bloodGroup', value === 'NO_GROUP' ? '' : value)}>
+                          <SelectTrigger><SelectValue placeholder="Select blood group" /></SelectTrigger>
+                          <SelectContent>{bloodGroups.map((group) => <SelectItem key={group} value={group}><Droplets size={14} className="inline mr-2 text-red-500"/>{group}</SelectItem>)}<SelectItem value="NO_GROUP">None</SelectItem></SelectContent>
+                      </Select>
+                  </div>
+                </div>
                 <div className="space-y-2">
                     <Label>Photograph</Label>
                     <div className="flex items-center gap-2">
@@ -180,15 +205,7 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
                     {inputMode === 'webcam' && <div className="space-y-1"><Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" className="w-full rounded-md border" /><Button type="button" onClick={capturePhoto} className="w-full h-8 text-xs" variant="outline"><Camera className="mr-1 h-3 w-3" /> Capture</Button></div>}
                 </div>
                 <div><Label htmlFor="address">Address</Label><Textarea id="address" name="address" value={formData.address || ''} onChange={handleChange}/></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="bloodGroup">Blood Group</Label>
-                        <Select value={formData.bloodGroup || 'NO_GROUP'} onValueChange={(value) => setFormData(p => ({...p, bloodGroup: value === 'NO_GROUP' ? undefined : value}))}>
-                            <SelectTrigger><SelectValue placeholder="Select blood group" /></SelectTrigger>
-                            <SelectContent>{bloodGroups.map((group) => <SelectItem key={group} value={group}><Droplets size={14} className="inline mr-2 text-red-500"/>{group}</SelectItem>)}<SelectItem value="NO_GROUP">None</SelectItem></SelectContent>
-                        </Select>
-                    </div>
-                </div>
+               
                 <div className="flex gap-2 pt-4">
                     <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancel</Button>
                     <Button type="submit" className="bg-accent" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />} Save Changes</Button>

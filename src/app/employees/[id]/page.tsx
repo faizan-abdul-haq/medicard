@@ -6,10 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History, Mail, Phone, Home, CalendarDays, Droplets, Loader2, ArrowLeft, Briefcase, Edit3, Trash2 } from "lucide-react";
 import Image from "next/image";
-import type { EmployeeData, CardSettingsData } from '@/lib/types';
+import type { EmployeeData, CardSettingsData, EmployeeType } from '@/lib/types';
 import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
 import { format, isValid } from 'date-fns';
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import { getEmployeeById, deleteEmployee } from '@/services/employeeService'; 
@@ -86,6 +87,14 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
     }
   };
 
+  const EmployeeTypeBadge = ({ type }: { type: EmployeeType }) => {
+    const typeStyles = {
+      FACULTY: "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/50 dark:text-purple-300",
+      STAFF: "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/50 dark:text-green-300",
+    };
+    return <Badge variant="outline" className={`font-semibold text-base ${typeStyles[type]}`}>{type}</Badge>;
+  };
+
   if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   if (error) return <div className="text-center text-destructive p-8">{error}</div>;
   if (!employee) return <div className="text-center p-8">Employee not found.</div>;
@@ -132,7 +141,10 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
               )}
             </div>
             <div className="flex-grow space-y-3 w-full">
-              <h2 className="text-2xl font-bold text-primary text-center md:text-left">{employee.fullName}</h2>
+              <div className="flex flex-col md:flex-row justify-between items-center gap-2">
+                <h2 className="text-2xl font-bold text-primary text-center md:text-left">{employee.fullName}</h2>
+                <EmployeeTypeBadge type={employee.employeeType} />
+              </div>
               <p className="text-md text-muted-foreground font-semibold text-center md:text-left">{employee.designation} - {employee.department}</p>
               <Separator/>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">

@@ -2,7 +2,7 @@
 'use server';
 
 import { db, storage } from '@/lib/firebase';
-import type { EmployeeData } from '@/lib/types';
+import type { EmployeeData, EmployeeType } from '@/lib/types';
 import { 
   collection, 
   addDoc, 
@@ -44,6 +44,7 @@ const mapFirestoreDocToEmployeeData = (docData: any, id: string): EmployeeData =
     employeeId: data.employeeId,
     department: data.department,
     designation: data.designation,
+    employeeType: data.employeeType || 'STAFF',
     dateOfJoining: parseDate(data.dateOfJoining),
     registrationDate: parseDate(data.registrationDate),
     bloodGroup: data.bloodGroup || undefined,
@@ -101,7 +102,7 @@ async function deletePhotograph(photographUrl: string): Promise<void> {
 
 
 export async function registerEmployee(
-  employeeData: Omit<EmployeeData, 'id' | 'registrationDate' | 'photographUrl' | 'printHistory' | 'photograph'> & { photograph?: File | null, dateOfJoining: Date, photographUrl?: string | null }
+  employeeData: Omit<EmployeeData, 'id' | 'registrationDate' | 'photographUrl' | 'printHistory' | 'photograph'> & { photograph?: File | null, dateOfJoining: Date, photographUrl?: string | null, employeeType: EmployeeType }
 ): Promise<EmployeeData> {
   try {
     const q = query(collection(db, EMPLOYEES_COLLECTION), where("employeeId", "==", employeeData.employeeId));
@@ -123,6 +124,7 @@ export async function registerEmployee(
       employeeId: employeeData.employeeId,
       department: employeeData.department,
       designation: employeeData.designation,
+      employeeType: employeeData.employeeType,
       photographUrl: finalPhotographUrl,
       registrationDate: serverTimestamp(),
       printHistory: [],

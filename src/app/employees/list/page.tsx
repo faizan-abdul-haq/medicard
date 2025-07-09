@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import type { EmployeeData } from '@/lib/types';
+import type { EmployeeData, EmployeeType } from '@/lib/types';
 import { format } from 'date-fns';
 import { Users, Eye, Search, ChevronLeft, ChevronRight, Printer, Trash2, Loader2, Briefcase } from 'lucide-react';
 import { getEmployees, deleteEmployee } from '@/services/employeeService';
@@ -60,7 +61,8 @@ function EmployeeListContent() {
       emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.designation.toLowerCase().includes(searchTerm.toLowerCase())
+      emp.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.employeeType.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [employees, searchTerm]);
 
@@ -109,6 +111,14 @@ function EmployeeListContent() {
       setIsDeleting(null);
     }
   };
+  
+  const EmployeeTypeBadge = ({ type }: { type: EmployeeType }) => {
+    const typeStyles = {
+      FACULTY: "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/50 dark:text-purple-300",
+      STAFF: "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/50 dark:text-green-300",
+    };
+    return <Badge variant="outline" className={`font-semibold ${typeStyles[type]}`}>{type}</Badge>;
+  };
 
   if (isLoading && employees.length === 0) {
     return <div className="flex justify-center items-center min-h-[300px]"><Loader2 className="h-8 w-8 animate-spin" /><p className="ml-2">Loading employees...</p></div>;
@@ -147,6 +157,7 @@ function EmployeeListContent() {
                     <TableHead className="w-[50px]"><Checkbox checked={isAllSelectedOnPage ? true : (isSomeSelectedOnPage ? 'indeterminate' : false)} onCheckedChange={handleSelectAll} /></TableHead>
                     <TableHead>Employee ID</TableHead>
                     <TableHead>Full Name</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Department</TableHead>
                     <TableHead>Designation</TableHead>
                     <TableHead>Joining Date</TableHead>
@@ -159,6 +170,7 @@ function EmployeeListContent() {
                       <TableCell><Checkbox checked={selectedEmployees.has(employee.employeeId)} onCheckedChange={(checked) => handleSelectEmployee(employee.employeeId, checked)} /></TableCell>
                       <TableCell className="font-medium">{employee.employeeId}</TableCell>
                       <TableCell>{employee.fullName}</TableCell>
+                      <TableCell><EmployeeTypeBadge type={employee.employeeType} /></TableCell>
                       <TableCell>{employee.department}</TableCell>
                       <TableCell>{employee.designation}</TableCell>
                       <TableCell>{format(new Date(employee.dateOfJoining), 'dd MMM, yyyy')}</TableCell>

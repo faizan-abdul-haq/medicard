@@ -17,6 +17,8 @@ export interface StudentData {
   cardHolderSignature?: string;
 }
 
+export type EmployeeType = 'FACULTY' | 'STAFF';
+
 export interface EmployeeData {
   id: string; // Firestore document ID
   photograph?: File | null; // For upload form
@@ -28,6 +30,7 @@ export interface EmployeeData {
   employeeId: string; // Should be unique
   department: string;
   designation: string;
+  employeeType: EmployeeType;
   bloodGroup?: string;
   registrationDate: Date; // Timestamp of record creation
   printHistory?: Date[];
