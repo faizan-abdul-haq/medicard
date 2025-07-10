@@ -55,10 +55,15 @@ export default function EmployeeIdCard({
 
   const cardBaseClasses = `w-[85.6mm] h-[53.98mm] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative print:shadow-none print:border-gray-400 ${className || ''}`;
   
-  const headerStyle: React.CSSProperties = {
+  const headerBackgroundColorStyle: React.CSSProperties = {
     backgroundColor: settings.headerBackgroundColor,
     color: settings.headerTextColor,
   };
+
+  const headerTextStyle: React.CSSProperties = {
+    fontSize: `${settings.cardFontSize}px`,
+    fontWeight: 'bolder',
+  }
   
   const importantInfoStyle: React.CSSProperties = {
     backgroundColor: settings.importantInfoBackgroundColor,
@@ -66,7 +71,7 @@ export default function EmployeeIdCard({
 
   const cardDynamicStyle: React.CSSProperties = {
     fontFamily: settings.cardFontFamily,
-    fontSize: `${settings.cardFontSize || 11}px`,
+    fontSize: '11px', // Keep a base font size for other elements
   };
 
   const finalLogoUrl = logoError || !settings.logoUrl ? 'https://placehold.co/30x30.png' : settings.logoUrl;
@@ -84,7 +89,7 @@ export default function EmployeeIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <div style={headerStyle} className="pt-1.5 pr-1.5 pl-1.5 flex items-center print:pt-2">
+        <div style={headerBackgroundColorStyle} className="pt-1.5 pr-1.5 pl-1.5 flex items-center print:pt-2">
           <div className="w-1/5 flex justify-center items-center print:pl-2">
             <Image 
               src={finalLogoUrl} 
@@ -97,8 +102,8 @@ export default function EmployeeIdCard({
             />
           </div>
           <div className="w-4/5 text-center leading-tight print:pr-2">
-            <p className="font-black text-[1.18em] tracking-tighter">{settings.collegeNameLine1}</p>
-            <p className="font-black text-[1em] tracking-tighter">{settings.collegeNameLine2}</p>
+            <p style={headerTextStyle} className="tracking-tighter">{settings.collegeNameLine1}</p>
+            <p style={headerTextStyle} className="tracking-tighter">{settings.collegeNameLine2}</p>
           </div>
         </div>
 
@@ -155,10 +160,10 @@ export default function EmployeeIdCard({
   } else {
     // Back Side
     const instructions = isStaff ? [
-      'हे कार्ड नेहमी परिसरात प्रदर्शित केले पाहिजे आणि मागणीनुसार तपासणीसाठी सादर केले पाहिजे.',
-      'सापडल्यास कृपया कार्यालयीन पत्त्यावर परत करा.',
-      'हे हस्तांतरणीय नाही आणि ही जीजीएमसी आणि सर जे.जे. रुग्णालयाची मालमत्ता आहे.',
-      'कार्डची वैधता: तुम्ही जीजीएमसी आणि सर जे.जे. रुग्णालयात असेपर्यंत.'
+      'हे कार्ड नेहमी परिसरात प्रदर्शित केले पाहिजे आणि मागणीनुसार तपासणीसाठी सादर केले पाहिजे।',
+      'सापडल्यास कृपया कार्यालयीन पत्त्यावर परत करा।',
+      'हे हस्तांतरणीय नाही आणि ही जीजीएमसी आणि सर जे.जे. रुग्णालयाची मालमत्ता आहे।',
+      'कार्डची वैधता: तुम्ही जीजीएमसी आणि सर जे.जे. रुग्णालयात असेपर्यंत।'
     ] : [
       settings.instructionLine1, settings.instructionLine2, settings.instructionLine3, settings.instructionLine4
     ];

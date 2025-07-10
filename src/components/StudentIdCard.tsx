@@ -69,10 +69,15 @@ export default function StudentIdCard({
 
   const cardBaseClasses = `w-[85.6mm] h-[53.98mm] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative print:shadow-none print:border-gray-400 ${className || ''}`;
   
-  const headerStyle: React.CSSProperties = {
+  const headerBackgroundColorStyle: React.CSSProperties = {
     backgroundColor: settings.headerBackgroundColor,
     color: settings.headerTextColor,
   };
+
+  const headerTextStyle: React.CSSProperties = {
+    fontSize: `${settings.cardFontSize}px`,
+    fontWeight: 'bolder',
+  }
   
   const importantInfoStyle: React.CSSProperties = {
     backgroundColor: settings.importantInfoBackgroundColor,
@@ -80,7 +85,7 @@ export default function StudentIdCard({
 
   const cardDynamicStyle: React.CSSProperties = {
     fontFamily: settings.cardFontFamily,
-    fontSize: `${settings.cardFontSize || 11}px`,
+    fontSize: '11px', // Set a base font size for the card body
   };
 
   const finalLogoUrl = logoError || !settings.logoUrl ? 'https://placehold.co/30x30.png' : settings.logoUrl;
@@ -93,7 +98,7 @@ export default function StudentIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <div style={headerStyle} className="pt-1.5 pr-1.5 pl-1.5 flex items-center print:pt-2">
+        <div style={headerBackgroundColorStyle} className="pt-1.5 pr-1.5 pl-1.5 flex items-center print:pt-2">
           <div className="w-1/5 flex justify-center items-center print:pl-2">
             <Image 
               src={finalLogoUrl} 
@@ -106,8 +111,8 @@ export default function StudentIdCard({
             />
           </div>
           <div className="w-4/5 text-center leading-tight print:pr-2">
-            <p className="font-black text-[1.18em] tracking-tighter">{settings.collegeNameLine1}</p>
-            <p className="font-black text-[1em] tracking-tighter">{settings.collegeNameLine2}</p>
+            <p style={headerTextStyle} className="tracking-tighter">{settings.collegeNameLine1}</p>
+            <p style={headerTextStyle} className="tracking-tighter">{settings.collegeNameLine2}</p>
           </div>
         </div>
 
