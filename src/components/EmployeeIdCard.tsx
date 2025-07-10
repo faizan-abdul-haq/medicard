@@ -30,6 +30,7 @@ export default function EmployeeIdCard({
   const [logoError, setLogoError] = useState(false);
 
   const settings = { ...DEFAULT_CARD_SETTINGS, ...propSettings };
+  const isStaff = employee.employeeType === 'STAFF';
 
   useEffect(() => {
     if (typeof window !== 'undefined' && employee.employeeId) {
@@ -117,18 +118,18 @@ export default function EmployeeIdCard({
           <div className="flex-grow space-y-0.5">
             <div style={importantInfoStyle} className="rounded-sm mb-1 bg-primary/10 flex justify-between items-center">
               <p className="uppercase font-bold text-[1.27em] text-primary">{employee.fullName}</p>
-              <span className={`text-[0.8em] font-bold px-1.5 py-0.5 rounded-sm mr-1 ${employeeTypeStyles[employee.employeeType]}`}>{employee.employeeType}</span>
+              <span className={`text-[0.8em] font-bold px-1.5 py-0.5 rounded-sm mr-1 ${employeeTypeStyles[employee.employeeType]}`}>{isStaff ? 'कर्मचारी' : employee.employeeType}</span>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center text-[1em]">
-              <span className="font-bold">Designation</span>
+              <span className="font-bold">{isStaff ? 'पद' : 'Designation'}</span>
               <p>{employee.designation}</p>
-              <span className="font-bold">Department</span>
+              <span className="font-bold">{isStaff ? 'विभाग' : 'Department'}</span>
               <p>{employee.department}</p>
-              <span className="font-bold">Joining Dt.</span>
+              <span className="font-bold">{isStaff ? 'रुजू होण्याची दि.' : 'Joining Dt.'}</span>
               <p>{employee.dateOfJoining && isValid(new Date(employee.dateOfJoining)) ? format(new Date(employee.dateOfJoining), 'dd/MM/yyyy') : 'N/A'}</p>
-              <span className="font-bold">Blood Grp</span>
+              <span className="font-bold">{isStaff ? 'रक्त गट' : 'Blood Grp'}</span>
               <p>{employee.bloodGroup || 'N/A'}</p>
-              <span className="font-bold">Emp. ID</span>
+              <span className="font-bold">{isStaff ? 'कर्मचारी आयडी' : 'Emp. ID'}</span>
               <p>{employee.employeeId}</p>
             </div>
           </div>
@@ -138,7 +139,7 @@ export default function EmployeeIdCard({
             {settings.deanSignatureUrl && (
               <Image src={settings.deanSignatureUrl} alt="Authority Signature" width={60} height={40} className="object-contain h-auto max-h-[24px]" unoptimized />
             )}
-            <p className="font-bold text-primary mt-0.5">{settings.deanTitle.toUpperCase()}</p>
+            <p className="font-bold text-primary mt-0.5">{(isStaff ? 'अधिष्ठाता' : settings.deanTitle).toUpperCase()}</p>
           </div>          
           <div className="text-right print:pr-2">
             <div className="w-30 h-6 text-black mb-0.5 flex justify-end">
@@ -146,13 +147,22 @@ export default function EmployeeIdCard({
                 <Image src={employee.cardHolderSignature} alt="" width={70} height={40} className="object-contain h-auto max-h-[24px]" unoptimized />
               )}
             </div>
-            <p className="font-bold text-primary">{settings.defaultCardHolderSignatureText}</p>
+            <p className="font-bold text-primary">{isStaff ? 'कार्ड धारकाची सही' : settings.defaultCardHolderSignatureText}</p>
           </div>
         </div>
       </Card>
     );
   } else {
     // Back Side
+    const instructions = isStaff ? [
+      'हे कार्ड नेहमी परिसरात प्रदर्शित केले पाहिजे आणि मागणीनुसार तपासणीसाठी सादर केले पाहिजे.',
+      'सापडल्यास कृपया कार्यालयीन पत्त्यावर परत करा.',
+      'हे हस्तांतरणीय नाही आणि ही जीजीएमसी आणि सर जे.जे. रुग्णालयाची मालमत्ता आहे.',
+      'कार्डची वैधता: तुम्ही जीजीएमसी आणि सर जे.जे. रुग्णालयात असेपर्यंत.'
+    ] : [
+      settings.instructionLine1, settings.instructionLine2, settings.instructionLine3, settings.instructionLine4
+    ];
+
     return (
       <Card className={cardBaseClasses} style={cardDynamicStyle}>
         {showFlipButton && (
@@ -171,17 +181,17 @@ export default function EmployeeIdCard({
             )}
           </div>
           <div className='print:pl-2 print:pr-2'>
-            <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">Residential Address:</p>
+            <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{isStaff ? 'निवासी पत्ता:' : 'Residential Address:'}</p>
             <p className="font-bold text-[0.77em] leading-tight mt-0.5">{employee.address || 'N/A'}</p>
           </div>
           <ol className="list-decimal list-inside space-y-0.5 mt-1 text-[0.9em] leading-tight print:pl-2 print:pr-2">
-            {[settings.instructionLine1, settings.instructionLine2, settings.instructionLine3, settings.instructionLine4].map((inst, idx) => (
+            {instructions.map((inst, idx) => (
               inst && <li key={idx} className="font-bold">{inst}</li>
             ))}
           </ol>
           <div className="border-t mt-auto pt-1 flex justify-between items-center text-[0.9em] absolute bottom-2 left-2 right-2">
-            <p className="font-bold">Mob: {employee.mobileNumber || 'N/A'}</p>
-            <p className="font-bold">Office: {settings.officePhoneNumber}</p>
+            <p className="font-bold">{isStaff ? 'मोबाईल' : 'Mob'}: {employee.mobileNumber || 'N/A'}</p>
+            <p className="font-bold">{isStaff ? 'कार्यालय' : 'Office'}: {settings.officePhoneNumber}</p>
           </div>
         </CardContent>
       </Card>
