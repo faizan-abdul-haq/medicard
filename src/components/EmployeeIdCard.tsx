@@ -71,7 +71,6 @@ export default function EmployeeIdCard({
 
   const cardDynamicStyle: React.CSSProperties = {
     fontFamily: settings.cardFontFamily,
-    fontSize: '11px', // Keep a base font size for other elements
   };
 
   const finalLogoUrl = logoError || !settings.logoUrl ? 'https://placehold.co/30x30.png' : settings.logoUrl;
@@ -120,7 +119,7 @@ export default function EmployeeIdCard({
               />
             </div>
           </div>
-          <div className="flex-grow space-y-0.5">
+          <div className="flex-grow space-y-0.5 text-[11px]">
             <div style={importantInfoStyle} className="rounded-sm mb-1 bg-primary/10 flex justify-between items-center">
               <p className="uppercase font-bold text-[1.27em] text-primary">{employee.fullName}</p>
               <span className={`text-[0.8em] font-bold px-1.5 py-0.5 rounded-sm mr-1 ${employeeTypeStyles[employee.employeeType]}`}>{isStaff ? 'कर्मचारी' : employee.employeeType}</span>
@@ -139,7 +138,7 @@ export default function EmployeeIdCard({
             </div>
           </div>
         </CardContent>
-        <div className="absolute bottom-1 left-0 right-0 px-3 flex justify-between items-end text-[1em]">
+        <div className="absolute bottom-1 left-0 right-0 px-3 flex justify-between items-end text-[11px]">
           <div className="flex flex-col items-start print:pl-2">
             {settings.deanSignatureUrl && (
               <Image src={settings.deanSignatureUrl} alt="Authority Signature" width={60} height={40} className="object-contain h-auto max-h-[24px]" unoptimized />
@@ -175,7 +174,7 @@ export default function EmployeeIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <CardContent className="p-2 space-y-1 leading-snug">
+        <CardContent className="p-2 space-y-1 leading-snug text-[11px]">
           <div className="flex justify-end items-start mb-1 print:pt-2">
             {qrCodeUrl ? (
               <Image src={qrCodeUrl} alt="QR Code" width={50} height={50} data-ai-hint="qr code" unoptimized className="border border-gray-300" />

@@ -85,7 +85,6 @@ export default function StudentIdCard({
 
   const cardDynamicStyle: React.CSSProperties = {
     fontFamily: settings.cardFontFamily,
-    fontSize: '11px', // Set a base font size for the card body
   };
 
   const finalLogoUrl = logoError || !settings.logoUrl ? 'https://placehold.co/30x30.png' : settings.logoUrl;
@@ -132,7 +131,7 @@ export default function StudentIdCard({
               />
             </div>
           </div>
-          <div className="flex-grow space-y-0.5">
+          <div className="flex-grow space-y-0.5 text-[11px]">
             <div style={{...importantInfoStyle}} className="rounded-sm mb-1 bg-primary/10">
               <p className="uppercase font-bold text-[1.27em] text-[#004AAD]">{student.fullName}</p>
             </div>
@@ -152,7 +151,7 @@ export default function StudentIdCard({
             </div>
           </div>
         </CardContent>
-        <div className="absolute bottom-1 left-0 right-0 px-3 flex justify-between items-end text-[1em]">
+        <div className="absolute bottom-1 left-0 right-0 px-3 flex justify-between items-end text-[11px]">
           <div className="flex flex-col items-start print:pl-2">
             {settings.deanSignatureUrl && (
               <Image
@@ -196,7 +195,7 @@ export default function StudentIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <CardContent className="p-2 space-y-1 leading-snug">
+        <CardContent className="p-2 space-y-1 leading-snug text-[11px]">
         <div className="flex justify-between items-start mb-1 print:pt-2">
           {/* Left: Text info stacked top and bottom */}
           <div className="flex flex-col justify-between h-[50px] print:pl-2 print:pt-2"> {/* Adjust height as needed */}
