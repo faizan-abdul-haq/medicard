@@ -15,8 +15,10 @@ export default function Header() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Don't render header on login page, during auth loading, or for unauthenticated users on register page
-  if (pathname === '/login' || isLoading || (!isAuthenticated && pathname === '/register')) {
+  const publicPages = ['/login', '/register', '/employees/register'];
+
+  // Don't render header on login page, during auth loading, or for unauthenticated users on public forms
+  if (isLoading || (!isAuthenticated && publicPages.includes(pathname))) {
     return null;
   }
 

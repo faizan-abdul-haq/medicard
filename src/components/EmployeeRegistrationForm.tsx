@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
-import ProtectedRoute from './ProtectedRoute';
+
 
 const initialFormData: Partial<Omit<EmployeeData, 'id' | 'registrationDate' | 'photographUrl'>> & { photograph?: File | null, dateOfJoining?: Date } = {
   fullName: '',
@@ -63,7 +63,7 @@ const dataURLtoFile = (dataurl: string, filename: string): File => {
   return new File([u8arr], filename, { type: mime });
 };
 
-function EmployeeRegistrationFormContent() {
+export default function EmployeeRegistrationForm() {
   const [formData, setFormData] = useState(initialFormData);
   const [photographPreview, setPhotographPreview] = useState<string | null>(null);
   const [submittedEmployee, setSubmittedEmployee] = useState<EmployeeData | null>(null);
@@ -72,6 +72,7 @@ function EmployeeRegistrationFormContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { isAuthenticated, isLoading: authIsLoading } = useAuth();
   
   const [inputMode, setInputMode] = useState<'upload' | 'webcam'>('upload');
   const webcamRef = useRef<Webcam>(null);
@@ -80,14 +81,14 @@ function EmployeeRegistrationFormContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (submittedEmployee) { 
+    if (submittedEmployee && isAuthenticated) { 
       setIsLoadingSettings(true);
-      getCardSettings()
+      getCardSettings(submittedEmployee.employeeType.toLowerCase() as 'faculty' | 'staff')
         .then(setCardSettings)
         .catch(() => toast({ title: "Error loading card settings", variant: "destructive"}))
         .finally(() => setIsLoadingSettings(false));
     }
-  }, [submittedEmployee, toast]);
+  }, [submittedEmployee, isAuthenticated, toast]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -155,10 +156,20 @@ function EmployeeRegistrationFormContent() {
         employeeType: formData.employeeType as EmployeeType,
       });
       
-      setSubmittedEmployee(newEmployee);
-      toast({ title: "Registration Successful!", description: `${newEmployee.fullName}'s ID card has been generated.` });
+      toast({ 
+        title: "Registration Successful!", 
+        description: isAuthenticated 
+          ? `${newEmployee.fullName}'s ID card has been generated.`
+          : 'Your registration has been submitted for review.'
+      });
+      
+      if (isAuthenticated) {
+        setSubmittedEmployee(newEmployee);
+      }
+      
       setFormData(initialFormData);
       setPhotographPreview(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
 
     } catch (error) {
       console.error("Registration failed:", error);
@@ -171,7 +182,11 @@ function EmployeeRegistrationFormContent() {
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
   const employeeTypes: EmployeeType[] = ["FACULTY", "STAFF"];
 
-  if (submittedEmployee) {
+  if (authIsLoading && !isAuthenticated) {
+    return <div className="flex justify-center items-center min-h-[300px]"><Loader2 className="h-6 w-6 animate-spin text-primary" /> <p className="ml-2">Loading form...</p></div>;
+  }
+
+  if (isAuthenticated && submittedEmployee) {
     return (
       <Card className="mt-12 max-w-3xl mx-auto shadow-lg">
         <CardHeader className="text-center">
@@ -299,21 +314,15 @@ function EmployeeRegistrationFormContent() {
             </div>
           <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <UserPlus className="mr-2 h-4 w-4" />}
-            Register Employee & Generate ID
+            {isSubmitting ? 'Registering...' : (isAuthenticated ? 'Register Employee & Generate ID' : 'Submit Registration')}
           </Button>
         </form>
       </CardContent>
-      <CardFooter>
-        <Button variant="outline" onClick={() => router.back()} className="w-full"><ArrowLeft className="mr-2 h-4 w-4" /> Go Back</Button>
-      </CardFooter>
+      {isAuthenticated && (
+        <CardFooter>
+          <Button variant="outline" onClick={() => router.back()} className="w-full"><ArrowLeft className="mr-2 h-4 w-4" /> Go Back</Button>
+        </CardFooter>
+      )}
     </Card>
   );
-}
-
-export default function EmployeeRegistrationPage() {
-    return (
-        <ProtectedRoute>
-            <EmployeeRegistrationFormContent />
-        </ProtectedRoute>
-    )
 }
