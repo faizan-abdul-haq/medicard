@@ -155,7 +155,8 @@ export default function StudentIdCard({
               <p className="font-bold text-black">{student.yearOfJoining}</p>
               <span className="font-bold text-black">Roll No</span>
               <p className="font-bold text-black">{student.rollNumber}</p>
-
+              <span className="font-bold text-black">PRN No</span>
+              <p className="font-bold text-black">{student.prnNumber}</p>
             </div>
           </div>
         </CardContent>
@@ -205,15 +206,6 @@ export default function StudentIdCard({
         <div className="flex justify-between items-start mb-1 print:pt-2">
           {/* Left: Text info stacked top and bottom */}
           <div className="flex flex-col justify-between h-[50px] print:pl-2 print:pt-2"> {/* Adjust height as needed */}
-                      
-            <div
-              style={importantInfoStyle}
-              className="text-black p-0.5 rounded-sm inline-block uppercase"
-            >
-              <p className="font-bold">
-                <span className="font-bold">PRN No:</span> {student.prnNumber}
-              </p>
-            </div> 
 
             <div
               style={importantInfoStyle}
