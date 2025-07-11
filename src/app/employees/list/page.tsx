@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { EmployeeData, EmployeeType } from '@/lib/types';
 import { format } from 'date-fns';
-import { Users, Eye, Search, ChevronLeft, ChevronRight, Printer, Trash2, Loader2, Briefcase } from 'lucide-react';
+import { Users, Eye, Search, ChevronLeft, ChevronRight, Printer, Download, Trash2, Loader2, Briefcase } from 'lucide-react';
 import { getEmployees, deleteEmployee } from '@/services/employeeService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
@@ -112,6 +112,51 @@ function EmployeeListContent() {
     }
   };
   
+  const handleDownloadCSV = () => {
+    if (filteredEmployees.length === 0) {
+      toast({ title: "No Data", description: "No employees to download.", variant: "warning" });
+      return;
+    }
+
+    const headers = [
+      "Employee ID", "Full Name", "Type", "Department", "Designation",
+      "Date of Joining", "Registration Date", "Mobile Number", "Address",
+      "Blood Group", "Photograph URL", "Signature URL"
+    ];
+    const csvRows = [headers.join(',')];
+
+    filteredEmployees.forEach(emp => {
+      const row = [
+        `"${emp.employeeId}"`,
+        `"${emp.fullName}"`,
+        `"${emp.employeeType}"`,
+        `"${emp.department}"`,
+        `"${emp.designation}"`,
+        `"${format(new Date(emp.dateOfJoining), 'yyyy-MM-dd')}"`,
+        `"${format(new Date(emp.registrationDate), 'yyyy-MM-dd HH:mm')}"`,
+        `"${emp.mobileNumber || ''}"`,
+        `"${(emp.address || '').replace(/"/g, '""')}"`,
+        `"${emp.bloodGroup || ''}"`,
+        `"${emp.photographUrl || ''}"`,
+        `"${emp.cardHolderSignature || ''}"`
+      ];
+      csvRows.push(row.join(','));
+    });
+
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `employees_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast({ title: "CSV Downloaded", description: `${filteredEmployees.length} employee records exported.`});
+  };
+
   const EmployeeTypeBadge = ({ type }: { type: EmployeeType }) => {
     const typeStyles = {
       FACULTY: "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/50 dark:text-purple-300",
@@ -133,7 +178,7 @@ function EmployeeListContent() {
               <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2"><Briefcase size={28} /> Employee Roster</CardTitle>
               <CardDescription>Browse all registered employees. Found {filteredEmployees.length} records.</CardDescription>
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
               <div className="relative flex-grow sm:flex-grow-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input type="search" placeholder="Search employees..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="pl-10 w-full sm:w-64" />
@@ -143,6 +188,9 @@ function EmployeeListContent() {
                   <Link href={`/print-preview?employeeIds=${Array.from(selectedEmployees).join(',')}`} target="_blank"><Printer size={16} className="mr-2" /> Print ({selectedEmployees.size})</Link>
                 </Button>
               )}
+               <Button onClick={handleDownloadCSV} variant="outline" disabled={filteredEmployees.length === 0}>
+                  <Download size={16} className="mr-2" /> Download CSV
+                </Button>
             </div>
           </div>
         </CardHeader>
