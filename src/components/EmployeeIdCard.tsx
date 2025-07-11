@@ -60,11 +60,24 @@ export default function EmployeeIdCard({
     color: settings.headerTextColor,
   };
 
-  const headerTextStyle: React.CSSProperties = {
-    fontSize: `${settings.cardFontSize}px`,
+  const collegeNameLine1Style: React.CSSProperties = {
+    fontSize: `${settings.collegeNameLine1FontSize}px`,
     fontWeight: 'bolder',
-  }
+  };
+
+  const collegeNameLine2Style: React.CSSProperties = {
+    fontSize: `${settings.collegeNameLine2FontSize}px`,
+    fontWeight: 'bolder',
+  };
   
+  const personNameStyle: React.CSSProperties = {
+    fontSize: `${settings.personNameFontSize}px`,
+  };
+
+  const detailsStyle: React.CSSProperties = {
+    fontSize: `${settings.detailsFontSize}px`,
+  };
+
   const importantInfoStyle: React.CSSProperties = {
     backgroundColor: settings.importantInfoBackgroundColor,
   };
@@ -101,8 +114,8 @@ export default function EmployeeIdCard({
             />
           </div>
           <div className="w-4/5 text-center leading-tight print:pr-2">
-            <p style={headerTextStyle} className="tracking-tighter">{settings.collegeNameLine1}</p>
-            <p style={headerTextStyle} className="tracking-tighter">{settings.collegeNameLine2}</p>
+            <p style={collegeNameLine1Style} className="tracking-tighter">{settings.collegeNameLine1}</p>
+            <p style={collegeNameLine2Style} className="tracking-tighter">{settings.collegeNameLine2}</p>
           </div>
         </div>
 
@@ -119,9 +132,9 @@ export default function EmployeeIdCard({
               />
             </div>
           </div>
-          <div className="flex-grow space-y-0.5 text-[11px]">
+          <div className="flex-grow space-y-0.5" style={detailsStyle}>
             <div style={importantInfoStyle} className="rounded-sm mb-1 bg-primary/10 flex justify-between items-center">
-              <p className="uppercase font-bold text-[1.27em] text-primary">{employee.fullName}</p>
+              <p style={personNameStyle} className="uppercase font-bold text-primary">{employee.fullName}</p>
               <span className={`text-[0.8em] font-bold px-1.5 py-0.5 rounded-sm mr-1 ${employeeTypeStyles[employee.employeeType]}`}>{isStaff ? 'कर्मचारी' : employee.employeeType}</span>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center text-[1em]">
@@ -174,7 +187,7 @@ export default function EmployeeIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <CardContent className="p-2 space-y-1 leading-snug text-[11px]">
+        <CardContent className="p-2 space-y-1 leading-snug" style={detailsStyle}>
           <div className="flex justify-end items-start mb-1 print:pt-2">
             {qrCodeUrl ? (
               <Image src={qrCodeUrl} alt="QR Code" width={50} height={50} data-ai-hint="qr code" unoptimized className="border border-gray-300" />
@@ -186,7 +199,7 @@ export default function EmployeeIdCard({
           </div>
           <div className='print:pl-2 print:pr-2'>
             <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{isStaff ? 'निवासी पत्ता:' : 'Residential Address:'}</p>
-            <p className="font-bold text-[0.77em] leading-tight mt-0.5">{employee.address || 'N/A'}</p>
+            <p className="font-bold text-[0.9em] leading-tight mt-0.5">{employee.address || 'N/A'}</p>
           </div>
           <ol className="list-decimal list-inside space-y-0.5 mt-1 text-[0.9em] leading-tight print:pl-2 print:pr-2">
             {instructions.map((inst, idx) => (

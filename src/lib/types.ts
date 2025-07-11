@@ -75,7 +75,10 @@ export interface CardSettingsData {
   instructionLine4: string;
   defaultCardHolderSignatureText: string; // e.g., "Card Holder's Signature"
   cardFontFamily: string;
-  cardFontSize: number; // Base font size in pixels
+  collegeNameLine1FontSize: number;
+  collegeNameLine2FontSize: number;
+  personNameFontSize: number;
+  detailsFontSize: number;
 }
 
 export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
@@ -95,5 +98,8 @@ export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
   instructionLine4: "Card validity: till you are at GGMC & Sir J.J. Hospital.",
   defaultCardHolderSignatureText: "Card Holder's Signature",
   cardFontFamily: "'Trebuchet MS', sans-serif",
-  cardFontSize: 11, // Default base font size
+  collegeNameLine1FontSize: 11,
+  collegeNameLine2FontSize: 11,
+  personNameFontSize: 14,
+  detailsFontSize: 11,
 };

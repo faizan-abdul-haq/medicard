@@ -74,10 +74,23 @@ export default function StudentIdCard({
     color: settings.headerTextColor,
   };
 
-  const headerTextStyle: React.CSSProperties = {
-    fontSize: `${settings.cardFontSize}px`,
+  const collegeNameLine1Style: React.CSSProperties = {
+    fontSize: `${settings.collegeNameLine1FontSize}px`,
     fontWeight: 'bolder',
-  }
+  };
+
+  const collegeNameLine2Style: React.CSSProperties = {
+    fontSize: `${settings.collegeNameLine2FontSize}px`,
+    fontWeight: 'bolder',
+  };
+  
+  const personNameStyle: React.CSSProperties = {
+    fontSize: `${settings.personNameFontSize}px`,
+  };
+
+  const detailsStyle: React.CSSProperties = {
+    fontSize: `${settings.detailsFontSize}px`,
+  };
   
   const importantInfoStyle: React.CSSProperties = {
     backgroundColor: settings.importantInfoBackgroundColor,
@@ -110,8 +123,8 @@ export default function StudentIdCard({
             />
           </div>
           <div className="w-4/5 text-center leading-tight print:pr-2">
-            <p style={headerTextStyle} className="tracking-tighter">{settings.collegeNameLine1}</p>
-            <p style={headerTextStyle} className="tracking-tighter">{settings.collegeNameLine2}</p>
+            <p style={collegeNameLine1Style} className="tracking-tighter">{settings.collegeNameLine1}</p>
+            <p style={collegeNameLine2Style} className="tracking-tighter">{settings.collegeNameLine2}</p>
           </div>
         </div>
 
@@ -131,9 +144,9 @@ export default function StudentIdCard({
               />
             </div>
           </div>
-          <div className="flex-grow space-y-0.5 text-[11px]">
+          <div className="flex-grow space-y-0.5" style={detailsStyle}>
             <div style={{...importantInfoStyle}} className="rounded-sm mb-1 bg-primary/10">
-              <p className="uppercase font-bold text-[1.27em] text-[#004AAD]">{student.fullName}</p>
+              <p style={personNameStyle} className="uppercase font-bold text-[#004AAD]">{student.fullName}</p>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center text-[1em]">
               <span className="font-bold text-black">DOB</span>
@@ -159,8 +172,7 @@ export default function StudentIdCard({
                 alt="Dean's Signature"
                 width={60}
                 height={40}
-                className="object-contain"
-                style={{ height: 'auto', maxHeight: '24px', color: 'transparent' }}
+                className="object-contain h-auto max-h-[24px]"
                 unoptimized
               />
             )}
@@ -175,8 +187,7 @@ export default function StudentIdCard({
                 alt=""
                 width={70}
                 height={40}
-                className="object-contain"
-                style={{ height: 'auto', maxHeight: '24px', color: 'transparent' }}
+                className="object-contain h-auto max-h-[24px]"
                 unoptimized
               />
             )}
@@ -195,7 +206,7 @@ export default function StudentIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <CardContent className="p-2 space-y-1 leading-snug text-[11px]">
+        <CardContent className="p-2 space-y-1 leading-snug" style={detailsStyle}>
         <div className="flex justify-between items-start mb-1 print:pt-2">
           {/* Left: Text info stacked top and bottom */}
           <div className="flex flex-col justify-between h-[50px] print:pl-2 print:pt-2"> {/* Adjust height as needed */}
@@ -238,7 +249,7 @@ export default function StudentIdCard({
 
           <div className='print:pl-2 print:pr-2'>
             <p style={importantInfoStyle} className="font-bold text-black p-0.5 rounded-sm inline-block">Residential Address:</p>
-            <p className="text-black font-bold text-[0.77em] leading-tight mt-0.5">{student.address || 'N/A'}</p>
+            <p className="text-black font-bold text-[0.9em] leading-tight mt-0.5">{student.address || 'N/A'}</p>
           </div>
 
           <ol className="text-black list-decimal list-inside space-y-0.5 mt-1 text-[0.9em] leading-tight print:pl-2 print:pr-2">

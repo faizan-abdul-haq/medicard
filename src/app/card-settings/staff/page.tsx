@@ -147,7 +147,10 @@ function CardSettingsContent() {
                     <SelectContent>{popularFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font.split(',')[0].replace(/'/g, '')}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div><Label htmlFor="cardFontSize">Header Font Size (in px)</Label><Input type="number" name="cardFontSize" value={settings.cardFontSize} onChange={handleNumberInputChange} /></div>
+                <div><Label htmlFor="collegeNameLine1FontSize">College Name Line 1 Font Size (px)</Label><Input type="number" name="collegeNameLine1FontSize" value={settings.collegeNameLine1FontSize} onChange={handleNumberInputChange} /></div>
+                <div><Label htmlFor="collegeNameLine2FontSize">College Name Line 2 Font Size (px)</Label><Input type="number" name="collegeNameLine2FontSize" value={settings.collegeNameLine2FontSize} onChange={handleNumberInputChange} /></div>
+                <div><Label htmlFor="personNameFontSize">Person Name Font Size (px)</Label><Input type="number" name="personNameFontSize" value={settings.personNameFontSize} onChange={handleNumberInputChange} /></div>
+                <div><Label htmlFor="detailsFontSize">Details Text Font Size (px)</Label><Input type="number" name="detailsFontSize" value={settings.detailsFontSize} onChange={handleNumberInputChange} /></div>
               </CardContent>
             </Card>
 
