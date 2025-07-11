@@ -198,7 +198,7 @@ export default function EmployeeIdCard({
             )}
           </div>
           <div className='print:pl-2 print:pr-2'>
-            <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{isStaff ? 'सेवार्थ क्र:' : 'SEVARTH No:'} {employee.sevarthNo || 'N/A'}</p>
+            <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{isStaff ? 'सेवार्थ नंबर:' : 'SEVARTH No:'} {employee.sevarthNo || 'N/A'}</p>
           </div>
           <div className='print:pl-2 print:pr-2'>
             <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{isStaff ? 'निवासी पत्ता:' : 'Residential Address:'}</p>
