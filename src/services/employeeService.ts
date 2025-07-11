@@ -42,6 +42,7 @@ const mapFirestoreDocToEmployeeData = (docData: any, id: string): EmployeeData =
     address: data.address,
     mobileNumber: data.mobileNumber,
     employeeId: data.employeeId,
+    sevarthNo: data.sevarthNo,
     department: data.department,
     designation: data.designation,
     employeeType: data.employeeType || 'STAFF',
@@ -122,6 +123,7 @@ export async function registerEmployee(
       dateOfJoining: Timestamp.fromDate(employeeData.dateOfJoining),
       mobileNumber: employeeData.mobileNumber || 'N/A',
       employeeId: employeeData.employeeId,
+      sevarthNo: employeeData.sevarthNo || '',
       department: employeeData.department,
       designation: employeeData.designation,
       employeeType: employeeData.employeeType,
@@ -221,6 +223,7 @@ export async function bulkRegisterEmployees(employeesData: Partial<EmployeeData>
       registrationDate: serverTimestamp(),
       printHistory: [],
       photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
+      sevarthNo: data.sevarthNo || '',
     };
 
     batch.set(employeeDocRef, employeeToSave);

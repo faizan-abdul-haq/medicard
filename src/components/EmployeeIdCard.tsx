@@ -146,7 +146,7 @@ export default function EmployeeIdCard({
               <p>{employee.dateOfJoining && isValid(new Date(employee.dateOfJoining)) ? format(new Date(employee.dateOfJoining), 'dd/MM/yyyy') : 'N/A'}</p>
               <span className="font-bold">{isStaff ? 'रक्त गट' : 'Blood Grp'}</span>
               <p>{employee.bloodGroup || 'N/A'}</p>
-              <span className="font-bold">{isStaff ? 'कर्मचारी आयडी' : 'Emp. ID'}</span>
+              <span className="font-bold">{isStaff ? 'आयडी क्र.' : 'ID No.'}</span>
               <p>{employee.employeeId}</p>
             </div>
           </div>
@@ -196,6 +196,9 @@ export default function EmployeeIdCard({
                 <QrCodeIcon size={30} />
               </div>
             )}
+          </div>
+          <div className='print:pl-2 print:pr-2'>
+            <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{isStaff ? 'सेवार्थ क्र:' : 'SEVARTH No:'} {employee.sevarthNo || 'N/A'}</p>
           </div>
           <div className='print:pl-2 print:pr-2'>
             <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{isStaff ? 'निवासी पत्ता:' : 'Residential Address:'}</p>

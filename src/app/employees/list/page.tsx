@@ -60,6 +60,7 @@ function EmployeeListContent() {
     return employees.filter(emp =>
       emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (emp.sevarthNo && emp.sevarthNo.toLowerCase().includes(searchTerm.toLowerCase())) ||
       emp.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.employeeType.toLowerCase().includes(searchTerm.toLowerCase())
@@ -119,7 +120,7 @@ function EmployeeListContent() {
     }
 
     const headers = [
-      "Employee ID", "Full Name", "Type", "Department", "Designation",
+      "ID No.", "SEVARTH No.", "Full Name", "Type", "Department", "Designation",
       "Date of Joining", "Registration Date", "Mobile Number", "Address",
       "Blood Group", "Photograph URL", "Signature URL"
     ];
@@ -128,6 +129,7 @@ function EmployeeListContent() {
     filteredEmployees.forEach(emp => {
       const row = [
         `"${emp.employeeId}"`,
+        `"${emp.sevarthNo || ''}"`,
         `"${emp.fullName}"`,
         `"${emp.employeeType}"`,
         `"${emp.department}"`,
@@ -203,7 +205,7 @@ function EmployeeListContent() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[50px]"><Checkbox checked={isAllSelectedOnPage ? true : (isSomeSelectedOnPage ? 'indeterminate' : false)} onCheckedChange={handleSelectAll} /></TableHead>
-                    <TableHead>Employee ID</TableHead>
+                    <TableHead>ID No.</TableHead>
                     <TableHead>Full Name</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Department</TableHead>
@@ -227,7 +229,7 @@ function EmployeeListContent() {
                         <AlertDialog>
                           <AlertDialogTrigger asChild><Button variant="destructive" size="sm" disabled={isDeleting === employee.id}>{isDeleting === employee.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 size={16} />}</Button></AlertDialogTrigger>
                           <AlertDialogContent>
-                            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete {employee.fullName} (ID: {employee.employeeId}).</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete {employee.fullName} (ID No: {employee.employeeId}).</AlertDialogDescription></AlertDialogHeader>
                             <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteEmployee(employee.id, employee.photographUrl)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction></AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>

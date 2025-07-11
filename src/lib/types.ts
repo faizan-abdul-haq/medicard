@@ -28,6 +28,7 @@ export interface EmployeeData {
   dateOfJoining: Date;
   mobileNumber: string;
   employeeId: string; // Should be unique
+  sevarthNo?: string;
   department: string;
   designation: string;
   employeeType: EmployeeType;

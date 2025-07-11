@@ -123,7 +123,7 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
             <AlertDialog>
               <AlertDialogTrigger asChild><Button variant="destructive" size="sm" disabled={isDeleting}>{isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />} Delete</Button></AlertDialogTrigger>
               <AlertDialogContent>
-                <AlertDialogHeader><AlertDialogTitle>Confirm Deletion</AlertDialogTitle><AlertDialogDescription>Delete {employee.fullName} (ID: {employee.employeeId})? This is permanent.</AlertDialogDescription></AlertDialogHeader>
+                <AlertDialogHeader><AlertDialogTitle>Confirm Deletion</AlertDialogTitle><AlertDialogDescription>Delete {employee.fullName} (ID No: {employee.employeeId})? This is permanent.</AlertDialogDescription></AlertDialogHeader>
                 <AlertDialogFooter><AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel><AlertDialogAction onClick={handleDeleteConfirmed} disabled={isDeleting}>Delete</AlertDialogAction></AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -158,7 +158,8 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
               <p className="text-md text-muted-foreground font-semibold text-center md:text-left">{employee.designation} - {employee.department}</p>
               <Separator/>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                <DetailItem icon={<Briefcase size={14}/>} label="Employee ID" value={employee.employeeId} />
+                <DetailItem icon={<Briefcase size={14}/>} label="ID No." value={employee.employeeId} />
+                <DetailItem icon={<Briefcase size={14}/>} label="SEVARTH No." value={employee.sevarthNo} />
                 <DetailItem icon={<CalendarDays size={14}/>} label="Date of Joining" value={format(employee.dateOfJoining, 'dd MMM, yyyy')} />
                 <DetailItem icon={<Phone size={14}/>} label="Mobile" value={employee.mobileNumber} />
                 <DetailItem icon={<Droplets size={14}/>} label="Blood Group" value={employee.bloodGroup} />

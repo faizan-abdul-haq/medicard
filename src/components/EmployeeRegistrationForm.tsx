@@ -41,6 +41,7 @@ const initialFormData: Partial<Omit<EmployeeData, 'id' | 'registrationDate' | 'p
   dateOfJoining: undefined,
   mobileNumber: '',
   employeeId: '',
+  sevarthNo: '',
   department: '',
   designation: '',
   employeeType: 'STAFF',
@@ -234,8 +235,18 @@ export default function EmployeeRegistrationForm() {
               <Input id="fullName" name="fullName" value={formData.fullName || ''} onChange={handleChange} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="employeeId">Employee ID <span className="text-destructive">*</span></Label>
+              <Label htmlFor="employeeId">ID No. <span className="text-destructive">*</span></Label>
               <Input id="employeeId" name="employeeId" value={formData.employeeId || ''} onChange={handleChange} required />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="sevarthNo">SEVARTH No.</Label>
+              <Input id="sevarthNo" name="sevarthNo" value={formData.sevarthNo || ''} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="mobileNumber">Mobile Number</Label>
+              <Input id="mobileNumber" name="mobileNumber" type="tel" value={formData.mobileNumber || ''} onChange={handleChange} />
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -273,10 +284,6 @@ export default function EmployeeRegistrationForm() {
           </div>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="mobileNumber">Mobile Number</Label>
-              <Input id="mobileNumber" name="mobileNumber" type="tel" value={formData.mobileNumber || ''} onChange={handleChange} />
-            </div>
-            <div className="space-y-2">
               <Label>Photograph (Max 2MB)</Label>
               <div className="flex gap-2 mb-2">
                 <Button type="button" variant={inputMode === 'upload' ? 'default' : 'outline'} onClick={() => setInputMode('upload')}><UploadCloud className="mr-2 h-4 w-4" /> Upload</Button>
@@ -293,12 +300,6 @@ export default function EmployeeRegistrationForm() {
               )}
               {photographPreview && <Image src={photographPreview} alt="Photograph preview" width={100} height={120} className="rounded-md border mt-2" data-ai-hint="employee portrait" unoptimized/>}
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="address">Address</Label>
-            <Textarea id="address" name="address" value={formData.address || ''} onChange={handleChange} />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="bloodGroup">Blood Group</Label>
               <Select value={formData.bloodGroup || ''} onValueChange={(value) => handleSelectChange('bloodGroup', value)}>
@@ -308,6 +309,10 @@ export default function EmployeeRegistrationForm() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="address">Address</Label>
+            <Textarea id="address" name="address" value={formData.address || ''} onChange={handleChange} />
           </div>
            <div className="space-y-2">
               <ImageUploadField label="Card Holder's Signature" value={formData.cardHolderSignature} onChange={(url) => setFormData(prev => ({ ...prev, cardHolderSignature: url }))} directory="signatures" maxSizeKB={1024} note="Upload a pre-signed image."/>

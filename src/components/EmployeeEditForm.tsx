@@ -148,7 +148,7 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
       <Card className="mx-auto shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl font-bold text-primary flex items-center gap-2">
-            <UserCog size={24} /> Edit Employee: {employeeToEdit.fullName} (ID: {employeeToEdit.employeeId})
+            <UserCog size={24} /> Edit Employee: {employeeToEdit.fullName} (ID No: {employeeToEdit.employeeId})
           </CardTitle>
           <CardDescription>Modify employee details below. Click "Save Changes" to update.</CardDescription>
         </CardHeader>
@@ -160,7 +160,11 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><Label htmlFor="fullName">Full Name</Label><Input id="fullName" name="fullName" value={formData.fullName || ''} onChange={handleChange} /></div>
-                    <div><Label htmlFor="employeeId">Employee ID</Label><Input id="employeeId" name="employeeId" value={formData.employeeId || ''} onChange={handleChange} /></div>
+                    <div><Label htmlFor="employeeId">ID No.</Label><Input id="employeeId" name="employeeId" value={formData.employeeId || ''} onChange={handleChange} /></div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><Label htmlFor="sevarthNo">SEVARTH No.</Label><Input id="sevarthNo" name="sevarthNo" value={formData.sevarthNo || ''} onChange={handleChange} /></div>
+                    <div><Label htmlFor="mobileNumber">Mobile Number</Label><Input id="mobileNumber" name="mobileNumber" type="tel" value={formData.mobileNumber || ''} onChange={handleChange}/></div>
                 </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><Label htmlFor="department">Department</Label><Input id="department" name="department" value={formData.department || ''} onChange={handleChange} /></div>
@@ -174,7 +178,6 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
                         <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={formData.dateOfJoining ? new Date(formData.dateOfJoining) : undefined} onSelect={handleDateChange} initialFocus/></PopoverContent>
                         </Popover>
                     </div>
-                    <div><Label htmlFor="mobileNumber">Mobile Number</Label><Input id="mobileNumber" name="mobileNumber" type="tel" value={formData.mobileNumber || ''} onChange={handleChange}/></div>
                 </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
