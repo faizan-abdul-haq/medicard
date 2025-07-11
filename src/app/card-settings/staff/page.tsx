@@ -36,21 +36,16 @@ const mockEmployeeForPreview: EmployeeData = {
   cardHolderSignature: ''
 };
 
-const popularFonts = [
+const marathiFonts = [
+  "'Noto Sans Devanagari', sans-serif",
+  "'Mukta', sans-serif",
+  "'Hind', sans-serif",
+  "'Laila', serif",
+  "'Tiro Devanagari Marathi', serif",
   "Arial, sans-serif",
-  "'Arial Black', sans-serif",
-  "'Courier New', monospace",
-  "Georgia, serif",
-  "'Helvetica Neue', sans-serif",
-  "Impact, sans-serif",
-  "'Lucida Console', monospace",
-  "'Lucida Sans Unicode', sans-serif",
-  "'Palatino Linotype', serif",
   "Tahoma, sans-serif",
-  "'Times New Roman', serif",
-  "'Trebuchet MS', sans-serif",
-  "Verdana, sans-serif",
 ];
+
 
 function CardSettingsContent() {
   const [settings, setSettings] = useState<CardSettingsData>(DEFAULT_CARD_SETTINGS);
@@ -144,7 +139,7 @@ function CardSettingsContent() {
                   <Label htmlFor="cardFontFamily">Font Family</Label>
                   <Select value={settings.cardFontFamily} onValueChange={(value) => handleSelectChange('cardFontFamily', value)}>
                     <SelectTrigger id="cardFontFamily"><SelectValue placeholder="Select font family" /></SelectTrigger>
-                    <SelectContent>{popularFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font.split(',')[0].replace(/'/g, '')}</SelectItem>)}</SelectContent>
+                    <SelectContent>{marathiFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font.split(',')[0].replace(/'/g, '')}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div><Label htmlFor="collegeNameLine1FontSize">College Name Line 1 Font Size (px)</Label><Input type="number" name="collegeNameLine1FontSize" value={settings.collegeNameLine1FontSize} onChange={handleNumberInputChange} /></div>

@@ -30,6 +30,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;700&family=Laila:wght@400;700&family=Mukta:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&family=Tiro+Devanagari+Marathi:wght@400;700&display=swap" rel="stylesheet" />
+      </head>
       {/* <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}> */}
       <body className="antialiased flex flex-col min-h-screen">
         <AuthProvider>

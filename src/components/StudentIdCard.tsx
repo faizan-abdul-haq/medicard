@@ -149,18 +149,13 @@ export default function StudentIdCard({
               <p style={personNameStyle} className="uppercase font-bold text-[#004AAD]">{student.fullName}</p>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center text-[1em]">
-              <span className="font-bold text-black">DOB</span>
-              <p className="font-bold text-black">{student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'dd/MM/yyyy') : 'N/A'}</p>
-              <span className="font-bold text-black">Blood Grp</span>
-              <p className="font-bold text-black">{student.bloodGroup || 'N/A'}</p>
               <span className="font-bold text-black">Course</span>
               <p className="font-bold text-black">{student.courseName}</p>
               <span className="font-bold text-black">Year</span>
               <p className="font-bold text-black">{student.yearOfJoining}</p>
               <span className="font-bold text-black">Roll No</span>
               <p className="font-bold text-black">{student.rollNumber}</p>
-              <span className="font-bold text-black">PRN No</span>
-              <p className="font-bold text-black">{student.prnNumber}</p>
+
             </div>
           </div>
         </CardContent>
@@ -210,6 +205,25 @@ export default function StudentIdCard({
         <div className="flex justify-between items-start mb-1 print:pt-2">
           {/* Left: Text info stacked top and bottom */}
           <div className="flex flex-col justify-between h-[50px] print:pl-2 print:pt-2"> {/* Adjust height as needed */}
+                      
+            <div
+              style={importantInfoStyle}
+              className="text-black p-0.5 rounded-sm inline-block uppercase"
+            >
+              <p className="font-bold">
+                <span className="font-bold">PRN No:</span> {student.prnNumber}
+              </p>
+            </div> 
+
+            <div
+              style={importantInfoStyle}
+              className="text-black p-0.5 rounded-sm inline-block uppercase"
+            >
+              <p className="font-bold">
+                <span className="font-bold">DOB:</span> {student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'dd/MM/yyyy') : 'N/A'}
+              </p>
+            </div> 
+
             <div
               style={importantInfoStyle}
               className="text-black p-0.5 rounded-sm inline-block uppercase"
@@ -218,6 +232,7 @@ export default function StudentIdCard({
                 <span className="font-bold">Year of Admission:</span> {yearOfAdmissionDisplay}
               </p>
             </div>
+
             <div
               style={importantInfoStyle}
               className="text-start text-black p-0.5 rounded-sm inline-block uppercase"
@@ -226,6 +241,16 @@ export default function StudentIdCard({
                 <span className="font-bold">Valid Upto:</span> {validUptoString}
               </p>
             </div>
+
+            <div
+              style={importantInfoStyle}
+              className="text-start text-black p-0.5 rounded-sm inline-block uppercase"
+            >
+              <p className="font-bold">
+                <span className="font-bold">Blood group:</span> {student.bloodGroup || 'N/A'}
+              </p>
+            </div>
+
           </div>
 
           {/* Right: QR Code or placeholder */}
