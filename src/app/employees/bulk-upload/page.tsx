@@ -29,12 +29,12 @@ function BulkUploadContent() {
 
   const csvHeaders = [
     "fullName", "employeeId", "sevarthNo", "designation", "employeeType",
-    "mobileNumber", "address", "bloodGroup", "photographUrl", "cardHolderSignature"
+    "mobileNumber", "address", "bloodGroup", "isOrganDonor", "photographUrl", "cardHolderSignature"
   ];
 
   const csvTemplateString = csvHeaders.join(',') + '\n' +
-    `"Dr. Jane Doe","EMP001","SVRTH001","Professor","FACULTY","9876543210","123 Faculty Row, Knowledge City","O+","https://placehold.co/100x120.png",""` + '\n' +
-    `"John Smith","EMP002","SVRTH002","Office Clerk","STAFF","9876543211","456 Staff Quarters, Service Town","A+","https://placehold.co/100x120.png",""`;
+    `"Dr. Jane Doe","EMP001","SVRTH001","Professor","FACULTY","9876543210","123 Faculty Row, Knowledge City","O+","TRUE","https://placehold.co/100x120.png",""` + '\n' +
+    `"John Smith","EMP002","SVRTH002","Office Clerk","STAFF","9876543211","456 Staff Quarters, Service Town","A+","FALSE","https://placehold.co/100x120.png",""`;
   
   const requiredHeadersForParsing = ["fullName", "employeeId", "designation", "employeeType"];
 
@@ -82,7 +82,10 @@ function BulkUploadContent() {
         } else if (key === 'mobileNumber' && value && !MOBILE_REGEX.test(value)) {
           currentParsingErrors.push(`Row ${i+1} (ID: ${employee.employeeId || 'N/A'}): Invalid mobileNumber '${value}'. Must be 10 digits. Field will be cleared.`);
           value = '';
+        } else if (key === 'isOrganDonor') {
+          value = value.trim().toUpperCase() === 'TRUE';
         }
+
 
         (employee as any)[key] = value;
       });
@@ -199,7 +202,7 @@ function BulkUploadContent() {
           <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
             <UploadCloud size={28} /> Bulk Employee Upload
           </CardTitle>
-          <CardDescription>Upload a CSV file to register multiple employees. Employee IDs must be unique. `employeeType` must be either "FACULTY" or "STAFF".</CardDescription>
+          <CardDescription>Upload a CSV file to register multiple employees. Employee IDs must be unique. `employeeType` must be either "FACULTY" or "STAFF". For `isOrganDonor`, use TRUE or FALSE.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -232,15 +235,15 @@ function BulkUploadContent() {
               <CardContent>
                 <div className="max-h-96 overflow-auto">
                   <Table>
-                    <TableHeader><TableRow><TableHead>Full Name</TableHead><TableHead>ID No.</TableHead><TableHead>SEVARTH No.</TableHead><TableHead>Type</TableHead><TableHead>Designation</TableHead></TableRow></TableHeader>
+                    <TableHeader><TableRow><TableHead>Full Name</TableHead><TableHead>ID No.</TableHead><TableHead>Type</TableHead><TableHead>Designation</TableHead><TableHead>Organ Donor</TableHead></TableRow></TableHeader>
                     <TableBody>
                       {parsedEmployees.map((emp, index) => (
                         <TableRow key={emp.employeeId || index}>
                           <TableCell className="font-medium flex items-center gap-2"><UserCircle size={18} className="text-muted-foreground" />{emp.fullName}</TableCell>
                           <TableCell>{emp.employeeId}</TableCell>
-                          <TableCell>{emp.sevarthNo}</TableCell>
                           <TableCell>{emp.employeeType}</TableCell>
                           <TableCell>{emp.designation}</TableCell>
+                          <TableCell>{emp.isOrganDonor ? 'Yes' : 'No'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

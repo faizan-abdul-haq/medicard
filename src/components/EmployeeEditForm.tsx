@@ -20,6 +20,7 @@ import { getCardSettings } from '@/services/cardSettingsService';
 import Webcam from 'react-webcam';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const dataURLtoFile = (dataurl: string, filename: string): File => {
   const arr = dataurl.split(',');
@@ -63,8 +64,13 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
   }, []);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+        const { checked } = e.target as HTMLInputElement;
+        setFormData(prev => ({ ...prev, [name]: checked }));
+    } else {
+        setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
   
   const handleSelectChange = (name: string, value: string) => {
@@ -190,6 +196,21 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
                     {inputMode === 'webcam' && <div className="space-y-1"><Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" className="w-full rounded-md border" /><Button type="button" onClick={capturePhoto} className="w-full h-8 text-xs" variant="outline"><Camera className="mr-1 h-3 w-3" /> Capture</Button></div>}
                 </div>
                 <div><Label htmlFor="address">Address</Label><Textarea id="address" name="address" value={formData.address || ''} onChange={handleChange}/></div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="isOrganDonor" 
+                    name="isOrganDonor"
+                    checked={formData.isOrganDonor || false} 
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isOrganDonor: !!checked }))}
+                  />
+                  <label
+                    htmlFor="isOrganDonor"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Is an Organ Donor
+                  </label>
+                </div>
                
                 <div className="flex gap-2 pt-4">
                     <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancel</Button>

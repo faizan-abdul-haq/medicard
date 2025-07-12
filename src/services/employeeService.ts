@@ -48,7 +48,8 @@ const mapFirestoreDocToEmployeeData = (docData: any, id: string): EmployeeData =
     bloodGroup: data.bloodGroup || undefined,
     photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
     printHistory: data.printHistory?.map(parseDate).sort((a,b) => b.getTime() - a.getTime()),
-    cardHolderSignature: data.cardHolderSignature
+    cardHolderSignature: data.cardHolderSignature,
+    isOrganDonor: data.isOrganDonor || false,
   };
 };
 
@@ -125,7 +126,8 @@ export async function registerEmployee(
       photographUrl: finalPhotographUrl,
       registrationDate: serverTimestamp(),
       printHistory: [],
-      cardHolderSignature: employeeData.cardHolderSignature
+      cardHolderSignature: employeeData.cardHolderSignature,
+      isOrganDonor: employeeData.isOrganDonor || false,
     };
     if (employeeData.bloodGroup) docDataToSave.bloodGroup = employeeData.bloodGroup;
 
@@ -217,6 +219,7 @@ export async function bulkRegisterEmployees(employeesData: Partial<EmployeeData>
       printHistory: [],
       photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
       sevarthNo: data.sevarthNo || '',
+      isOrganDonor: data.isOrganDonor || false,
     };
 
     batch.set(employeeDocRef, employeeToSave);

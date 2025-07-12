@@ -34,6 +34,7 @@ export interface EmployeeData {
   registrationDate: Date; // Timestamp of record creation
   printHistory?: Date[];
   cardHolderSignature?: string;
+  isOrganDonor?: boolean;
 }
 
 export interface RecentRegistration {
@@ -102,4 +103,5 @@ export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
   personNameFontSize: 14,
   detailsFontSize: 11,
 };
+
 

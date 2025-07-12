@@ -6,7 +6,7 @@ import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Repeat, QrCodeIcon } from 'lucide-react';
+import { Repeat, QrCodeIcon, Heart } from 'lucide-react';
 import { format, isValid } from 'date-fns';
 import { useState, useEffect } from 'react';
 
@@ -184,8 +184,13 @@ export default function EmployeeIdCard({
           </Button>
         )}
         <CardContent className="p-2 space-y-1 leading-snug" style={detailsStyle}>
-          <div className='print:pl-2 print:pr-2'>
+          <div className='print:pl-2 print:pr-2 flex justify-between items-center'>
             <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{isStaff ? 'सेवार्थ नंबर:' : 'SEVARTH No:'} {employee.sevarthNo || 'N/A'}</p>
+             {employee.isOrganDonor && (
+              <div className="flex items-center gap-1 text-red-600 font-bold text-[10px] border border-red-600 px-1 rounded">
+                <Heart className="h-2.5 w-2.5" fill="currentColor" /> ORGAN DONOR
+              </div>
+            )}
           </div>
           
           <div className="flex justify-end items-start mb-1 print:pt-2">

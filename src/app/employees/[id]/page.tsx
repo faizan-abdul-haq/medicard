@@ -4,7 +4,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History, Phone, Home, CalendarDays, Droplets, Loader2, ArrowLeft, Briefcase, Edit3, Trash2 } from "lucide-react";
+import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History, Phone, Home, CalendarDays, Droplets, Loader2, ArrowLeft, Briefcase, Edit3, Trash2, Heart } from "lucide-react";
 import Image from "next/image";
 import type { EmployeeData, CardSettingsData, EmployeeType } from '@/lib/types';
 import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
@@ -110,8 +110,20 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
   if (!employee) return <div className="text-center p-8">Employee not found.</div>;
   if (isEditing) return <EmployeeEditForm employeeToEdit={employee} onUpdateSuccess={handleUpdateSuccess} onCancel={() => setIsEditing(false)} />;
 
-  const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value?: string | null }) => (
-    value ? <div className="flex items-start gap-2 py-1"><span className="text-primary mt-0.5">{icon}</span><div><p className="text-xs text-muted-foreground">{label}</p><p className="font-semibold">{value}</p></div></div> : null
+  const DetailItem = ({ icon, label, value, isBoolean = false }: { icon: React.ReactNode, label: string, value?: string | boolean | null, isBoolean?: boolean }) => (
+    value !== undefined && value !== null ? (
+      <div className="flex items-start gap-2 py-1">
+        <span className="text-primary mt-0.5">{icon}</span>
+        <div>
+          <p className="text-xs text-muted-foreground">{label}</p>
+          {isBoolean ? (
+            <p className={`font-semibold ${value ? 'text-green-600' : 'text-muted-foreground'}`}>{value ? 'Yes' : 'No'}</p>
+          ) : (
+            <p className="font-semibold">{value}</p>
+          )}
+        </div>
+      </div>
+    ) : null
   );
 
   return (
@@ -162,6 +174,7 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
                 <DetailItem icon={<Briefcase size={14}/>} label="SEVARTH No." value={employee.sevarthNo} />
                 <DetailItem icon={<Phone size={14}/>} label="Mobile" value={employee.mobileNumber} />
                 <DetailItem icon={<Droplets size={14}/>} label="Blood Group" value={employee.bloodGroup} />
+                <DetailItem icon={<Heart size={14} className={employee.isOrganDonor ? 'text-red-500' : ''}/>} label="Organ Donor" value={employee.isOrganDonor} isBoolean />
                 <DetailItem icon={<CalendarDays size={14}/>} label="Registration Date" value={format(employee.registrationDate, 'dd MMM, yyyy HH:mm')}/>
               </div>
                <DetailItem icon={<Home size={14}/>} label="Address" value={employee.address} />

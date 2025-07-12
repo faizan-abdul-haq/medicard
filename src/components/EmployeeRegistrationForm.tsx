@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 const initialFormData: Partial<Omit<EmployeeData, 'id' | 'registrationDate' | 'photographUrl'>> & { photograph?: File | null } = {
@@ -43,6 +44,7 @@ const initialFormData: Partial<Omit<EmployeeData, 'id' | 'registrationDate' | 'p
   photograph: null,
   bloodGroup: '',
   cardHolderSignature: '',
+  isOrganDonor: false,
 };
 
 const dataURLtoFile = (dataurl: string, filename: string): File => {
@@ -87,8 +89,13 @@ export default function EmployeeRegistrationForm() {
   }, [submittedEmployee, isAuthenticated, toast]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    if (type === 'checkbox') {
+        const { checked } = e.target as HTMLInputElement;
+        setFormData(prev => ({ ...prev, [name]: checked }));
+    } else {
+        setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -292,6 +299,20 @@ export default function EmployeeRegistrationForm() {
            <div className="space-y-2">
               <ImageUploadField label="Card Holder's Signature" value={formData.cardHolderSignature} onChange={(url) => setFormData(prev => ({ ...prev, cardHolderSignature: url }))} directory="signatures" maxSizeKB={1024} note="Upload a pre-signed image."/>
             </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="isOrganDonor" 
+              name="isOrganDonor"
+              checked={formData.isOrganDonor} 
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isOrganDonor: !!checked }))}
+            />
+            <label
+              htmlFor="isOrganDonor"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Is an Organ Donor
+            </label>
+          </div>
           <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <UserPlus className="mr-2 h-4 w-4" />}
             {isSubmitting ? 'Registering...' : (isAuthenticated ? 'Register Employee & Generate ID' : 'Submit Registration')}
