@@ -138,11 +138,11 @@ export default function EmployeeIdCard({
               <span className={`text-[0.8em] font-bold px-1.5 py-0.5 rounded-sm mr-1 ${employeeTypeStyles[employee.employeeType]}`}>{isStaff ? 'कर्मचारी' : employee.employeeType}</span>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center text-[1em]">
-              <span className="font-bold">{isStaff ? 'पद' : 'Designation'}</span>
+              <span className="font-bold">{isStaff ? 'पदनाम' : 'Designation'}</span>
               <p>{employee.designation}</p>
               <span className="font-bold">{isStaff ? 'रक्त गट' : 'Blood Grp'}</span>
               <p>{employee.bloodGroup || 'N/A'}</p>
-              <span className="font-bold">{isStaff ? 'आयडी क्र.' : 'ID No.'}</span>
+              <span className="font-bold">{isStaff ? 'ओळखपत्र क्रमांक.' : 'ID No.'}</span>
               <p>{employee.employeeId}</p>
             </div>
           </div>
