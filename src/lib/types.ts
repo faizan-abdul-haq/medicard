@@ -25,11 +25,9 @@ export interface EmployeeData {
   photographUrl?: string; // URL to the photo from Storage
   fullName: string;
   address: string;
-  dateOfJoining: Date;
   mobileNumber: string;
   employeeId: string; // Should be unique
   sevarthNo?: string;
-  department: string;
   designation: string;
   employeeType: EmployeeType;
   bloodGroup?: string;
@@ -104,3 +102,4 @@ export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
   personNameFontSize: 14,
   detailsFontSize: 11,
 };
+

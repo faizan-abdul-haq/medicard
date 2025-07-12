@@ -9,13 +9,10 @@ import EmployeeIdCard from './EmployeeIdCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription as ShadcnAlertDescription } from '@/components/ui/alert';
-import { CalendarIcon, UserPlus, Droplets, Printer, AlertTriangle, ShieldCheck, Loader2, ArrowLeft, Camera, UploadCloud, Briefcase } from 'lucide-react';
-import { format } from 'date-fns';
+import { UserPlus, Droplets, Printer, AlertTriangle, ShieldCheck, Loader2, ArrowLeft, Camera, UploadCloud, Briefcase } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -35,14 +32,12 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 
 
-const initialFormData: Partial<Omit<EmployeeData, 'id' | 'registrationDate' | 'photographUrl'>> & { photograph?: File | null, dateOfJoining?: Date } = {
+const initialFormData: Partial<Omit<EmployeeData, 'id' | 'registrationDate' | 'photographUrl'>> & { photograph?: File | null } = {
   fullName: '',
   address: '',
-  dateOfJoining: undefined,
   mobileNumber: '',
   employeeId: '',
   sevarthNo: '',
-  department: '',
   designation: '',
   employeeType: 'STAFF',
   photograph: null,
@@ -99,10 +94,6 @@ export default function EmployeeRegistrationForm() {
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value as any }));
   };
-
-  const handleDateChange = (date: Date | undefined) => {
-    setFormData(prev => ({ ...prev, dateOfJoining: date }));
-  };
   
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -142,7 +133,7 @@ export default function EmployeeRegistrationForm() {
   
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData.dateOfJoining || !formData.fullName || !formData.employeeId || !formData.employeeType) {
+    if (!formData.fullName || !formData.employeeId || !formData.employeeType) {
       toast({ title: "Validation Error", description: "Please fill all required fields, including employee type.", variant: "destructive" });
       return;
     }
@@ -151,7 +142,6 @@ export default function EmployeeRegistrationForm() {
     try {
       const newEmployee = await registerEmployee({
         ...formData,
-        dateOfJoining: formData.dateOfJoining,
         fullName: formData.fullName,
         employeeId: formData.employeeId,
         employeeType: formData.employeeType as EmployeeType,
@@ -251,10 +241,6 @@ export default function EmployeeRegistrationForm() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="department">Department <span className="text-destructive">*</span></Label>
-              <Input id="department" name="department" value={formData.department || ''} onChange={handleChange} required />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="designation">Designation <span className="text-destructive">*</span></Label>
               <Input id="designation" name="designation" value={formData.designation || ''} onChange={handleChange} required />
             </div>
@@ -270,17 +256,14 @@ export default function EmployeeRegistrationForm() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="dateOfJoining">Date of Joining <span className="text-destructive">*</span></Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={`w-full justify-start text-left font-normal ${!formData.dateOfJoining && "text-muted-foreground"}`}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.dateOfJoining ? format(formData.dateOfJoining, "dd/MM/yyyy") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={formData.dateOfJoining} onSelect={handleDateChange} initialFocus /></PopoverContent>
-              </Popover>
-            </div>
+                <Label htmlFor="bloodGroup">Blood Group</Label>
+                <Select value={formData.bloodGroup || ''} onValueChange={(value) => handleSelectChange('bloodGroup', value)}>
+                  <SelectTrigger><SelectValue placeholder="Select blood group" /></SelectTrigger>
+                  <SelectContent>
+                    {bloodGroups.map(group => <SelectItem key={group} value={group}><Droplets size={14} className="inline mr-2 text-red-500"/>{group}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
           </div>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
@@ -300,15 +283,7 @@ export default function EmployeeRegistrationForm() {
               )}
               {photographPreview && <Image src={photographPreview} alt="Photograph preview" width={100} height={120} className="rounded-md border mt-2" data-ai-hint="employee portrait" unoptimized/>}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="bloodGroup">Blood Group</Label>
-              <Select value={formData.bloodGroup || ''} onValueChange={(value) => handleSelectChange('bloodGroup', value)}>
-                <SelectTrigger><SelectValue placeholder="Select blood group" /></SelectTrigger>
-                <SelectContent>
-                  {bloodGroups.map(group => <SelectItem key={group} value={group}><Droplets size={14} className="inline mr-2 text-red-500"/>{group}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+            
           </div>
           <div className="space-y-2">
             <Label htmlFor="address">Address</Label>

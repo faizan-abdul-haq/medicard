@@ -4,7 +4,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History, Mail, Phone, Home, CalendarDays, Droplets, Loader2, ArrowLeft, Briefcase, Edit3, Trash2 } from "lucide-react";
+import { User, QrCode, ShieldCheck, AlertTriangle, Printer, History, Phone, Home, CalendarDays, Droplets, Loader2, ArrowLeft, Briefcase, Edit3, Trash2 } from "lucide-react";
 import Image from "next/image";
 import type { EmployeeData, CardSettingsData, EmployeeType } from '@/lib/types';
 import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
@@ -155,12 +155,11 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
                 <h2 className="text-2xl font-bold text-primary text-center md:text-left">{employee.fullName}</h2>
                 <EmployeeTypeBadge type={employee.employeeType} />
               </div>
-              <p className="text-md text-muted-foreground font-semibold text-center md:text-left">{employee.designation} - {employee.department}</p>
+              <p className="text-md text-muted-foreground font-semibold text-center md:text-left">{employee.designation}</p>
               <Separator/>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
                 <DetailItem icon={<Briefcase size={14}/>} label="ID No." value={employee.employeeId} />
                 <DetailItem icon={<Briefcase size={14}/>} label="SEVARTH No." value={employee.sevarthNo} />
-                <DetailItem icon={<CalendarDays size={14}/>} label="Date of Joining" value={format(employee.dateOfJoining, 'dd MMM, yyyy')} />
                 <DetailItem icon={<Phone size={14}/>} label="Mobile" value={employee.mobileNumber} />
                 <DetailItem icon={<Droplets size={14}/>} label="Blood Group" value={employee.bloodGroup} />
                 <DetailItem icon={<CalendarDays size={14}/>} label="Registration Date" value={format(employee.registrationDate, 'dd MMM, yyyy HH:mm')}/>

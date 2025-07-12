@@ -53,7 +53,7 @@ export default function EmployeeIdCard({
     }
   };
 
-  const cardBaseClasses = `w-[85.6mm] h-[53.98mm] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative print:shadow-none print:border-gray-400 ${className || ''}`;
+  const cardBaseClasses = `w-[85.6mm] h-[53.98mm] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative print:shadow-none print:border-gray-400`;
   
   const headerBackgroundColorStyle: React.CSSProperties = {
     backgroundColor: settings.headerBackgroundColor,
@@ -140,10 +140,6 @@ export default function EmployeeIdCard({
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center text-[1em]">
               <span className="font-bold">{isStaff ? 'पद' : 'Designation'}</span>
               <p>{employee.designation}</p>
-              <span className="font-bold">{isStaff ? 'विभाग' : 'Department'}</span>
-              <p>{employee.department}</p>
-              <span className="font-bold">{isStaff ? 'रुजू होण्याची दि.' : 'Joining Dt.'}</span>
-              <p>{employee.dateOfJoining && isValid(new Date(employee.dateOfJoining)) ? format(new Date(employee.dateOfJoining), 'dd/MM/yyyy') : 'N/A'}</p>
               <span className="font-bold">{isStaff ? 'रक्त गट' : 'Blood Grp'}</span>
               <p>{employee.bloodGroup || 'N/A'}</p>
               <span className="font-bold">{isStaff ? 'आयडी क्र.' : 'ID No.'}</span>
@@ -188,6 +184,10 @@ export default function EmployeeIdCard({
           </Button>
         )}
         <CardContent className="p-2 space-y-1 leading-snug" style={detailsStyle}>
+          <div className='print:pl-2 print:pr-2'>
+            <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{isStaff ? 'सेवार्थ नंबर:' : 'SEVARTH No:'} {employee.sevarthNo || 'N/A'}</p>
+          </div>
+          
           <div className="flex justify-end items-start mb-1 print:pt-2">
             {qrCodeUrl ? (
               <Image src={qrCodeUrl} alt="QR Code" width={50} height={50} data-ai-hint="qr code" unoptimized className="border border-gray-300" />
@@ -197,9 +197,7 @@ export default function EmployeeIdCard({
               </div>
             )}
           </div>
-          <div className='print:pl-2 print:pr-2'>
-            <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{isStaff ? 'सेवार्थ नंबर:' : 'SEVARTH No:'} {employee.sevarthNo || 'N/A'}</p>
-          </div>
+          
           <div className='print:pl-2 print:pr-2'>
             <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{isStaff ? 'निवासी पत्ता:' : 'Residential Address:'}</p>
             <p className="font-bold text-[0.9em] leading-tight mt-0.5">{employee.address || 'N/A'}</p>

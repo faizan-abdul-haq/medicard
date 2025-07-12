@@ -23,8 +23,7 @@ import { uploadStudentPhoto } from './photoUploadService'; // Can be reused
 const EMPLOYEES_COLLECTION = 'employees';
 
 const mapFirestoreDocToEmployeeData = (docData: any, id: string): EmployeeData => {
-  const data = docData as Omit<EmployeeData, 'id' | 'dateOfJoining' | 'registrationDate' | 'printHistory'> & {
-    dateOfJoining: Timestamp | Date | string;
+  const data = docData as Omit<EmployeeData, 'id' | 'registrationDate' | 'printHistory'> & {
     registrationDate: Timestamp | Date | string;
     printHistory?: Array<Timestamp | Date | string>;
   };
@@ -43,10 +42,8 @@ const mapFirestoreDocToEmployeeData = (docData: any, id: string): EmployeeData =
     mobileNumber: data.mobileNumber,
     employeeId: data.employeeId,
     sevarthNo: data.sevarthNo,
-    department: data.department,
     designation: data.designation,
     employeeType: data.employeeType || 'STAFF',
-    dateOfJoining: parseDate(data.dateOfJoining),
     registrationDate: parseDate(data.registrationDate),
     bloodGroup: data.bloodGroup || undefined,
     photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
@@ -103,7 +100,7 @@ async function deletePhotograph(photographUrl: string): Promise<void> {
 
 
 export async function registerEmployee(
-  employeeData: Omit<EmployeeData, 'id' | 'registrationDate' | 'photographUrl' | 'printHistory' | 'photograph'> & { photograph?: File | null, dateOfJoining: Date, photographUrl?: string | null, employeeType: EmployeeType }
+  employeeData: Omit<EmployeeData, 'id' | 'registrationDate' | 'photographUrl' | 'printHistory' | 'photograph'> & { photograph?: File | null, photographUrl?: string | null, employeeType: EmployeeType }
 ): Promise<EmployeeData> {
   try {
     const q = query(collection(db, EMPLOYEES_COLLECTION), where("employeeId", "==", employeeData.employeeId));
@@ -120,11 +117,9 @@ export async function registerEmployee(
     const docDataToSave: any = {
       fullName: employeeData.fullName,
       address: employeeData.address || 'N/A',
-      dateOfJoining: Timestamp.fromDate(employeeData.dateOfJoining),
       mobileNumber: employeeData.mobileNumber || 'N/A',
       employeeId: employeeData.employeeId,
       sevarthNo: employeeData.sevarthNo || '',
-      department: employeeData.department,
       designation: employeeData.designation,
       employeeType: employeeData.employeeType,
       photographUrl: finalPhotographUrl,
@@ -165,7 +160,6 @@ export async function updateEmployee(
     
     const updatePayload: any = { ...dataToUpdate };
     if (finalPhotographUrl !== undefined) updatePayload.photographUrl = finalPhotographUrl;
-    if (dataToUpdate.dateOfJoining) updatePayload.dateOfJoining = Timestamp.fromDate(new Date(dataToUpdate.dateOfJoining));
     
     await updateDoc(employeeDocRef, updatePayload);
 
@@ -219,7 +213,6 @@ export async function bulkRegisterEmployees(employeesData: Partial<EmployeeData>
 
     const employeeToSave: any = {
       ...data,
-      dateOfJoining: data.dateOfJoining ? Timestamp.fromDate(new Date(data.dateOfJoining)) : Timestamp.now(),
       registrationDate: serverTimestamp(),
       printHistory: [],
       photographUrl: data.photographUrl || "https://placehold.co/80x100.png",

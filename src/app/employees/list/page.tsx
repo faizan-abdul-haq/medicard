@@ -61,7 +61,6 @@ function EmployeeListContent() {
       emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (emp.sevarthNo && emp.sevarthNo.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      emp.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.employeeType.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -120,8 +119,8 @@ function EmployeeListContent() {
     }
 
     const headers = [
-      "ID No.", "SEVARTH No.", "Full Name", "Type", "Department", "Designation",
-      "Date of Joining", "Registration Date", "Mobile Number", "Address",
+      "ID No.", "SEVARTH No.", "Full Name", "Type", "Designation",
+      "Registration Date", "Mobile Number", "Address",
       "Blood Group", "Photograph URL", "Signature URL"
     ];
     const csvRows = [headers.join(',')];
@@ -132,9 +131,7 @@ function EmployeeListContent() {
         `"${emp.sevarthNo || ''}"`,
         `"${emp.fullName}"`,
         `"${emp.employeeType}"`,
-        `"${emp.department}"`,
         `"${emp.designation}"`,
-        `"${format(new Date(emp.dateOfJoining), 'yyyy-MM-dd')}"`,
         `"${format(new Date(emp.registrationDate), 'yyyy-MM-dd HH:mm')}"`,
         `"${emp.mobileNumber || ''}"`,
         `"${(emp.address || '').replace(/"/g, '""')}"`,
@@ -208,9 +205,7 @@ function EmployeeListContent() {
                     <TableHead>ID No.</TableHead>
                     <TableHead>Full Name</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead>Department</TableHead>
                     <TableHead>Designation</TableHead>
-                    <TableHead>Joining Date</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -221,9 +216,7 @@ function EmployeeListContent() {
                       <TableCell className="font-medium">{employee.employeeId}</TableCell>
                       <TableCell>{employee.fullName}</TableCell>
                       <TableCell><EmployeeTypeBadge type={employee.employeeType} /></TableCell>
-                      <TableCell>{employee.department}</TableCell>
                       <TableCell>{employee.designation}</TableCell>
-                      <TableCell>{format(new Date(employee.dateOfJoining), 'dd MMM, yyyy')}</TableCell>
                       <TableCell className="space-x-1">
                         <Button asChild variant="outline" size="sm"><Link href={`/employees/${employee.id}`}><Eye size={16} className="mr-1" /> View/Edit</Link></Button>
                         <AlertDialog>

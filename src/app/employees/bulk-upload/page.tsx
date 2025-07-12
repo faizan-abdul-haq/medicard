@@ -11,7 +11,6 @@ import { useToast } from "@/hooks/use-toast";
 import { UploadCloud, FileText, Download, TableIcon, UserCircle, AlertTriangle, ArrowLeft, Briefcase } from "lucide-react";
 import type { EmployeeData, EmployeeType } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { format, isValid, parseISO, parse } from 'date-fns';
 import { bulkRegisterEmployees } from '@/services/employeeService';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,15 +28,15 @@ function BulkUploadContent() {
   const router = useRouter();
 
   const csvHeaders = [
-    "fullName", "employeeId", "sevarthNo", "department", "designation", "employeeType", "dateOfJoining",
+    "fullName", "employeeId", "sevarthNo", "designation", "employeeType",
     "mobileNumber", "address", "bloodGroup", "photographUrl", "cardHolderSignature"
   ];
 
   const csvTemplateString = csvHeaders.join(',') + '\n' +
-    `"Dr. Jane Doe","EMP001","SVRTH001","Computer Science","Professor","FACULTY","2020-08-15","9876543210","123 Faculty Row, Knowledge City","O+","https://placehold.co/100x120.png",""` + '\n' +
-    `"John Smith","EMP002","SVRTH002","Administration","Office Clerk","STAFF","2021-02-01","9876543211","456 Staff Quarters, Service Town","A+","https://placehold.co/100x120.png",""`;
+    `"Dr. Jane Doe","EMP001","SVRTH001","Professor","FACULTY","9876543210","123 Faculty Row, Knowledge City","O+","https://placehold.co/100x120.png",""` + '\n' +
+    `"John Smith","EMP002","SVRTH002","Office Clerk","STAFF","9876543211","456 Staff Quarters, Service Town","A+","https://placehold.co/100x120.png",""`;
   
-  const requiredHeadersForParsing = ["fullName", "employeeId", "department", "designation", "employeeType", "dateOfJoining"];
+  const requiredHeadersForParsing = ["fullName", "employeeId", "designation", "employeeType"];
 
   const parseCSV = (csvText: string): Partial<EmployeeData>[] => {
     const employees: Partial<EmployeeData>[] = [];
@@ -77,19 +76,7 @@ function BulkUploadContent() {
         const key = header as keyof EmployeeData;
         let value: any = data[index] || '';
 
-        if (key === 'dateOfJoining') {
-          let parsedDate = parseISO(value);
-          if (!isValid(parsedDate)) parsedDate = parse(value, 'MM/dd/yyyy', new Date());
-          if (!isValid(parsedDate)) parsedDate = parse(value, 'dd/MM/yyyy', new Date());
-
-          if (isValid(parsedDate)) {
-            value = parsedDate;
-          } else {
-            currentParsingErrors.push(`Row ${i+1} (ID: ${data[headersFromFile.indexOf("employeeId")] || 'N/A'}): Invalid Date Format '${data[index]}'. Skipping record.`);
-            value = undefined;
-            rowError = true;
-          }
-        } else if (key === 'employeeType' && value !== 'FACULTY' && value !== 'STAFF') {
+        if (key === 'employeeType' && value !== 'FACULTY' && value !== 'STAFF') {
             currentParsingErrors.push(`Row ${i+1} (ID: ${data[headersFromFile.indexOf("employeeId")] || 'N/A'}): Invalid employeeType '${value}'. Must be 'FACULTY' or 'STAFF'. Skipping record.`);
             rowError = true;
         } else if (key === 'mobileNumber' && value && !MOBILE_REGEX.test(value)) {
@@ -245,7 +232,7 @@ function BulkUploadContent() {
               <CardContent>
                 <div className="max-h-96 overflow-auto">
                   <Table>
-                    <TableHeader><TableRow><TableHead>Full Name</TableHead><TableHead>ID No.</TableHead><TableHead>SEVARTH No.</TableHead><TableHead>Type</TableHead><TableHead>Department</TableHead><TableHead>Joining Date</TableHead></TableRow></TableHeader>
+                    <TableHeader><TableRow><TableHead>Full Name</TableHead><TableHead>ID No.</TableHead><TableHead>SEVARTH No.</TableHead><TableHead>Type</TableHead><TableHead>Designation</TableHead></TableRow></TableHeader>
                     <TableBody>
                       {parsedEmployees.map((emp, index) => (
                         <TableRow key={emp.employeeId || index}>
@@ -253,8 +240,7 @@ function BulkUploadContent() {
                           <TableCell>{emp.employeeId}</TableCell>
                           <TableCell>{emp.sevarthNo}</TableCell>
                           <TableCell>{emp.employeeType}</TableCell>
-                          <TableCell>{emp.department}</TableCell>
-                          <TableCell>{emp.dateOfJoining && isValid(new Date(emp.dateOfJoining)) ? format(new Date(emp.dateOfJoining), 'dd/MM/yyyy') : 'Invalid'}</TableCell>
+                          <TableCell>{emp.designation}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

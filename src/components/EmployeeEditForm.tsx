@@ -9,12 +9,10 @@ import EmployeeIdCard from './EmployeeIdCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CalendarIcon, UserCog, Droplets, Loader2, Save, Camera, UploadCloud, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { UserCog, Droplets, Loader2, Save, Camera, UploadCloud, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
 import { updateEmployee } from '@/services/employeeService';
@@ -56,7 +54,6 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
   useEffect(() => {
     setFormData({
       ...employeeToEdit,
-      dateOfJoining: employeeToEdit.dateOfJoining ? new Date(employeeToEdit.dateOfJoining) : undefined,
     });
     setPhotographPreview(employeeToEdit.photographUrl || "https://placehold.co/80x100.png");
   }, [employeeToEdit]);
@@ -72,10 +69,6 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
   
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value as any }));
-  };
-
-  const handleDateChange = (date: Date | undefined) => {
-    setFormData(prev => ({ ...prev, dateOfJoining: date }));
   };
 
   const handleNewPhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -107,8 +100,8 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData.dateOfJoining || !formData.employeeType) {
-      toast({ title: "Validation Error", description: "Date of joining and employee type are required.", variant: "destructive" });
+    if (!formData.employeeType) {
+      toast({ title: "Validation Error", description: "Employee type is required.", variant: "destructive" });
       return;
     }
     
@@ -137,7 +130,6 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
     ...employeeToEdit,
     ...formData,
     photographUrl: photographPreview || "https://placehold.co/80x100.png",
-    dateOfJoining: formData.dateOfJoining || employeeToEdit.dateOfJoining,
     id: employeeToEdit.id,
     registrationDate: employeeToEdit.registrationDate,
     employeeType: formData.employeeType || employeeToEdit.employeeType,
@@ -167,18 +159,8 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
                     <div><Label htmlFor="mobileNumber">Mobile Number</Label><Input id="mobileNumber" name="mobileNumber" type="tel" value={formData.mobileNumber || ''} onChange={handleChange}/></div>
                 </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div><Label htmlFor="department">Department</Label><Input id="department" name="department" value={formData.department || ''} onChange={handleChange} /></div>
                     <div><Label htmlFor="designation">Designation</Label><Input id="designation" name="designation" value={formData.designation || ''} onChange={handleChange} /></div>
                 </div>  
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="dateOfJoining">Date of Joining</Label>
-                        <Popover>
-                        <PopoverTrigger asChild><Button variant={"outline"} className={`w-full justify-start text-left font-normal ${!formData.dateOfJoining && "text-muted-foreground"}`}><CalendarIcon className="mr-2 h-4 w-4" />{formData.dateOfJoining ? format(new Date(formData.dateOfJoining), "dd/MM/yyyy") : <span>Pick a date</span>}</Button></PopoverTrigger>
-                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={formData.dateOfJoining ? new Date(formData.dateOfJoining) : undefined} onSelect={handleDateChange} initialFocus/></PopoverContent>
-                        </Popover>
-                    </div>
-                </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                       <Label htmlFor="employeeType">Employee Type</Label>
