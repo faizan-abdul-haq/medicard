@@ -146,8 +146,6 @@ export default function StaffIdCard({
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center text-[1em]">
               <span className="font-bold">{'पदनाम'}</span>
               <p>{employee.designation}</p>
-              <span className="font-bold">{'ओळखपत्र क्रमांक.'}</span>
-              <p>{employee.employeeId}</p>
               <span className="font-bold">{'रक्त गट'}</span>
               <p>{employee.bloodGroup || 'N/A'}</p>
               <span className="font-bold">{'जन्मतारीख'}</span>
@@ -208,6 +206,7 @@ export default function StaffIdCard({
           <div className='print:pl-2 print:pr-2'>
             <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{'निवासी पत्ता:'}</p>
             <p className="font-bold text-[0.9em] leading-tight mt-0.5">{employee.address || 'N/A'}</p>
+            <div className="border-t my-1"></div>
           </div>
           <ol className="list-decimal list-inside space-y-0.5 mt-1 text-[0.9em] leading-tight print:pl-2 print:pr-2">
             {instructions.map((inst, idx) => (
