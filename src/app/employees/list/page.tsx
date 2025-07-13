@@ -3,6 +3,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { cn } from '@/lib/utils';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -38,6 +40,11 @@ function EmployeeListContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
   const { toast } = useToast();
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const filter = searchParams.get('filter');
 
   const fetchEmployeesData = useCallback(async () => {
     setIsLoading(true);
@@ -54,17 +61,34 @@ function EmployeeListContent() {
   useEffect(() => {
     fetchEmployeesData();
   }, [fetchEmployeesData]);
+  
+  const handleFilterChange = (newFilter: 'faculty' | 'staff' | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (newFilter) {
+      params.set('filter', newFilter);
+    } else {
+      params.delete('filter');
+    }
+    router.push(`${pathname}?${params.toString()}`);
+    setCurrentPage(1); // Reset to first page on filter change
+  };
 
   const filteredEmployees = useMemo(() => {
-    if (!searchTerm) return employees;
-    return employees.filter(emp =>
+    let employeesToFilter = employees;
+
+    if (filter === 'faculty' || filter === 'staff') {
+      employeesToFilter = employees.filter(emp => emp.employeeType.toLowerCase() === filter);
+    }
+    
+    if (!searchTerm) return employeesToFilter;
+
+    return employeesToFilter.filter(emp =>
       emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       emp.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (emp.sevarthNo && emp.sevarthNo.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      emp.designation.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.employeeType.toLowerCase().includes(searchTerm.toLowerCase())
+      emp.designation.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [employees, searchTerm]);
+  }, [employees, searchTerm, filter]);
 
   const totalPages = Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE);
   
@@ -177,10 +201,16 @@ function EmployeeListContent() {
               <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2"><Briefcase size={28} /> Employee Roster</CardTitle>
               <CardDescription>Browse all registered employees. Found {filteredEmployees.length} records.</CardDescription>
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-              <div className="relative flex-grow sm:flex-grow-0">
+             <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+              <Button onClick={() => handleFilterChange(null)} variant={!filter ? "default" : "outline"} size="sm">All</Button>
+              <Button onClick={() => handleFilterChange('faculty')} variant={filter === 'faculty' ? "default" : "outline"} size="sm">Faculty</Button>
+              <Button onClick={() => handleFilterChange('staff')} variant={filter === 'staff' ? "default" : "outline"} size="sm">Staff</Button>
+            </div>
+          </div>
+           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap pt-4">
+              <div className="relative flex-grow">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input type="search" placeholder="Search employees..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="pl-10 w-full sm:w-64" />
+                <Input type="search" placeholder="Search employees..." value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} className="pl-10 w-full" />
               </div>
               {selectedEmployees.size > 0 && (
                 <Button asChild>
@@ -191,7 +221,6 @@ function EmployeeListContent() {
                   <Download size={16} className="mr-2" /> Download CSV
                 </Button>
             </div>
-          </div>
         </CardHeader>
         <CardContent>
           {paginatedEmployees.length === 0 ? (
@@ -261,3 +290,5 @@ export default function EmployeeListPage() {
     </ProtectedRoute>
   );
 }
+
+    
