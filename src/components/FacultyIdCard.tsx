@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Repeat, QrCodeIcon, Heart } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { format, isValid } from 'date-fns';
 
 interface FacultyIdCardProps {
   employee: EmployeeData;
@@ -96,6 +97,11 @@ export default function FacultyIdCard({
             <Repeat size={16} />
           </Button>
         )}
+        {employee.isOrganDonor && (
+          <div className="absolute top-0 right-0 h-full w-[12px] bg-red-600 flex items-center justify-center z-20">
+            <p className="text-white font-bold text-[8px] transform -rotate-90 origin-center whitespace-nowrap">I am an Organ Donor</p>
+          </div>
+        )}
         <div style={headerBackgroundColorStyle} className="pt-1.5 pr-1.5 pl-1.5 flex items-center print:pt-2">
           <div className="w-1/5 flex justify-center items-center print:pl-2">
             <Image 
@@ -135,10 +141,12 @@ export default function FacultyIdCard({
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center text-[1em]">
               <span className="font-bold">{'Designation'}</span>
               <p>{employee.designation}</p>
-              <span className="font-bold">{'Blood Grp'}</span>
-              <p>{employee.bloodGroup || 'N/A'}</p>
               <span className="font-bold">{'ID No.'}</span>
               <p>{employee.employeeId}</p>
+              <span className="font-bold">{'Blood Grp'}</span>
+              <p>{employee.bloodGroup || 'N/A'}</p>
+              <span className="font-bold">{'DOB'}</span>
+              <p>{employee.dateOfBirth && isValid(new Date(employee.dateOfBirth)) ? format(new Date(employee.dateOfBirth), 'dd/MM/yyyy') : 'N/A'}</p>
             </div>
           </div>
         </CardContent>
@@ -176,11 +184,6 @@ export default function FacultyIdCard({
         <CardContent className="p-2 space-y-1 leading-snug" style={detailsStyle}>
           <div className='print:pl-2 print:pr-2 flex justify-between items-center'>
             <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{'SEVARTH No:'} {employee.sevarthNo || 'N/A'}</p>
-             {employee.isOrganDonor && (
-              <div className="flex items-center gap-1 text-red-600 font-bold text-[10px] border border-red-600 px-1 rounded">
-                <Heart className="h-2.5 w-2.5" fill="currentColor" /> ORGAN DONOR
-              </div>
-            )}
           </div>
           
           <div className="flex justify-end items-start mb-1 print:pt-2">

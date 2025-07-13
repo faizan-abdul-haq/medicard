@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Repeat, QrCodeIcon, Heart } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { format, isValid } from 'date-fns';
 
 interface StaffIdCardProps {
   employee: EmployeeData;
@@ -145,10 +146,12 @@ export default function StaffIdCard({
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center text-[1em]">
               <span className="font-bold">{'पदनाम'}</span>
               <p>{employee.designation}</p>
-              <span className="font-bold">{'रक्त गट'}</span>
-              <p>{employee.bloodGroup || 'N/A'}</p>
               <span className="font-bold">{'ओळखपत्र क्रमांक.'}</span>
               <p>{employee.employeeId}</p>
+              <span className="font-bold">{'रक्त गट'}</span>
+              <p>{employee.bloodGroup || 'N/A'}</p>
+              <span className="font-bold">{'जन्मतारीख'}</span>
+              <p>{employee.dateOfBirth && isValid(new Date(employee.dateOfBirth)) ? format(new Date(employee.dateOfBirth), 'dd/MM/yyyy') : 'N/A'}</p>
             </div>
           </div>
         </CardContent>

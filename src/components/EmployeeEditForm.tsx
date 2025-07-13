@@ -9,10 +9,12 @@ import EmployeeIdCard from './EmployeeIdCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { UserCog, Droplets, Loader2, Save, Camera, UploadCloud, Trash2 } from 'lucide-react';
+import { UserCog, Droplets, Loader2, Save, Camera, UploadCloud, Trash2, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
 import { updateEmployee } from '@/services/employeeService';
@@ -55,6 +57,7 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
   useEffect(() => {
     setFormData({
       ...employeeToEdit,
+      dateOfBirth: employeeToEdit.dateOfBirth ? new Date(employeeToEdit.dateOfBirth) : undefined,
     });
     setPhotographPreview(employeeToEdit.photographUrl || "https://placehold.co/80x100.png");
   }, [employeeToEdit]);
@@ -71,6 +74,10 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
     } else {
         setFormData(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  const handleDateChange = (date: Date | undefined) => {
+    setFormData(prev => ({ ...prev, dateOfBirth: date }));
   };
   
   const handleSelectChange = (name: string, value: string) => {
@@ -166,6 +173,20 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
                 </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><Label htmlFor="designation">Designation</Label><Input id="designation" name="designation" value={formData.designation || ''} onChange={handleChange} /></div>
+                    <div>
+                        <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                        <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant={"outline"} className={`w-full justify-start text-left font-normal ${!formData.dateOfBirth && "text-muted-foreground"}`}>
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {formData.dateOfBirth ? format(new Date(formData.dateOfBirth), "dd/MM/yyyy") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar mode="single" selected={formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined} onSelect={handleDateChange} initialFocus captionLayout="dropdown-buttons" fromYear={1950} toYear={new Date().getFullYear()} />
+                        </PopoverContent>
+                        </Popover>
+                    </div>
                 </div>  
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>

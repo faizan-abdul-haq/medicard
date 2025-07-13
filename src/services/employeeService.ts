@@ -23,16 +23,25 @@ import { uploadStudentPhoto } from './photoUploadService'; // Can be reused
 const EMPLOYEES_COLLECTION = 'employees';
 
 const mapFirestoreDocToEmployeeData = (docData: any, id: string): EmployeeData => {
-  const data = docData as Omit<EmployeeData, 'id' | 'registrationDate' | 'printHistory'> & {
+  const data = docData as Omit<EmployeeData, 'id' | 'registrationDate' | 'printHistory' | 'dateOfBirth'> & {
     registrationDate: Timestamp | Date | string;
     printHistory?: Array<Timestamp | Date | string>;
+    dateOfBirth?: Timestamp | Date | string;
   };
   
   const parseDate = (dateField: any): Date => {
+    if (!dateField) return new Date('1900-01-01'); // Return a default or handle as invalid
     if (dateField instanceof Timestamp) return dateField.toDate();
     if (dateField instanceof Date) return dateField;
     const parsed = new Date(dateField);
-    return isNaN(parsed.getTime()) ? new Date() : parsed;
+    return isNaN(parsed.getTime()) ? new Date('1900-01-01') : parsed;
+  };
+  
+  const parseNullableDate = (dateField: any): Date | undefined => {
+    if (!dateField) return undefined;
+    const parsed = parseDate(dateField);
+    // Check if the parsed date is the default 'invalid' date
+    return parsed.getFullYear() === 1900 ? undefined : parsed;
   };
 
   return {
@@ -44,6 +53,7 @@ const mapFirestoreDocToEmployeeData = (docData: any, id: string): EmployeeData =
     sevarthNo: data.sevarthNo,
     designation: data.designation,
     employeeType: data.employeeType || 'STAFF',
+    dateOfBirth: parseNullableDate(data.dateOfBirth),
     registrationDate: parseDate(data.registrationDate),
     bloodGroup: data.bloodGroup || undefined,
     photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
@@ -129,6 +139,7 @@ export async function registerEmployee(
       cardHolderSignature: employeeData.cardHolderSignature,
       isOrganDonor: employeeData.isOrganDonor || false,
     };
+    if (employeeData.dateOfBirth) docDataToSave.dateOfBirth = Timestamp.fromDate(new Date(employeeData.dateOfBirth));
     if (employeeData.bloodGroup) docDataToSave.bloodGroup = employeeData.bloodGroup;
 
     const docRef = await addDoc(collection(db, EMPLOYEES_COLLECTION), docDataToSave);
@@ -162,6 +173,9 @@ export async function updateEmployee(
     
     const updatePayload: any = { ...dataToUpdate };
     if (finalPhotographUrl !== undefined) updatePayload.photographUrl = finalPhotographUrl;
+    if (dataToUpdate.dateOfBirth) {
+      updatePayload.dateOfBirth = Timestamp.fromDate(new Date(dataToUpdate.dateOfBirth));
+    }
     
     await updateDoc(employeeDocRef, updatePayload);
 
@@ -221,6 +235,10 @@ export async function bulkRegisterEmployees(employeesData: Partial<EmployeeData>
       sevarthNo: data.sevarthNo || '',
       isOrganDonor: data.isOrganDonor || false,
     };
+
+    if (data.dateOfBirth) {
+        employeeToSave.dateOfBirth = Timestamp.fromDate(new Date(data.dateOfBirth));
+    }
 
     batch.set(employeeDocRef, employeeToSave);
     successCount++;

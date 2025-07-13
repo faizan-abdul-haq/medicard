@@ -16,6 +16,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Alert, AlertDescription as ShadcnAlertDescription, AlertTitle as ShadcnAlertTitle } from "@/components/ui/alert";
+import { isValid, parseISO, parse } from 'date-fns';
 
 const MOBILE_REGEX = /^\d{10}$/;
 
@@ -29,14 +30,14 @@ function BulkUploadContent() {
 
   const csvHeaders = [
     "fullName", "employeeId", "sevarthNo", "designation", "employeeType",
-    "mobileNumber", "address", "bloodGroup", "isOrganDonor", "photographUrl", "cardHolderSignature"
+    "mobileNumber", "dateOfBirth", "address", "bloodGroup", "isOrganDonor", "photographUrl", "cardHolderSignature"
   ];
 
   const csvTemplateString = csvHeaders.join(',') + '\n' +
-    `"Dr. Jane Doe","EMP001","SVRTH001","Professor","FACULTY","9876543210","123 Faculty Row, Knowledge City","O+","TRUE","https://placehold.co/100x120.png",""` + '\n' +
-    `"John Smith","EMP002","SVRTH002","Office Clerk","STAFF","9876543211","456 Staff Quarters, Service Town","A+","FALSE","https://placehold.co/100x120.png",""`;
+    `"Dr. Jane Doe","EMP001","SVRTH001","Professor","FACULTY","9876543210","1980-05-20","123 Faculty Row, Knowledge City","O+","TRUE","https://placehold.co/100x120.png",""` + '\n' +
+    `"John Smith","EMP002","SVRTH002","Office Clerk","STAFF","9876543211","1992-11-15","456 Staff Quarters, Service Town","A+","FALSE","https://placehold.co/100x120.png",""`;
   
-  const requiredHeadersForParsing = ["fullName", "employeeId", "designation", "employeeType"];
+  const requiredHeadersForParsing = ["fullName", "employeeId", "designation", "employeeType", "dateOfBirth"];
 
   const parseCSV = (csvText: string): Partial<EmployeeData>[] => {
     const employees: Partial<EmployeeData>[] = [];
@@ -84,6 +85,18 @@ function BulkUploadContent() {
           value = '';
         } else if (key === 'isOrganDonor') {
           value = value.trim().toUpperCase() === 'TRUE';
+        } else if (key === 'dateOfBirth') {
+          let parsedDate = parseISO(value);
+          if (!isValid(parsedDate)) parsedDate = parse(value, 'MM/dd/yyyy', new Date());
+          if (!isValid(parsedDate)) parsedDate = parse(value, 'dd/MM/yyyy', new Date());
+
+          if (isValid(parsedDate)) {
+            value = parsedDate;
+          } else {
+            currentParsingErrors.push(`Row ${i+1} (ID: ${data[headersFromFile.indexOf("employeeId")] || 'N/A'}): Invalid Date Format '${data[index]}'. Use YYYY-MM-DD, MM/DD/YYYY, or DD/MM/YYYY. Skipping record.`);
+            value = undefined;
+            rowError = true;
+          }
         }
 
 
@@ -202,7 +215,7 @@ function BulkUploadContent() {
           <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
             <UploadCloud size={28} /> Bulk Employee Upload
           </CardTitle>
-          <CardDescription>Upload a CSV file to register multiple employees. Employee IDs must be unique. `employeeType` must be either "FACULTY" or "STAFF". For `isOrganDonor`, use TRUE or FALSE.</CardDescription>
+          <CardDescription>Upload a CSV file to register multiple employees. Employee IDs must be unique. `employeeType` must be either "FACULTY" or "STAFF". For `isOrganDonor`, use TRUE or FALSE. Date format: YYYY-MM-DD, MM/DD/YYYY, or DD/MM/YYYY.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <form onSubmit={handleSubmit} className="space-y-4">

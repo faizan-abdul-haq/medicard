@@ -172,6 +172,8 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm">
                 <DetailItem icon={<Briefcase size={14}/>} label="ID No." value={employee.employeeId} />
                 <DetailItem icon={<Briefcase size={14}/>} label="SEVARTH No." value={employee.sevarthNo} />
+                {employee.dateOfBirth && isValid(employee.dateOfBirth) &&
+                  <DetailItem icon={<CalendarDays size={14}/>} label="Date of Birth" value={format(employee.dateOfBirth, 'dd MMM, yyyy')} />}
                 <DetailItem icon={<Phone size={14}/>} label="Mobile" value={employee.mobileNumber} />
                 <DetailItem icon={<Droplets size={14}/>} label="Blood Group" value={employee.bloodGroup} />
                 <DetailItem icon={<Heart size={14} className={employee.isOrganDonor ? 'text-red-500' : ''}/>} label="Organ Donor" value={employee.isOrganDonor} isBoolean />

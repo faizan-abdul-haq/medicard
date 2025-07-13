@@ -9,10 +9,13 @@ import EmployeeIdCard from './EmployeeIdCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription as ShadcnAlertDescription } from '@/components/ui/alert';
-import { UserPlus, Droplets, Printer, AlertTriangle, ShieldCheck, Loader2, ArrowLeft, Camera, UploadCloud, Briefcase } from 'lucide-react';
+import { UserPlus, Droplets, Printer, AlertTriangle, ShieldCheck, Loader2, ArrowLeft, Camera, UploadCloud, Briefcase, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -33,7 +36,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Checkbox } from '@/components/ui/checkbox';
 
 
-const initialFormData: Partial<Omit<EmployeeData, 'id' | 'registrationDate' | 'photographUrl'>> & { photograph?: File | null } = {
+const initialFormData: Partial<Omit<EmployeeData, 'id' | 'registrationDate' | 'photographUrl'>> & { photograph?: File | null, dateOfBirth?: Date } = {
   fullName: '',
   address: '',
   mobileNumber: '',
@@ -41,6 +44,7 @@ const initialFormData: Partial<Omit<EmployeeData, 'id' | 'registrationDate' | 'p
   sevarthNo: '',
   designation: '',
   employeeType: 'STAFF',
+  dateOfBirth: undefined,
   photograph: null,
   bloodGroup: '',
   cardHolderSignature: '',
@@ -96,6 +100,10 @@ export default function EmployeeRegistrationForm() {
     } else {
         setFormData(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  const handleDateChange = (date: Date | undefined) => {
+    setFormData(prev => ({ ...prev, dateOfBirth: date }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -251,6 +259,31 @@ export default function EmployeeRegistrationForm() {
               <Label htmlFor="designation">Designation <span className="text-destructive">*</span></Label>
               <Input id="designation" name="designation" value={formData.designation || ''} onChange={handleChange} required />
             </div>
+             <div className="space-y-2">
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={`w-full justify-start text-left font-normal ${!formData.dateOfBirth && "text-muted-foreground"}`}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {formData.dateOfBirth ? format(formData.dateOfBirth, "dd/MM/yyyy") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={formData.dateOfBirth}
+                      onSelect={handleDateChange}
+                      initialFocus
+                      captionLayout="dropdown-buttons"
+                      fromYear={1950}
+                      toYear={new Date().getFullYear()}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <div className="space-y-2">

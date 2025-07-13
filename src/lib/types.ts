@@ -30,6 +30,7 @@ export interface EmployeeData {
   sevarthNo?: string;
   designation: string;
   employeeType: EmployeeType;
+  dateOfBirth?: Date;
   bloodGroup?: string;
   registrationDate: Date; // Timestamp of record creation
   printHistory?: Date[];
@@ -103,5 +104,6 @@ export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
   personNameFontSize: 14,
   detailsFontSize: 11,
 };
+
 
 
