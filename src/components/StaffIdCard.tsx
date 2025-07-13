@@ -190,11 +190,12 @@ export default function StaffIdCard({
           </Button>
         )}
         <CardContent className="p-2 space-y-1 leading-snug" style={detailsStyle}>
-          <div className='print:pl-2 print:pr-2 flex justify-between items-center'>
+          <div className='print:pl-2 print:pr-2 flex justify-between items-center mb-1'>
+            <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{'ओळखपत्र क्रमांक:'} {employee.employeeId || 'N/A'}</p>
             <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{'सेवार्थ नंबर:'} {employee.sevarthNo || 'N/A'}</p>
           </div>
           
-          <div className="flex justify-end items-start mb-1 print:pt-2">
+          <div className="flex justify-end items-start mb-1">
             {qrCodeUrl ? (
               <Image src={qrCodeUrl} alt="QR Code" width={50} height={50} data-ai-hint="qr code" unoptimized className="border border-gray-300" />
             ) : (
