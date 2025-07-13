@@ -89,6 +89,10 @@ export default function StaffIdCard({
   const employeeTypeStyles = 'bg-green-600 text-white';
 
   if (isFrontVisible) {
+    const collegeNameParts = settings.collegeNameLine1.split(' ');
+    const firstPart = collegeNameParts[0] || '';
+    const secondPart = collegeNameParts.slice(1).join(' ');
+
     return (
       <Card className={cardBaseClasses} style={cardDynamicStyle}>
         {showFlipButton && (
@@ -96,22 +100,29 @@ export default function StaffIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <div style={headerBackgroundColorStyle} className="pt-1.5 pr-1.5 pl-1.5 flex items-center print:pt-2">
-          <div className="w-1/5 flex justify-center items-center print:pl-2">
+        
+        {employee.isOrganDonor && (
+          <div className="absolute top-0 right-0 h-full w-[12px] bg-red-600 flex items-center justify-center z-20">
+            <p className="text-white font-bold text-[8px] transform -rotate-90 origin-center whitespace-nowrap">I am an Organ Donor</p>
+          </div>
+        )}
+
+        <div style={headerBackgroundColorStyle} className="pt-1.5 pr-1.5 pl-1.5 flex flex-col items-center justify-center text-center leading-tight print:pt-2">
+          <div className="flex items-center justify-center gap-1">
+            <span style={collegeNameLine1Style} className="tracking-tighter">{firstPart}</span>
             <Image 
               src={finalLogoUrl} 
               alt="Company Logo" 
-              width={50} 
-              height={40} 
+              width={20} 
+              height={20} 
+              className="h-auto"
               data-ai-hint="company logo" 
               onError={() => setLogoError(true)}
               unoptimized
             />
+            <span style={collegeNameLine1Style} className="tracking-tighter">{secondPart}</span>
           </div>
-          <div className="w-4/5 text-center leading-tight print:pr-2">
-            <p style={collegeNameLine1Style} className="tracking-tighter">{settings.collegeNameLine1}</p>
-            <p style={collegeNameLine2Style} className="tracking-tighter">{settings.collegeNameLine2}</p>
-          </div>
+          <p style={collegeNameLine2Style} className="tracking-tighter">{settings.collegeNameLine2}</p>
         </div>
 
         <CardContent className="p-1.5 flex flex-row gap-4 print:pl-2">
@@ -130,7 +141,6 @@ export default function StaffIdCard({
           <div className="flex-grow space-y-0.5" style={detailsStyle}>
             <div style={importantInfoStyle} className="rounded-sm mb-1 bg-primary/10 flex justify-between items-center">
               <p style={personNameStyle} className="uppercase font-bold text-primary">{employee.fullName}</p>
-              <span className={`text-[0.8em] font-bold px-1.5 py-0.5 rounded-sm mr-1 ${employeeTypeStyles}`}>{'कर्मचारी'}</span>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center text-[1em]">
               <span className="font-bold">{'पदनाम'}</span>
@@ -179,11 +189,6 @@ export default function StaffIdCard({
         <CardContent className="p-2 space-y-1 leading-snug" style={detailsStyle}>
           <div className='print:pl-2 print:pr-2 flex justify-between items-center'>
             <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{'सेवार्थ नंबर:'} {employee.sevarthNo || 'N/A'}</p>
-             {employee.isOrganDonor && (
-              <div className="flex items-center gap-1 text-red-600 font-bold text-[10px] border border-red-600 px-1 rounded">
-                <Heart className="h-2.5 w-2.5" fill="currentColor" /> ORGAN DONOR
-              </div>
-            )}
           </div>
           
           <div className="flex justify-end items-start mb-1 print:pt-2">
