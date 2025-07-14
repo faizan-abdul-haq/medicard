@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Repeat, QrCodeIcon, Heart } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { format, isValid } from 'date-fns';
+import { Separator } from './ui/separator';
 
 interface FacultyIdCardProps {
   employee: EmployeeData;
@@ -136,13 +137,10 @@ export default function FacultyIdCard({
           <div className="flex-grow space-y-0.5" style={detailsStyle}>
             <div style={importantInfoStyle} className="rounded-sm mb-1 bg-primary/10 flex justify-between items-center">
               <p style={personNameStyle} className="uppercase font-bold text-primary">{employee.fullName}</p>
-              <span className={`text-[0.8em] font-bold px-1.5 py-0.5 rounded-sm mr-1 ${employeeTypeStyles}`}>{employee.employeeType}</span>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center text-[1em]">
               <span className="font-bold">{'Designation'}</span>
               <p>{employee.designation}</p>
-              <span className="font-bold">{'ID No.'}</span>
-              <p>{employee.employeeId}</p>
               <span className="font-bold">{'Blood Grp'}</span>
               <p>{employee.bloodGroup || 'N/A'}</p>
               <span className="font-bold">{'DOB'}</span>
@@ -182,11 +180,12 @@ export default function FacultyIdCard({
           </Button>
         )}
         <CardContent className="p-2 space-y-1 leading-snug" style={detailsStyle}>
-          <div className='print:pl-2 print:pr-2 flex justify-between items-center'>
-            <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{'SEVARTH No:'} {employee.sevarthNo || 'N/A'}</p>
-          </div>
-          
-          <div className="flex justify-end items-start mb-1 print:pt-2">
+          <div className='print:pl-2 print:pr-2 flex justify-between items-start mb-1'>
+            <div className="space-y-0.5">
+                <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{'ID No:'} {employee.employeeId || 'N/A'}</p>
+                <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm block">{'SEVARTH No:'} {employee.sevarthNo || 'N/A'}</p>
+                <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm block">{'Mob:'} {employee.mobileNumber || 'N/A'}</p>
+            </div>
             {qrCodeUrl ? (
               <Image src={qrCodeUrl} alt="QR Code" width={50} height={50} data-ai-hint="qr code" unoptimized className="border border-gray-300" />
             ) : (
@@ -199,14 +198,14 @@ export default function FacultyIdCard({
           <div className='print:pl-2 print:pr-2'>
             <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{'Residential Address:'}</p>
             <p className="font-bold text-[0.9em] leading-tight mt-0.5">{employee.address || 'N/A'}</p>
+            <Separator className="my-1 bg-gray-400" />
           </div>
           <ol className="list-decimal list-inside space-y-0.5 mt-1 text-[0.9em] leading-tight print:pl-2 print:pr-2">
             {instructions.map((inst, idx) => (
               inst && <li key={idx} className="font-bold">{inst}</li>
             ))}
           </ol>
-          <div className="border-t mt-auto pt-1 flex justify-between items-center text-[0.9em] absolute bottom-2 left-2 right-2">
-            <p className="font-bold">{'Mob'}: {employee.mobileNumber || 'N/A'}</p>
+          <div className="border-t mt-auto pt-1 flex justify-end items-center text-[0.9em] absolute bottom-2 left-2 right-2">
             <p className="font-bold">{'Office'}: {settings.officePhoneNumber}</p>
           </div>
         </CardContent>
