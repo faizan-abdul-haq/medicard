@@ -171,10 +171,10 @@ function PrintPreviewContent() {
             ];
           } else { // item.type === 'employee'
              return [
-              <div key={`${item.data.employeeId}-front`} className={commonFrontClasses}>
+              <div key={`${item.data.id}-front`} className={commonFrontClasses}>
                 <EmployeeIdCard employee={item.data} settings={item.settings} showFlipButton={false} initialSide="front" className="employee-id-card" />
               </div>,
-              <div key={`${item.data.employeeId}-back`} className={commonBackClasses}>
+              <div key={`${item.data.id}-back`} className={commonBackClasses}>
                 <EmployeeIdCard employee={item.data} settings={item.settings} showFlipButton={false} initialSide="back" className="employee-id-card" />
               </div>
             ];

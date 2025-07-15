@@ -46,12 +46,13 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const employeeData = await getEmployeeById(employeeId);
       
       if (employeeData) {
         setEmployee(employeeData);
-        // Fetch settings based on employee type
+        // Fetch settings specifically for the employee's type
         const settingsData = await getCardSettings(employeeData.employeeType.toLowerCase() as 'faculty' | 'staff');
         setCardSettings(settingsData);
       } else {
@@ -60,11 +61,12 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
 
     } catch (err) {
       console.error(err);
-      setError("Failed to load employee data or settings.");
+      setError("Failed to load employee data or card settings.");
+      toast({ title: "Error Loading Data", description: "Could not retrieve employee details.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
-  }, [employeeId]);
+  }, [employeeId, toast]);
 
 
   useEffect(() => {
@@ -80,7 +82,7 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
   const handleUpdateSuccess = (updatedEmployee: EmployeeData) => {
     setEmployee(updatedEmployee);
     setIsEditing(false);
-    fetchData(); // Refetch all data to get potentially new card settings
+    fetchData(); // Refetch all data to ensure settings are up-to-date if employee type changed
     toast({ title: "Profile Updated" });
   };
 
@@ -102,7 +104,7 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
       FACULTY: "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/50 dark:text-purple-300",
       STAFF: "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/50 dark:text-green-300",
     };
-    return <Badge variant="outline" className={`font-semibold text-base ${typeStyles[type]}`}>{type}</Badge>;
+    return <Badge variant="outline" className={`font-semibold text-base ${typeStyles[type]}`}>{type.charAt(0) + type.slice(1).toLowerCase()}</Badge>;
   };
 
   if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -192,7 +194,7 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
             <EmployeeIdCard employee={employee} settings={cardSettings} showFlipButton={true} />
         </CardContent>
         <CardFooter className="flex justify-center pb-6">
-           <Button asChild className="bg-accent hover:bg-accent/80"><Link href={`/print-preview?employeeIds=${employee.employeeId}`} target="_blank"><Printer className="mr-2 h-4 w-4" /> Print ID Card</Link></Button>
+           <Button asChild className="bg-accent hover:bg-accent/80"><Link href={`/print-preview?employeeIds=${employee.id}`} target="_blank"><Printer className="mr-2 h-4 w-4" /> Print ID Card</Link></Button>
         </CardFooter>
       </Card>
 

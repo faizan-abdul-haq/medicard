@@ -108,14 +108,14 @@ function EmployeeListContent() {
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (checked === true) {
-      setSelectedEmployees(new Set(paginatedEmployees.map(e => e.employeeId)));
+      setSelectedEmployees(new Set(paginatedEmployees.map(e => e.id)));
     } else {
       setSelectedEmployees(new Set());
     }
   };
 
-  const isAllSelectedOnPage = paginatedEmployees.length > 0 && paginatedEmployees.every(e => selectedEmployees.has(e.employeeId));
-  const isSomeSelectedOnPage = paginatedEmployees.some(e => selectedEmployees.has(e.employeeId)) && !isAllSelectedOnPage;
+  const isAllSelectedOnPage = paginatedEmployees.length > 0 && paginatedEmployees.every(e => selectedEmployees.has(e.id));
+  const isSomeSelectedOnPage = paginatedEmployees.some(e => selectedEmployees.has(e.id)) && !isAllSelectedOnPage;
 
   const handleDeleteEmployee = async (employeeId: string, photographUrl?: string) => {
     setIsDeleting(employeeId);
@@ -125,8 +125,7 @@ function EmployeeListContent() {
       fetchEmployeesData();
       setSelectedEmployees(prev => {
         const newSelected = new Set(prev);
-        const empToDelete = employees.find(e => e.id === employeeId);
-        if(empToDelete) newSelected.delete(empToDelete.employeeId);
+        newSelected.delete(employeeId);
         return newSelected;
       });
     } catch (error) {
@@ -143,9 +142,9 @@ function EmployeeListContent() {
     }
 
     const headers = [
-      "ID No.", "SEVARTH No.", "Full Name", "Type", "Designation",
-      "Registration Date", "Mobile Number", "Address",
-      "Blood Group", "Photograph URL", "Signature URL"
+      "ID No.", "SEVARTH No.", "Full Name", "Type", "Designation", "Date of Birth",
+      "Registration Date", "Mobile Number", "Address", "Blood Group", "Organ Donor", 
+      "Photograph URL", "Signature URL"
     ];
     const csvRows = [headers.join(',')];
 
@@ -156,10 +155,12 @@ function EmployeeListContent() {
         `"${emp.fullName}"`,
         `"${emp.employeeType}"`,
         `"${emp.designation}"`,
+        `"${emp.dateOfBirth ? format(new Date(emp.dateOfBirth), 'yyyy-MM-dd') : ''}"`,
         `"${format(new Date(emp.registrationDate), 'yyyy-MM-dd HH:mm')}"`,
         `"${emp.mobileNumber || ''}"`,
         `"${(emp.address || '').replace(/"/g, '""')}"`,
         `"${emp.bloodGroup || ''}"`,
+        `"${emp.isOrganDonor ? 'TRUE' : 'FALSE'}"`,
         `"${emp.photographUrl || ''}"`,
         `"${emp.cardHolderSignature || ''}"`
       ];
@@ -185,7 +186,7 @@ function EmployeeListContent() {
       FACULTY: "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/50 dark:text-purple-300",
       STAFF: "bg-green-100 text-green-800 border-green-300 dark:bg-green-900/50 dark:text-green-300",
     };
-    return <Badge variant="outline" className={`font-semibold ${typeStyles[type]}`}>{type}</Badge>;
+    return <Badge variant="outline" className={`font-semibold ${typeStyles[type]}`}>{type.charAt(0) + type.slice(1).toLowerCase()}</Badge>;
   };
 
   if (isLoading && employees.length === 0) {
@@ -240,8 +241,8 @@ function EmployeeListContent() {
                 </TableHeader>
                 <TableBody>
                   {paginatedEmployees.map((employee) => (
-                    <TableRow key={employee.id} data-state={selectedEmployees.has(employee.employeeId) ? "selected" : undefined}>
-                      <TableCell><Checkbox checked={selectedEmployees.has(employee.employeeId)} onCheckedChange={(checked) => handleSelectEmployee(employee.employeeId, checked)} /></TableCell>
+                    <TableRow key={employee.id} data-state={selectedEmployees.has(employee.id) ? "selected" : undefined}>
+                      <TableCell><Checkbox checked={selectedEmployees.has(employee.id)} onCheckedChange={(checked) => handleSelectEmployee(employee.id, checked)} /></TableCell>
                       <TableCell className="font-medium">{employee.employeeId}</TableCell>
                       <TableCell>{employee.fullName}</TableCell>
                       <TableCell><EmployeeTypeBadge type={employee.employeeType} /></TableCell>
