@@ -23,17 +23,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const mockEmployeeForPreview: EmployeeData = {
   id: 'PREVIEW_ID',
   fullName: 'John Smith',
-  address: '456 Staff Quarters, Service Town, State 54321',
+  address: 'XYZ, Mumbai',
   dateOfJoining: new Date('2021-02-01'),
   mobileNumber: '9876543211',
-  employeeId: 'EMP002',
+  employeeId: 'GGMC - 4310/25',
   department: 'Administration',
   designation: 'Office Clerk',
   employeeType: 'STAFF',
   photographUrl: 'https://placehold.co/80x100.png',
   registrationDate: new Date(),
   bloodGroup: 'A+',
-  cardHolderSignature: ''
+  cardHolderSignature: '',
+  sevarthNo: 'ABD1234679'
 };
 
 const marathiFonts = [

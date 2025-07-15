@@ -100,7 +100,7 @@ export default function FacultyIdCard({
         )}
         {employee.isOrganDonor && (
           <div className="absolute top-0 right-0 h-full w-[12px] bg-red-600 flex items-center justify-center z-20">
-            <p className="text-white font-bold text-[8px] transform -rotate-90 origin-center whitespace-nowrap">I am an Organ Donor</p>
+            <p className="text-white font-bold text-[9px] transform -rotate-90 origin-center whitespace-nowrap">I am an Organ Donor</p>
           </div>
         )}
         <div style={headerBackgroundColorStyle} className="pt-1.5 pr-1.5 pl-1.5 flex items-center print:pt-2">
@@ -117,12 +117,17 @@ export default function FacultyIdCard({
           </div>
           <div className="w-4/5 text-center leading-tight print:pr-2">
             <p style={collegeNameLine1Style} className="tracking-tighter">{settings.collegeNameLine1}</p>
-            <p style={collegeNameLine2Style} className="tracking-tighter">{settings.collegeNameLine2}</p>
+            <p style={collegeNameLine2Style} className="tracking-tighter">{settings.collegeNameLine2}
+
+
+            </p>
+              <div className="border-t-2 w-[90%] my-1 print:pb-1 print:pt-1 self-start" style={{ borderColor: '#000' }}></div>
+
           </div>
         </div>
 
-        <CardContent className="p-1.5 flex flex-row gap-4 print:pl-2">
-          <div className="h-[28mm] w-[23mm] flex-shrink-0 mt-1">
+        <CardContent className="p-1.5 flex flex-row gap-4 print:pl-2 print:pt-2">
+          <div className="h-[20mm] w-[15mm] flex-shrink-0 mt-1">
             <div className="w-full h-full relative">
               <Image
                 src={employee.photographUrl || "https://placehold.co/80x80.png"}
@@ -139,16 +144,16 @@ export default function FacultyIdCard({
               <p style={personNameStyle} className="uppercase font-bold text-primary">{employee.fullName}</p>
             </div>
             <div className="grid grid-cols-[auto_1fr] gap-x-2 items-center text-[1em]">
-              <span className="font-bold">{'Designation'}</span>
-              <p>{employee.designation}</p>
-              <span className="font-bold">{'Blood Grp'}</span>
-              <p>{employee.bloodGroup || 'N/A'}</p>
-              <span className="font-bold">{'DOB'}</span>
-              <p>{employee.dateOfBirth && isValid(new Date(employee.dateOfBirth)) ? format(new Date(employee.dateOfBirth), 'dd/MM/yyyy') : 'N/A'}</p>
+              <span className="text-black">{'Designation :'}</span>
+              <p className="text-black">{employee.designation}</p>
+              <span className="text-black">{'Blood Grp :'}</span>
+              <p className="text-black">{employee.bloodGroup || 'N/A'}</p>
+              <span className="text-black">{'Birth Date : '}</span>
+              <p className="text-black">{employee.dateOfBirth && isValid(new Date(employee.dateOfBirth)) ? format(new Date(employee.dateOfBirth), 'dd/MM/yyyy') : 'N/A'}</p>
             </div>
           </div>
         </CardContent>
-        <div className="absolute bottom-1 left-0 right-0 px-3 flex justify-between items-end text-[11px]">
+        <div className="absolute bottom-1 left-0 right-1 px-3 flex justify-between items-end text-[11px]">
           <div className="flex flex-col items-start print:pl-2">
             {settings.deanSignatureUrl && (
               <Image src={settings.deanSignatureUrl} alt="Authority Signature" width={60} height={40} className="object-contain h-auto max-h-[24px]" unoptimized />
@@ -179,12 +184,12 @@ export default function FacultyIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <CardContent className="p-2 space-y-1 leading-snug" style={detailsStyle}>
+        <CardContent className="p-2 print:pt-2 space-y-1 leading-[1]" style={detailsStyle}>
           <div className='print:pl-2 print:pr-2 flex justify-between items-start mb-1'>
             <div className="space-y-0.5">
-                <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{'ID No:'} {employee.employeeId || 'N/A'}</p>
-                <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm block">{'SEVARTH No:'} {employee.sevarthNo || 'N/A'}</p>
-                <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm block">{'Mob:'} {employee.mobileNumber || 'N/A'}</p>
+                <p style={importantInfoStyle} className="font-bold text-black rounded-sm inline-block ">{'ID NO:'} {employee.employeeId || 'N/A'}</p>
+                <p style={importantInfoStyle} className="font-bold text-black rounded-sm block">{'SEVARTH NO:'} {employee.sevarthNo || 'N/A'}</p>
+                <p style={importantInfoStyle} className="font-bold text-black rounded-sm block">{'MOBILE NO:'} {employee.mobileNumber || 'N/A'}</p>
             </div>
             {qrCodeUrl ? (
               <Image src={qrCodeUrl} alt="QR Code" width={50} height={50} data-ai-hint="qr code" unoptimized className="border border-gray-300" />
@@ -196,17 +201,17 @@ export default function FacultyIdCard({
           </div>
           
           <div className='print:pl-2 print:pr-2'>
-            <p style={importantInfoStyle} className="font-bold p-0.5 rounded-sm inline-block">{'Residential Address:'}</p>
-            <p className="font-bold text-[0.9em] leading-tight mt-0.5">{employee.address || 'N/A'}</p>
-            <Separator className="my-1 bg-gray-400" />
+            <p style={importantInfoStyle} className="font-bold text-black rounded-sm inline-block">{'Residential Address:'}</p>
+            <p className="font-bold text-black leading-tight mt-0.5 max-w-[180px]">{employee.address || 'N/A'}</p>
+            <Separator className="my-1 bg-gray-400 print:pt-2 print:pb-2" />
           </div>
-          <ol className="list-decimal list-inside space-y-0.5 mt-1 text-[0.9em] leading-tight print:pl-2 print:pr-2">
+          <ul className="list-decimal list-inside space-y-0.5 mt-1 leading-tight print:pl-2 print:pr-2 print:pt-2">
             {instructions.map((inst, idx) => (
-              inst && <li key={idx} className="font-bold">{inst}</li>
+              inst && <li key={idx} className="font-bold text-black">{inst}</li>
             ))}
-          </ol>
-          <div className="border-t mt-auto pt-1 flex justify-end items-center text-[0.9em] absolute bottom-2 left-2 right-2">
-            <p className="font-bold">{'Office'}: {settings.officePhoneNumber}</p>
+          </ul>
+          <div className="text-black mt-auto pt-1 flex justify-end items-center absolute bottom-2 left-2 right-2">
+            <p className="font-bold text-black">{'Office'}: {settings.officePhoneNumber}</p>
           </div>
         </CardContent>
       </Card>

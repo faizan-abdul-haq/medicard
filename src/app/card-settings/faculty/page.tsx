@@ -26,14 +26,15 @@ const mockEmployeeForPreview: EmployeeData = {
   address: '123 Faculty Row, Knowledge City, State 54321',
   dateOfJoining: new Date('2020-08-15'),
   mobileNumber: '9876543210',
-  employeeId: 'EMP001',
+  employeeId: 'GGMC-251',
   department: 'Computer Science',
   designation: 'Professor',
   employeeType: 'FACULTY',
   photographUrl: 'https://placehold.co/80x100.png',
   registrationDate: new Date(),
   bloodGroup: 'O+',
-  cardHolderSignature: ''
+  cardHolderSignature: '',
+  sevarthNo: 'DMEDGSM8502'
 };
 
 const popularFonts = [
