@@ -82,14 +82,19 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
   }, [studentToEdit]);
 
   useEffect(() => {
-    setIsLoadingSettings(true);
-    getCardSettings()
-      .then(setCardSettings)
-      .catch(() => {
+    async function loadSettings() {
+      setIsLoadingSettings(true);
+      try {
+        const fetchedSettings = await getCardSettings('student');
+        setCardSettings(fetchedSettings);
+      } catch (error) {
         toast({ title: "Error loading card settings for preview", variant: "destructive"});
         setCardSettings(DEFAULT_CARD_SETTINGS); 
-      })
-      .finally(() => setIsLoadingSettings(false));
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    }
+    loadSettings();
   }, [toast]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -388,10 +393,7 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
                     <div className="flex justify-center items-center h-[210px]"><Loader2 className="h-6 w-6 animate-spin"/></div>
                 ) : (
                     <div className="flex flex-col items-center gap-2">
-                        <p className="text-xs text-muted-foreground">Front Side:</p>
-                        <StudentIdCard student={previewStudentData} settings={cardSettings} showFlipButton={false} initialSide="front" />
-                        <p className="text-xs text-muted-foreground mt-1">Back Side:</p>
-                        <StudentIdCard student={previewStudentData} settings={cardSettings} showFlipButton={false} initialSide="back" />
+                        <StudentIdCard student={previewStudentData} settings={cardSettings} showFlipButton={true}/>
                     </div>
                 )}
                  {photographPreview && (

@@ -63,8 +63,21 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
   }, [employeeToEdit]);
 
   useEffect(() => {
-    getCardSettings().then(setCardSettings).finally(() => setIsLoadingSettings(false));
-  }, []);
+    async function loadSettings() {
+      setIsLoadingSettings(true);
+      try {
+        const type = employeeToEdit.employeeType.toLowerCase() as 'faculty' | 'staff';
+        const fetchedSettings = await getCardSettings(type);
+        setCardSettings(fetchedSettings);
+      } catch (error) {
+        toast({ title: "Error Loading Settings", description: "Failed to fetch card settings for preview.", variant: "destructive" });
+        setCardSettings(DEFAULT_CARD_SETTINGS);
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    }
+    loadSettings();
+  }, [employeeToEdit.employeeType, toast]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -82,8 +95,12 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
   
 
   const handleSelectChange = (name: string, value: string) => {
-    if (value !== '') {
-      setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'employeeType') {
+        setFormData(prev => ({ ...prev, [name]: value as EmployeeType }));
+        // Refetch settings when type changes
+        getCardSettings(value.toLowerCase() as 'faculty' | 'staff').then(setCardSettings);
+    } else if (value !== '') {
+        setFormData(prev => ({ ...prev, [name]: value }));
     }  
   };
 
@@ -243,7 +260,7 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
             </form>
             <div className="space-y-2 sticky top-8">
                 <h3 className="text-lg font-semibold text-center">Live ID Card Preview</h3>
-                {isLoadingSettings ? <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin"/></div> : <div className="flex flex-col items-center gap-2"><EmployeeIdCard employee={previewEmployeeData} settings={cardSettings} showFlipButton={false} initialSide="front" /></div>}
+                {isLoadingSettings ? <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin"/></div> : <div className="flex flex-col items-center gap-2"><EmployeeIdCard employee={previewEmployeeData} settings={cardSettings} showFlipButton={true} /></div>}
                  {photographPreview && <div className="mt-2 text-center"><p className="text-xs text-muted-foreground mb-1">Current Photograph:</p><Image src={photographPreview} alt="Photograph preview" width={80} height={100} className="rounded-md border object-cover inline-block" data-ai-hint="employee portrait" unoptimized/></div>}
             </div>
         </CardContent>
