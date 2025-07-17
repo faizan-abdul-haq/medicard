@@ -108,8 +108,8 @@ export default function FacultyIdCard({
             <Image 
               src={finalLogoUrl} 
               alt="Company Logo" 
-              width={50} 
-              height={40} 
+              width={70} 
+              height={70} 
               data-ai-hint="company logo" 
               onError={() => setLogoError(true)}
               unoptimized
