@@ -110,7 +110,7 @@ export default function StudentIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <div style={headerBackgroundColorStyle} className="pt-1.5 pr-1.5 pl-1.5 flex items-center print:pt-2">
+        <div style={headerBackgroundColorStyle} className="pt-2 pr-2 pl-2 flex items-center print:pt-2 print:pr-2 print:pl-2">
           <div className="w-1/5 flex justify-center items-center print:pl-2">
             <Image 
               src={finalLogoUrl} 
@@ -128,8 +128,8 @@ export default function StudentIdCard({
           </div>
         </div>
 
-        <CardContent className="p-1.5 flex flex-row gap-4 print:pl-2">
-          <div className="h-[28mm] w-[23mm] flex-shrink-0 mt-1">
+        <CardContent className="p-2 flex flex-row gap-4 print:pl-2">
+          <div className="h-[21mm] w-[21mm] flex-shrink-0 mt-1">
             <div className="w-full h-full relative">
               <Image
                   src={

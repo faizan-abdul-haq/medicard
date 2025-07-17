@@ -133,7 +133,7 @@ body {
   }
 
   /* Target StudentIdCard specifically */
-  .student-id-card {
+  .student-id-card,.employee-id-card {
     width: 85.6mm !important;
     height: 53.98mm !important;
     margin: 0 !important;
@@ -147,7 +147,7 @@ body {
   }
 
   /* Ensure all child elements inside StudentIdCard stretch to full size */
-  .student-id-card > * {
+  .student-id-card, .employee-id-card > * {
     width: 100% !important;
     height: 100% !important;
     /* margin: 0 !important; */
@@ -157,7 +157,7 @@ body {
   }
 
   /* Ensure images and other elements fill correctly */
-  .student-id-card img {
+  .student-id-card, .employee-id-card img {
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important; /* Fill container without gaps */

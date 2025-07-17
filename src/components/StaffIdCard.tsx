@@ -109,14 +109,14 @@ export default function StaffIdCard({
           </div>
         )}
 
-        <div style={headerBackgroundColorStyle} className="pt-1.5 pr-1.5 pl-1.5 flex flex-col items-center justify-center text-center leading-tight print:pt-2">
+        <div style={headerBackgroundColorStyle} className="pt-2 pr-2 pl-2 flex flex-col items-center justify-center text-center leading-tight print:pt-2">
           <div className="flex items-center justify-center gap-1">
             <span style={collegeNameLine1Style} className="tracking-tighter">{firstPart}</span>
             <Image 
               src={finalLogoUrl} 
               alt="Company Logo" 
-              width={40} 
-              height={40} 
+              width={50} 
+              height={50} 
               className="h-auto"
               data-ai-hint="company logo" 
               onError={() => setLogoError(true)}
@@ -127,8 +127,8 @@ export default function StaffIdCard({
           <p style={collegeNameLine2Style} className="tracking-tighter pt-1 print:pt-1">{settings.collegeNameLine2}</p>
         </div>
 
-        <CardContent className="p-1.5 flex flex-row gap-4 print:pl-2">
-          <div className="h-[20mm] w-[15mm] flex-shrink-0 mt-1">
+        <CardContent className="p-2 flex flex-row gap-4 print:pl-2">
+          <div className="h-[15mm] w-[15mm] flex-shrink-0 mt-1">
             <div className="w-full h-full relative">
               <Image
                 src={employee.photographUrl || "https://placehold.co/80x80.png"}
@@ -207,7 +207,7 @@ export default function StaffIdCard({
           
           <div className='print:pl-2 print:pr-2 print:pb-2 print:pt-6'>
             <p style={importantInfoStyle} className="font-bold text-black p-0.5 rounded-sm inline-block print:pb-2">{'कायमचा रहिवासी पत्ता'}</p>
-            <p className="font-bold text-black mt-0.5 max-w-[100px] print:pb-2">{employee.address || 'N/A'}</p>
+            <p className="font-bold text-black mt-0.5 max-w-[200px] print:pb-2">{employee.address || 'N/A'}</p>
             <div className="border-t my-1 print:pb-2 print:pt-2"></div>
           </div>
           <div className="print:pl-2 print:pr-2 print:pt-2 mt-1 text-black">

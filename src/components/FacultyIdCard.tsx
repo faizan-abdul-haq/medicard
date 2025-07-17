@@ -103,7 +103,7 @@ export default function FacultyIdCard({
             <p className="text-white font-bold text-[9px] transform -rotate-90 origin-center whitespace-nowrap">I am an Organ Donor</p>
           </div>
         )}
-        <div style={headerBackgroundColorStyle} className="pt-1.5 pr-1.5 pl-1.5 flex items-center print:pt-2">
+        <div style={headerBackgroundColorStyle} className="pt-2 pr-2 pl-2 flex items-center print:pt-2">
           <div className="w-1/5 flex justify-center items-center print:pl-2">
             <Image 
               src={finalLogoUrl} 
@@ -117,17 +117,15 @@ export default function FacultyIdCard({
           </div>
           <div className="w-4/5 text-center leading-tight print:pr-2">
             <p style={collegeNameLine1Style} className="tracking-tighter">{settings.collegeNameLine1}</p>
-            <p style={collegeNameLine2Style} className="tracking-tighter">{settings.collegeNameLine2}
-
-
-            </p>
-              <div className="border-t-2 w-[90%] my-1 print:pb-1 print:pt-1 self-start" style={{ borderColor: '#000' }}></div>
+            <p style={collegeNameLine2Style} className="tracking-tighter">{settings.collegeNameLine2}</p>
+            
+            <div className="border-t-2 w-[90%] my-2 print:pb-2 print:pt-2 self-start" style={{ borderColor: '#000' }}></div>
 
           </div>
         </div>
 
-        <CardContent className="p-1.5 flex flex-row gap-4 print:pl-2 print:pt-2">
-          <div className="h-[20mm] w-[15mm] flex-shrink-0 mt-1">
+        <CardContent className="p-2 flex flex-row gap-4 print:pl-2 print:pt-2">
+          <div className="h-[21mm] w-[21mm] flex-shrink-0 mt-1">
             <div className="w-full h-full relative">
               <Image
                 src={employee.photographUrl || "https://placehold.co/80x80.png"}
