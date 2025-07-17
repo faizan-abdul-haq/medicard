@@ -76,6 +76,7 @@ export interface CardSettingsData {
   instructionLine2: string;
   instructionLine3: string;
   instructionLine4: string;
+  instructionLine5?: string;
   defaultCardHolderSignatureText: string; // e.g., "Card Holder's Signature"
   cardFontFamily: string;
   collegeNameLine1FontSize: number;
@@ -103,6 +104,7 @@ export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
   instructionLine2: "If found please return to office address.",
   instructionLine3: "It is not transferrable & is the property of GGMC & Sir J.J. Hospital.",
   instructionLine4: "Card validity: till you are at GGMC & Sir J.J. Hospital.",
+  instructionLine5: "",
   defaultCardHolderSignatureText: "Card Holder's Signature",
   cardFontFamily: "'Trebuchet MS', sans-serif",
   collegeNameLine1FontSize: 11,

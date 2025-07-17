@@ -6,7 +6,7 @@ import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Repeat, QrCodeIcon, Heart } from 'lucide-react';
+import { Repeat, QrCodeIcon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { format, isValid } from 'date-fns';
 import { Separator } from './ui/separator';
@@ -191,12 +191,12 @@ export default function StaffIdCard({
   } else {
     // Back Side
     const instructions = [
-      'हे कार्ड नेहमी परिसरात प्रदर्शित केले पाहिजे आणि मागणीनुसार तपासणीसाठी सादर केले पाहिजे।',
-      'सापडल्यास कृपया कार्यालयीन पत्त्यावर परत करा।',
-      'हे हस्तांतरणीय नाही आणि ही जीजीएमसी आणि सर जे.जे. रुग्णालयाची मालमत्ता आहे।',
-      'कार्डची वैधता: तुम्ही जीजीएमसी आणि सर जे.जे. रुग्णालयात असेपर्यंत।',
-      '⁠निवृत्ती / बदली च्या वेळी ओळखपत्र परत करावे.'
-    ];
+      settings.instructionLine1,
+      settings.instructionLine2,
+      settings.instructionLine3,
+      settings.instructionLine4,
+      settings.instructionLine5,
+    ].filter(Boolean); // Filter out any empty or null instructions
 
     return (
       <Card className={cardBaseClasses} style={cardDynamicStyle}>
@@ -236,10 +236,6 @@ export default function StaffIdCard({
               )
             ))}
           </div>
-          {/* <div className="border-t mt-auto pt-1 flex justify-between items-center text-[0.9em] absolute bottom-2 left-2 right-2">
-            <p className="font-bold">{'मोबाईल'}: {employee.mobileNumber || 'N/A'}</p>
-            <p className="font-bold">{'कार्यालय'}: {settings.officePhoneNumber}</p>
-          </div> */}
         </CardContent>
       </Card>
     );

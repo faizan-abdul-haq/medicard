@@ -192,6 +192,7 @@ function CardSettingsContent() {
                 <div><Label htmlFor="instructionLine2">Instruction Line 2</Label><Textarea name="instructionLine2" value={settings.instructionLine2} onChange={handleInputChange} rows={2}/></div>
                 <div><Label htmlFor="instructionLine3">Instruction Line 3</Label><Textarea name="instructionLine3" value={settings.instructionLine3} onChange={handleInputChange} rows={2}/></div>
                 <div><Label htmlFor="instructionLine4">Instruction Line 4</Label><Textarea name="instructionLine4" value={settings.instructionLine4} onChange={handleInputChange} rows={2}/></div>
+                <div><Label htmlFor="instructionLine5">Instruction Line 5</Label><Textarea name="instructionLine5" value={settings.instructionLine5 || ''} onChange={handleInputChange} rows={2}/></div>
               </CardContent>
             </Card>
           </div>
