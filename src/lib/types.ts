@@ -36,6 +36,8 @@ export interface EmployeeData {
   printHistory?: Date[];
   cardHolderSignature?: string;
   isOrganDonor?: boolean;
+  department?: string; // No longer used, but might exist on old records
+  dateOfJoining?: Date; // No longer used, but might exist on old records
 }
 
 export interface RecentRegistration {
@@ -79,7 +81,11 @@ export interface CardSettingsData {
   collegeNameLine1FontSize: number;
   collegeNameLine2FontSize: number;
   personNameFontSize: number;
-  detailsFontSize: number;
+  frontDetailsFontSize: number;
+  backDetailsFontSize: number;
+  addressFontSize: number;
+  instructionsFontSize: number;
+  footerFontSize: number;
 }
 
 export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
@@ -102,8 +108,9 @@ export const DEFAULT_CARD_SETTINGS: CardSettingsData = {
   collegeNameLine1FontSize: 11,
   collegeNameLine2FontSize: 11,
   personNameFontSize: 14,
-  detailsFontSize: 11,
+  frontDetailsFontSize: 11,
+  backDetailsFontSize: 10,
+  addressFontSize: 10,
+  instructionsFontSize: 9,
+  footerFontSize: 10,
 };
-
-
-

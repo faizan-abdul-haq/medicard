@@ -73,9 +73,25 @@ export default function FacultyIdCard({
   const personNameStyle: React.CSSProperties = {
     fontSize: `${settings.personNameFontSize}px`,
   };
+  
+  const frontDetailsStyle: React.CSSProperties = {
+    fontSize: `${settings.frontDetailsFontSize}px`,
+  };
 
-  const detailsStyle: React.CSSProperties = {
-    fontSize: `${settings.detailsFontSize}px`,
+  const backDetailsStyle: React.CSSProperties = {
+    fontSize: `${settings.backDetailsFontSize}px`,
+  };
+
+  const addressStyle: React.CSSProperties = {
+    fontSize: `${settings.addressFontSize}px`,
+  };
+
+  const instructionsStyle: React.CSSProperties = {
+    fontSize: `${settings.instructionsFontSize}px`,
+  };
+
+  const footerStyle: React.CSSProperties = {
+    fontSize: `${settings.footerFontSize}px`,
   };
 
   const importantInfoStyle: React.CSSProperties = {
@@ -88,7 +104,6 @@ export default function FacultyIdCard({
 
   const finalLogoUrl = logoError || !settings.logoUrl ? 'https://placehold.co/30x30.png' : settings.logoUrl;
 
-  const employeeTypeStyles = 'bg-purple-600 text-white';
 
   if (isFrontVisible) {
     return (
@@ -137,7 +152,7 @@ export default function FacultyIdCard({
               />
             </div>
           </div>
-          <div className="flex-grow space-y-0.5" style={detailsStyle}>
+          <div className="flex-grow space-y-0.5" style={frontDetailsStyle}>
             <div style={importantInfoStyle} className="rounded-sm mb-1 bg-primary/10 flex justify-between items-center">
               <p style={personNameStyle} className="uppercase font-bold text-primary">{employee.fullName}</p>
             </div>
@@ -182,9 +197,9 @@ export default function FacultyIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <CardContent className="p-2 print:pt-2 space-y-1 leading-[1]" style={detailsStyle}>
+        <CardContent className="p-2 print:pt-2 space-y-1 leading-[1]">
           <div className='print:pl-2 print:pr-2 flex justify-between items-start mb-1'>
-            <div className="space-y-0.5">
+            <div className="space-y-0.5" style={backDetailsStyle}>
                 <p style={importantInfoStyle} className="font-bold text-black rounded-sm inline-block ">{'ID NO:'} {employee.employeeId || 'N/A'}</p>
                 <p style={importantInfoStyle} className="font-bold text-black rounded-sm block">{'SEVARTH NO:'} {employee.sevarthNo || 'N/A'}</p>
                 <p style={importantInfoStyle} className="font-bold text-black rounded-sm block">{'MOBILE NO:'} {employee.mobileNumber || 'N/A'}</p>
@@ -200,15 +215,15 @@ export default function FacultyIdCard({
           
           <div className='print:pl-2 print:pr-2'>
             <p style={importantInfoStyle} className="font-bold text-black rounded-sm inline-block">{'Residential Address:'}</p>
-            <p className="font-bold text-black leading-tight mt-0.5 max-w-[180px]">{employee.address || 'N/A'}</p>
+            <p className="font-bold text-black leading-tight mt-0.5 max-w-[180px]" style={addressStyle}>{employee.address || 'N/A'}</p>
             <Separator className="my-1 bg-gray-400 print:pt-2 print:pb-2" />
           </div>
-          <ul className="list-decimal list-inside space-y-0.5 mt-1 leading-tight print:pl-2 print:pr-2 print:pt-2">
+          <ul className="list-decimal list-inside space-y-0.5 mt-1 leading-tight print:pl-2 print:pr-2 print:pt-2" style={instructionsStyle}>
             {instructions.map((inst, idx) => (
               inst && <li key={idx} className="font-bold text-black">{inst}</li>
             ))}
           </ul>
-          <div className="text-black mt-auto pt-1 flex justify-end items-center absolute bottom-2 left-2 right-2">
+          <div className="text-black mt-auto pt-1 flex justify-end items-center absolute bottom-2 left-2 right-2" style={footerStyle}>
             <p className="font-bold text-black">{'Office'}: {settings.officePhoneNumber}</p>
           </div>
         </CardContent>

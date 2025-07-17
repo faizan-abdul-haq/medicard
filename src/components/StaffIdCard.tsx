@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Repeat, QrCodeIcon, Heart } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { format, isValid } from 'date-fns';
+import { Separator } from './ui/separator';
 
 interface StaffIdCardProps {
   employee: EmployeeData;
@@ -74,8 +75,24 @@ export default function StaffIdCard({
     fontSize: `${settings.personNameFontSize}px`,
   };
 
-  const detailsStyle: React.CSSProperties = {
-    fontSize: `${settings.detailsFontSize}px`,
+  const frontDetailsStyle: React.CSSProperties = {
+    fontSize: `${settings.frontDetailsFontSize}px`,
+  };
+
+  const backDetailsStyle: React.CSSProperties = {
+    fontSize: `${settings.backDetailsFontSize}px`,
+  };
+
+  const addressStyle: React.CSSProperties = {
+    fontSize: `${settings.addressFontSize}px`,
+  };
+
+  const instructionsStyle: React.CSSProperties = {
+    fontSize: `${settings.instructionsFontSize}px`,
+  };
+  
+  const footerStyle: React.CSSProperties = {
+    fontSize: `${settings.footerFontSize}px`,
   };
 
   const importantInfoStyle: React.CSSProperties = {
@@ -88,7 +105,6 @@ export default function StaffIdCard({
 
   const finalLogoUrl = logoError || !settings.logoUrl ? 'https://placehold.co/30x30.png' : settings.logoUrl;
 
-  const employeeTypeStyles = 'bg-green-600 text-white';
 
   if (isFrontVisible) {
     const collegeNameParts = settings.collegeNameLine1.split(' ');
@@ -105,7 +121,7 @@ export default function StaffIdCard({
         
         {employee.isOrganDonor && (
           <div className="absolute top-0 right-0 h-full w-[12px] bg-red-600 flex items-center justify-center z-20">
-            <p className="text-white font-bold text-[9px] transform rotate-90 origin-center whitespace-nowrap">I am an Organ Donor</p>
+            <p className="text-white font-bold text-[9px] transform -rotate-90 origin-center whitespace-nowrap">I am an Organ Donor</p>
           </div>
         )}
 
@@ -140,7 +156,7 @@ export default function StaffIdCard({
               />
             </div>
           </div>
-          <div className="flex-grow space-y-0.5" style={detailsStyle}>
+          <div className="flex-grow space-y-0.5" style={frontDetailsStyle}>
             <div style={importantInfoStyle} className="rounded-sm mb-1 flex justify-between items-center">
               <p style={personNameStyle} className="uppercase font-bold text-black">{employee.fullName}</p>
             </div>
@@ -189,8 +205,8 @@ export default function StaffIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <CardContent className="p-2 print:pt-2 space-y-1 leading-snug" style={detailsStyle}>
-          <div className='print:pl-2 print:pr-2 print:pb-4 flex justify-between items-center mb-1'>
+        <CardContent className="p-2 print:pt-2 space-y-1 leading-snug">
+          <div className='print:pl-2 print:pr-2 print:pb-4 flex justify-between items-start mb-1' style={backDetailsStyle}>
             <p style={importantInfoStyle} className="font-bold text-black p-0.5 rounded-sm inline-block text-center">{'ओळखपत्र क्रमांक:'}<br/> <span>{employee.employeeId || 'N/A'}</span></p>
             <p style={importantInfoStyle} className="font-bold text-black p-0.5 rounded-sm inline-block text-center">{'सेवार्थ नंबर:'}<br/>{employee.sevarthNo || 'N/A'}</p>
           </div>
@@ -207,10 +223,10 @@ export default function StaffIdCard({
           
           <div className='print:pl-2 print:pr-2 print:pb-2 print:pt-6'>
             <p style={importantInfoStyle} className="font-bold text-black p-0.5 rounded-sm inline-block print:pb-2">{'कायमचा रहिवासी पत्ता'}</p>
-            <p className="font-bold text-black mt-0.5 max-w-[200px] print:pb-2">{employee.address || 'N/A'}</p>
-            <div className="border-t my-1 print:pb-2 print:pt-2"></div>
+            <p className="font-bold text-black mt-0.5 max-w-[200px] print:pb-2" style={addressStyle}>{employee.address || 'N/A'}</p>
+            <Separator className="my-1 print:pb-2 print:pt-2" />
           </div>
-          <div className="print:pl-2 print:pr-2 print:pt-2 mt-1 text-black">
+          <div className="print:pl-2 print:pr-2 print:pt-2 mt-1 text-black" style={instructionsStyle}>
             {instructions.map((inst, idx) => (
               inst && (
                 <span key={idx} className="text-black">

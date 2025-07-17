@@ -147,10 +147,18 @@ function CardSettingsContent() {
                     <SelectContent>{popularFonts.map(font => <SelectItem key={font} value={font} style={{fontFamily: font}}>{font.split(',')[0].replace(/'/g, '')}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
-                <div><Label htmlFor="collegeNameLine1FontSize">College Name Line 1 Font Size (px)</Label><Input type="number" name="collegeNameLine1FontSize" value={settings.collegeNameLine1FontSize} onChange={handleNumberInputChange} /></div>
-                <div><Label htmlFor="collegeNameLine2FontSize">College Name Line 2 Font Size (px)</Label><Input type="number" name="collegeNameLine2FontSize" value={settings.collegeNameLine2FontSize} onChange={handleNumberInputChange} /></div>
-                <div><Label htmlFor="personNameFontSize">Person Name Font Size (px)</Label><Input type="number" name="personNameFontSize" value={settings.personNameFontSize} onChange={handleNumberInputChange} /></div>
-                <div><Label htmlFor="detailsFontSize">Details Text Font Size (px)</Label><Input type="number" name="detailsFontSize" value={settings.detailsFontSize} onChange={handleNumberInputChange} /></div>
+                <Separator />
+                <h4 className="font-semibold text-md text-foreground">Front Side Font Sizes (px)</h4>
+                <div><Label htmlFor="collegeNameLine1FontSize">College Name Line 1</Label><Input type="number" name="collegeNameLine1FontSize" value={settings.collegeNameLine1FontSize} onChange={handleNumberInputChange} /></div>
+                <div><Label htmlFor="collegeNameLine2FontSize">College Name Line 2</Label><Input type="number" name="collegeNameLine2FontSize" value={settings.collegeNameLine2FontSize} onChange={handleNumberInputChange} /></div>
+                <div><Label htmlFor="personNameFontSize">Person Name</Label><Input type="number" name="personNameFontSize" value={settings.personNameFontSize} onChange={handleNumberInputChange} /></div>
+                <div><Label htmlFor="frontDetailsFontSize">Details (Course, Year, Roll, PRN)</Label><Input type="number" name="frontDetailsFontSize" value={settings.frontDetailsFontSize} onChange={handleNumberInputChange} /></div>
+                <Separator />
+                <h4 className="font-semibold text-md text-foreground">Back Side Font Sizes (px)</h4>
+                <div><Label htmlFor="backDetailsFontSize">Top Details (DOB, Admission, Validity)</Label><Input type="number" name="backDetailsFontSize" value={settings.backDetailsFontSize} onChange={handleNumberInputChange} /></div>
+                <div><Label htmlFor="addressFontSize">Address</Label><Input type="number" name="addressFontSize" value={settings.addressFontSize} onChange={handleNumberInputChange} /></div>
+                <div><Label htmlFor="instructionsFontSize">Instructions</Label><Input type="number" name="instructionsFontSize" value={settings.instructionsFontSize} onChange={handleNumberInputChange} /></div>
+                <div><Label htmlFor="footerFontSize">Footer (Mob, Office)</Label><Input type="number" name="footerFontSize" value={settings.footerFontSize} onChange={handleNumberInputChange} /></div>
               </CardContent>
             </Card>
 

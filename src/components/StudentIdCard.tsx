@@ -88,8 +88,24 @@ export default function StudentIdCard({
     fontSize: `${settings.personNameFontSize}px`,
   };
 
-  const detailsStyle: React.CSSProperties = {
-    fontSize: `${settings.detailsFontSize}px`,
+  const frontDetailsStyle: React.CSSProperties = {
+    fontSize: `${settings.frontDetailsFontSize}px`,
+  };
+
+  const backDetailsStyle: React.CSSProperties = {
+    fontSize: `${settings.backDetailsFontSize}px`,
+  };
+
+  const addressStyle: React.CSSProperties = {
+    fontSize: `${settings.addressFontSize}px`,
+  };
+
+  const instructionsStyle: React.CSSProperties = {
+    fontSize: `${settings.instructionsFontSize}px`,
+  };
+  
+  const footerStyle: React.CSSProperties = {
+    fontSize: `${settings.footerFontSize}px`,
   };
   
   const importantInfoStyle: React.CSSProperties = {
@@ -144,7 +160,7 @@ export default function StudentIdCard({
               />
             </div>
           </div>
-          <div className="flex-grow space-y-0.5" style={detailsStyle}>
+          <div className="flex-grow space-y-0.5" style={frontDetailsStyle}>
             <div style={{...importantInfoStyle}} className="rounded-sm mb-1 bg-primary/10">
               <p style={personNameStyle} className="uppercase font-bold text-[#004AAD]">{student.fullName}</p>
             </div>
@@ -202,10 +218,10 @@ export default function StudentIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <CardContent className="p-2 space-y-1 leading-snug" style={detailsStyle}>
+        <CardContent className="p-2 space-y-1 leading-snug">
         <div className="flex justify-between items-start mb-1 print:pt-2">
           {/* Left: Text info stacked top and bottom */}
-          <div className="flex flex-col justify-between h-[50px] print:pl-2 print:pt-2"> {/* Adjust height as needed */}
+          <div className="flex flex-col justify-between h-[50px] print:pl-2 print:pt-2" style={backDetailsStyle}> {/* Adjust height as needed */}
 
             <div
               style={importantInfoStyle}
@@ -266,16 +282,16 @@ export default function StudentIdCard({
 
           <div className='print:pl-2 print:pr-2'>
             <p style={importantInfoStyle} className="font-bold text-black p-0.5 rounded-sm inline-block">Residential Address:</p>
-            <p className="text-black font-bold text-[0.9em] leading-tight mt-0.5">{student.address || 'N/A'}</p>
+            <p className="text-black font-bold text-[0.9em] leading-tight mt-0.5" style={addressStyle}>{student.address || 'N/A'}</p>
           </div>
 
-          <ol className="text-black list-decimal list-inside space-y-0.5 mt-1 text-[0.9em] leading-tight print:pl-2 print:pr-2">
+          <ol className="text-black list-decimal list-inside space-y-0.5 mt-1 text-[0.9em] leading-tight print:pl-2 print:pr-2" style={instructionsStyle}>
             {[settings.instructionLine1, settings.instructionLine2, settings.instructionLine3, settings.instructionLine4].map((inst, idx) => (
               inst && <li key={idx} className="font-bold text-black">{inst}</li>
             ))}
           </ol>
 
-          <div className="border-t text-black mt-auto pt-1 flex justify-between items-center text-[0.9em] absolute bottom-2 left-2 right-2">
+          <div className="border-t text-black mt-auto pt-1 flex justify-between items-center text-[0.9em] absolute bottom-2 left-2 right-2" style={footerStyle}>
             <p className="font-bold text-black"><span className="font-bold">Mob:</span> {student.mobileNumber || 'N/A'}</p>
             <p className="font-bold text-black"><span className="font-bold">Office:</span> {settings.officePhoneNumber}</p>
           </div>
