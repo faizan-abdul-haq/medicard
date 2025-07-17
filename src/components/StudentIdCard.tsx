@@ -196,7 +196,7 @@ export default function StudentIdCard({
             {student.cardHolderSignature && (
               <Image
                 src={student.cardHolderSignature}
-                alt=""
+                alt="Card Holder Signature"
                 width={70}
                 height={40}
                 className="object-contain h-auto max-h-[24px]"

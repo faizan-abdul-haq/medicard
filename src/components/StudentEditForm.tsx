@@ -29,6 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from '@/components/ui/separator';
+import ImageUploadField from './ImageUploadField';
 
 const MOBILE_REGEX = /^\d{10}$/;
 
@@ -137,7 +138,6 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
     setPhotographPreview("https://placehold.co/80x100.png");
     setFormData(prev => ({ ...prev, photographUrl: null }));
     if (fileInputRef.current) fileInputRef.current.value = "";
-    // No specific action for webcam here, as capture replaces, remove clears.
   };
 
   const capturePhoto = () => {
@@ -169,9 +169,6 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         setHasCameraPermission(true);
-        // Assign stream to videoRef if you were directly controlling a <video> element
-        // For react-webcam, its `onUserMedia` prop handles this successfully.
-        // If react-webcam's `onUserMedia` is not firing as expected, this explicit call might be needed.
         if (webcamRef.current && webcamRef.current.video) {
             webcamRef.current.video.srcObject = stream;
         }
@@ -183,7 +180,7 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
   };
 
   useEffect(() => {
-    if (inputMode === 'webcam' && hasCameraPermission === null) { // Request permission when switching to webcam mode if not already determined
+    if (inputMode === 'webcam' && hasCameraPermission === null) {
        requestCameraPermission();
     }
   }, [inputMode, hasCameraPermission]);
@@ -216,14 +213,13 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
 
     setIsSubmitting(true);
     
-    const { id, prnNumber, registrationDate, photograph, ...dataToSubmit } = formData; 
+    const { id, registrationDate, photograph, ...dataToSubmit } = formData; 
 
     try {
       const updatedData = await updateStudent(
         studentToEdit.id, 
         {
             ...dataToSubmit,
-            prnNumber: formData.prnNumber,
             dateOfBirth: formData.dateOfBirth,
             bloodGroup: formData.bloodGroup === "NO_GROUP" ? undefined : formData.bloodGroup,
         },
@@ -246,14 +242,23 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
   const courseNames = ["MBBS", "BPMT-BLD TRANS", "BPMT-CARDIO", "BPMT-CM", "BPMT-EM", "BPMT-ENDO", "BPMT-FM", "BPMT-LAB", "BPMT-NEURO", "BPMT-OT", "BPMT-OPT", "BPMT-PERF", "BPMT-RADIOGR", "PG-ANAES", "PG-ANATOMY", "PG-BIOCHEM", "PG-CM", "PG-DERMAT", "PG-EM", "PG-FM & TOXICOLOGY", "PG-GerMed", "PG-IHBT", "PG-MED", "PG-MICRO", "PG-OBGY", "PG-OPTH", "PG-ORTHO", "PG-ENT", "PG-PAEDS", "PG-PATH", "PG-PHARMA", "PG-PHYSIO", "PG-PSYCHIATRY", "PG-PulMed","PG DMLT", "PG-RADIODIAGNOSIS", "PG-SURGERY", , "SUPS-CARDIOLOGY", "SUPS-CVTS", "SUPS-IntRad", "SUPS-NEPHRO", "SUPS-NEURO SX", "SUPS-NEUROLOGY", "SUPS-PAEDS SX", "SUPS-Plast SX", "SUPS-UROLOGY", "FLW-CARDIO-ANAES", "FLW-CNEPHRO", "FLW-DEADDICTION", "FLW-HIGH RISK OBST", "FLW-JTR SX", "FLW-LD & NEURO PAED", "FLW-MASX – GYNAE", "FLW-NEONATOLOGY", "FLW-NEURO-ANAEST", "FLW-PAED-ANAES", "FLW-SPINE SX", "FLW-VR SURGERY", , "MPH-N", , "Ph.D-FM & TOXICOLOGY", "Ph.D-GS", "Ph.D-MEDI BIOCHEM", "Ph.D-MEDI MICROB", "Ph.D-ORTHOPAEDICS", "Ph.D-ENT"]
 
   const previewStudentData: StudentData = {
-    ...studentToEdit,
-    ...formData,
+    ...studentToEdit, // Base data
+    ...formData,      // Overwrite with form changes
     photographUrl: photographPreview || studentToEdit.photographUrl || "https://placehold.co/80x100.png",
     dateOfBirth: formData.dateOfBirth || studentToEdit.dateOfBirth,
     id: studentToEdit.id,
-    prnNumber: studentToEdit.prnNumber,
+    prnNumber: formData.prnNumber || studentToEdit.prnNumber,
     registrationDate: studentToEdit.registrationDate,
+    fullName: formData.fullName || studentToEdit.fullName,
+    address: formData.address || studentToEdit.address,
+    mobileNumber: formData.mobileNumber || studentToEdit.mobileNumber,
+    rollNumber: formData.rollNumber || studentToEdit.rollNumber,
+    yearOfJoining: formData.yearOfJoining || studentToEdit.yearOfJoining,
+    courseName: formData.courseName || studentToEdit.courseName,
+    bloodGroup: formData.bloodGroup || studentToEdit.bloodGroup,
+    cardHolderSignature: formData.cardHolderSignature || studentToEdit.cardHolderSignature,
   };
+
 
   return (
     <div className="space-y-8">
@@ -276,7 +281,7 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
                         <Input id="fullName" name="fullName" value={formData.fullName || ''} onChange={handleChange} required />
                     </div>
                     <div>
-                        <Label htmlFor="prnNumber">PRN Number</Label> {/* You might want to update the label too */}
+                        <Label htmlFor="prnNumber">PRN Number</Label>
                         <Input id="prnNumber" name="prnNumber" value={formData.prnNumber || ''} onChange={handleChange} required /> 
                     </div>
                 </div>
@@ -293,7 +298,6 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <Label htmlFor="courseName">Course Name <span className="text-destructive">*</span></Label>
-                        {/* <Input id="courseName" name="courseName" value={formData.courseName || ''} onChange={handleChange} required /> */}
                         <Select required value={formData.courseName} onValueChange={(value) => handleSelectChange('courseName', value)}>
                           <SelectTrigger id="courseName"><SelectValue placeholder="Select Course" /></SelectTrigger>
                           <SelectContent>
@@ -330,7 +334,7 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
                     <div className="space-y-1">
                         <Label>Student Photograph (Max 2MB)</Label>
                          <div className="flex gap-1 mb-1">
-                            <Button type="button" size="sm" variant={inputMode === 'upload' ? 'secondary' : 'outline'} onClick={() => { setInputMode('upload'); setHasCameraPermission(true); /* Assume if they switch, they don't want to re-trigger permission prompt unless cam fails */}} className="text-xs px-2 py-1 h-auto"><UploadCloud className="mr-1 h-3 w-3" /> Upload</Button>
+                            <Button type="button" size="sm" variant={inputMode === 'upload' ? 'secondary' : 'outline'} onClick={() => { setInputMode('upload'); }} className="text-xs px-2 py-1 h-auto"><UploadCloud className="mr-1 h-3 w-3" /> Upload</Button>
                             <Button type="button" size="sm" variant={inputMode === 'webcam' ? 'secondary' : 'outline'} onClick={() => { setInputMode('webcam'); if(hasCameraPermission !== true) requestCameraPermission();}} className="text-xs px-2 py-1 h-auto"><Camera className="mr-1 h-3 w-3" /> Webcam</Button>
                             {(photographPreview && photographPreview !== "https://placehold.co/80x100.png") && (
                                 <Button type="button" size="sm" variant="destructive" onClick={removePhoto} className="text-xs px-2 py-1 h-auto"><Trash2 className="mr-1 h-3 w-3" /> Remove</Button>
@@ -360,7 +364,7 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
                 </div>
 
                 <div className="space-y-1 pt-3">
-                    <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">Medical Info</h3>
+                    <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">Medical & Signature</h3>
                     <Separator />
                 </div>
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -373,6 +377,9 @@ export default function StudentEditForm({ studentToEdit, onUpdateSuccess, onCanc
                             <SelectItem value="NO_GROUP">None</SelectItem>
                         </SelectContent>
                         </Select>
+                    </div>
+                    <div>
+                        <ImageUploadField label="Card Holder's Signature" value={formData.cardHolderSignature || ''} onChange={(url) => setFormData(prev => ({ ...prev, cardHolderSignature: url }))} directory="signatures" maxSizeKB={1024} note="Upload pre-signed image."/>
                     </div>
                 </div>
                 

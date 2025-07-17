@@ -66,7 +66,7 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
     async function loadSettings() {
       setIsLoadingSettings(true);
       try {
-        const type = employeeToEdit.employeeType.toLowerCase() as 'faculty' | 'staff';
+        const type = formData.employeeType?.toLowerCase() as 'faculty' | 'staff' || employeeToEdit.employeeType.toLowerCase() as 'faculty' | 'staff';
         const fetchedSettings = await getCardSettings(type);
         setCardSettings(fetchedSettings);
       } catch (error) {
@@ -77,7 +77,7 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
       }
     }
     loadSettings();
-  }, [employeeToEdit.employeeType, toast]);
+  }, [formData.employeeType, employeeToEdit.employeeType, toast]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -97,8 +97,6 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
   const handleSelectChange = (name: string, value: string) => {
     if (name === 'employeeType') {
         setFormData(prev => ({ ...prev, [name]: value as EmployeeType }));
-        // Refetch settings when type changes
-        getCardSettings(value.toLowerCase() as 'faculty' | 'staff').then(setCardSettings);
     } else if (value !== '') {
         setFormData(prev => ({ ...prev, [name]: value }));
     }  
