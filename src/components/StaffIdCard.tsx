@@ -144,7 +144,7 @@ export default function StaffIdCard({
         </div>
 
         <CardContent className="p-2 flex flex-row gap-4 print:pl-2">
-          <div className="h-[15mm] w-[15mm] flex-shrink-0 mt-1">
+          <div className="h-[20mm] w-[17mm] flex-shrink-0 mt-1">
             <div className="w-full h-full relative">
               <Image
                 src={employee.photographUrl || "https://placehold.co/80x80.png"}
