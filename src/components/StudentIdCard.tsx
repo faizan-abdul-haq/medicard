@@ -225,7 +225,7 @@ export default function StudentIdCard({
 
             <div
               style={importantInfoStyle}
-              className="text-black p-0.5 rounded-sm inline-block uppercase"
+              className="text-black rounded-sm inline-block uppercase"
             >
               <p className="font-bold">
                 <span className="font-bold">DOB:</span> {student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'dd/MM/yyyy') : 'N/A'}
@@ -234,7 +234,7 @@ export default function StudentIdCard({
 
             <div
               style={importantInfoStyle}
-              className="text-black p-0.5 rounded-sm inline-block uppercase"
+              className="text-black rounded-sm inline-block uppercase"
             >
               <p className="font-bold">
                 <span className="font-bold">Year of Admission:</span> {yearOfAdmissionDisplay}
@@ -243,7 +243,7 @@ export default function StudentIdCard({
 
             <div
               style={importantInfoStyle}
-              className="text-start text-black p-0.5 rounded-sm inline-block uppercase"
+              className="text-start text-black rounded-sm inline-block uppercase"
             >
               <p className="font-bold">
                 <span className="font-bold">Valid Upto:</span> {validUptoString}
@@ -252,7 +252,7 @@ export default function StudentIdCard({
 
             <div
               style={importantInfoStyle}
-              className="text-start text-black p-0.5 rounded-sm inline-block uppercase"
+              className="text-start text-black rounded-sm inline-block uppercase"
             >
               <p className="font-bold">
                 <span className="font-bold">Blood group:</span> {student.bloodGroup || 'N/A'}
@@ -281,8 +281,8 @@ export default function StudentIdCard({
 
 
           <div className='print:pl-2 print:pr-2'>
-            <p style={importantInfoStyle} className="font-bold text-black p-0.5 rounded-sm inline-block">Residential Address:</p>
-            <p className="text-black font-bold text-[0.9em] leading-tight mt-0.5" style={addressStyle}>{student.address || 'N/A'}</p>
+            <p style={{ ...importantInfoStyle, ...addressStyle }} className="font-bold text-black p-0.5 rounded-sm inline-block">Residential Address:</p>
+            <p className="text-black font-bold leading-tight mt-0.5" style={addressStyle}>{student.address || 'N/A'}</p>
           </div>
 
           <ol className="text-black list-decimal list-inside space-y-0.5 mt-1 text-[0.9em] leading-tight print:pl-2 print:pr-2" style={instructionsStyle}>
