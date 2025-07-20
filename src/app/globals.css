@@ -146,25 +146,24 @@ body {
     display: block !important;
   }
 
-  /* Ensure all child elements inside StudentIdCard stretch to full size */
-  .student-id-card, .employee-id-card > * {
+  /* Ensure all child elements inside StudentIdCard and EmployeeIdCard stretch to full size */
+  .student-id-card > *,
+  .employee-id-card > * {
     width: 100% !important;
     height: 100% !important;
-    /* margin: 0 !important; */
-    /* padding: 0 !important; */
     box-sizing: border-box !important;
-    /* border: none !important; */
   }
 
   /* Ensure images and other elements fill correctly */
-  .student-id-card, .employee-id-card img {
+  .student-id-card img,
+  .employee-id-card img {
     width: 100% !important;
     height: 100% !important;
-    object-fit: cover !important; /* Fill container without gaps */
+    object-fit: cover !important;
     margin: 0 !important;
     padding: 0 !important;
-    /* border: none !important; */
   }
+
 
   /* Remove inherited borders and margins */
   * {
