@@ -23,6 +23,7 @@ import Webcam from 'react-webcam';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
+import ImageUploadField from '@/components/ImageUploadField';
 
 const dataURLtoFile = (dataurl: string, filename: string): File => {
   const arr = dataurl.split(',');
@@ -235,6 +236,17 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
                     {inputMode === 'webcam' && <div className="space-y-1"><Webcam audio={false} ref={webcamRef} screenshotFormat="image/jpeg" className="w-full rounded-md border" /><Button type="button" onClick={capturePhoto} className="w-full h-8 text-xs" variant="outline"><Camera className="mr-1 h-3 w-3" /> Capture</Button></div>}
                 </div>
                 <div><Label htmlFor="address">Address</Label><Textarea id="address" name="address" value={formData.address || ''} onChange={handleChange}/></div>
+
+                <div className="space-y-2">
+                    <ImageUploadField 
+                        label="Card Holder's Signature" 
+                        value={formData.cardHolderSignature || ''} 
+                        onChange={(url) => setFormData(prev => ({ ...prev, cardHolderSignature: url }))} 
+                        directory="signatures" 
+                        maxSizeKB={1024} 
+                        note="Upload a pre-signed image."
+                    />
+                </div>
 
                 <div className="flex items-center space-x-2">
                   <Checkbox 

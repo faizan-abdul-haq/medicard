@@ -34,8 +34,8 @@ function BulkUploadContent() {
   ];
 
   const csvTemplateString = csvHeaders.join(',') + '\n' +
-    `"Dr. Jane Doe","EMP001","SVRTH001","Professor","FACULTY","9876543210","1980-05-20","123 Faculty Row, Knowledge City","O+","TRUE","https://placehold.co/100x120.png",""` + '\n' +
-    `"John Smith","EMP002","SVRTH002","Office Clerk","STAFF","9876543211","1992-11-15","456 Staff Quarters, Service Town","A+","FALSE","https://placehold.co/100x120.png",""`;
+    `"Dr. Jane Doe","EMP001","SVRTH001","Professor","FACULTY","9876543210","1980-05-20","123 Faculty Row, Knowledge City","O+","TRUE","https://placehold.co/100x120.png","https://placehold.co/100x40.png"` + '\n' +
+    `"John Smith","EMP002","SVRTH002","Office Clerk","STAFF","9876543211","1992-11-15","456 Staff Quarters, Service Town","A+","FALSE","https://placehold.co/100x120.png","https://placehold.co/100x40.png"`;
   
   const requiredHeadersForParsing = ["fullName", "employeeId", "designation", "employeeType", "dateOfBirth"];
 

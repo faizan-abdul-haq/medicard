@@ -211,7 +211,7 @@ export default function EmployeeRegistrationForm() {
         <CardFooter className="flex flex-col sm:flex-row justify-center items-center gap-2">
           <Button variant="outline" onClick={() => setSubmittedEmployee(null)}>Register Another Employee</Button>
           <Button asChild className="bg-accent hover:bg-accent/80 text-accent-foreground">
-            <Link href={`/print-preview?employeeIds=${submittedEmployee.employeeId}`} target="_blank">
+            <Link href={`/print-preview?employeeIds=${submittedEmployee.id}`} target="_blank">
               <Printer className="mr-2 h-4 w-4" /> Print This Card
             </Link>
           </Button>
@@ -330,7 +330,7 @@ export default function EmployeeRegistrationForm() {
             <Textarea id="address" name="address" value={formData.address || ''} onChange={handleChange} />
           </div>
            <div className="space-y-2">
-              <ImageUploadField label="Card Holder's Signature" value={formData.cardHolderSignature} onChange={(url) => setFormData(prev => ({ ...prev, cardHolderSignature: url }))} directory="signatures" maxSizeKB={1024} note="Upload a pre-signed image."/>
+              <ImageUploadField label="Card Holder's Signature" value={formData.cardHolderSignature || ''} onChange={(url) => setFormData(prev => ({ ...prev, cardHolderSignature: url }))} directory="signatures" maxSizeKB={1024} note="Upload a pre-signed image."/>
             </div>
           <div className="flex items-center space-x-2">
             <Checkbox 
