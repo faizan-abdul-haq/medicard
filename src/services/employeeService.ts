@@ -270,9 +270,9 @@ export async function bulkRegisterEmployees(employeesData: Partial<EmployeeData>
   }
 }
 
-export async function recordEmployeeCardPrint(employeeId: string, printedBy: string): Promise<void> {
+export async function recordEmployeeCardPrint(employeeDocId: string, printedBy: string): Promise<void> {
   try {
-    const employeeDocRef = doc(db, EMPLOYEES_COLLECTION, employeeId);
+    const employeeDocRef = doc(db, EMPLOYEES_COLLECTION, employeeDocId);
     
     const newPrintEntry = {
       printDate: Timestamp.now(),
@@ -283,6 +283,6 @@ export async function recordEmployeeCardPrint(employeeId: string, printedBy: str
       printHistory: arrayUnion(newPrintEntry)
     });
   } catch (error) {
-    console.error(`Error recording card print for employee ID ${employeeId}: `, error);
+    console.error(`Error recording card print for employee ID ${employeeDocId}: `, error);
   }
 }

@@ -203,9 +203,9 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
           <CardHeader><CardTitle className="text-xl flex items-center gap-2 text-primary"><History /> Print History</CardTitle><CardDescription>This card was generated for printing on the following dates:</CardDescription></CardHeader>
           <CardContent>
             <ul className="list-disc pl-5 space-y-2 text-sm max-h-40 overflow-y-auto">
-              {[...employee.printHistory].sort((a, b) => new Date(b.printDate).getTime() - new Date(a.printDate).getTime()).map((entry, i) => 
+              {[...(employee.printHistory || [])].sort((a, b) => new Date(b.printDate).getTime() - new Date(a.printDate).getTime()).map((entry, i) => 
                 <li key={i} className="font-semibold text-muted-foreground">
-                  {format(new Date(entry.printDate), 'dd MMM, yyyy HH:mm:ss')}
+                  {isValid(new Date(entry.printDate)) ? format(new Date(entry.printDate), 'dd MMM, yyyy HH:mm:ss') : 'Invalid Date'}
                   <span className="text-xs font-normal ml-2 text-muted-foreground/80">(by: {entry.printedBy})</span>
                 </li>
               )}

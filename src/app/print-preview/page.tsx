@@ -32,6 +32,9 @@ function PrintPreviewContent() {
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated, isLoading: authIsLoading, currentUser } = useAuth();
   
+  // Ref to ensure print recording happens only once
+  const hasRecordedPrint = useRef(false);
+
   // Effect for ONE-TIME print recording
   useEffect(() => {
     // This effect runs only once on mount.
@@ -40,6 +43,10 @@ function PrintPreviewContent() {
 
         const studentIds = studentIdsParam ? studentIdsParam.split(',').filter(id => id.trim()) : [];
         const employeeIds = employeeIdsParam ? employeeIdsParam.split(',').filter(id => id.trim()) : [];
+
+        if (hasRecordedPrint.current || (studentIds.length === 0 && employeeIds.length === 0)) return;
+        
+        hasRecordedPrint.current = true; // Mark as run immediately
 
         const printedBy = currentUser.email;
 
