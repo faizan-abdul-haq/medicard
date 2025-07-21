@@ -200,8 +200,17 @@ function EmployeeProfileContent({ employeeId }: { employeeId: string }) {
 
       {employee.printHistory && employee.printHistory.length > 0 && (
         <Card className="shadow-lg">
-          <CardHeader><CardTitle className="text-xl flex items-center gap-2 text-primary"><History /> Print History</CardTitle><CardDescription>Card generated on:</CardDescription></CardHeader>
-          <CardContent><ul className="list-disc pl-5 space-y-1 text-sm max-h-32 overflow-y-auto">{employee.printHistory.map((d, i) => <li key={i}>{format(d, 'dd MMM, yyyy HH:mm:ss')}</li>)}</ul></CardContent>
+          <CardHeader><CardTitle className="text-xl flex items-center gap-2 text-primary"><History /> Print History</CardTitle><CardDescription>This card was generated for printing on the following dates:</CardDescription></CardHeader>
+          <CardContent>
+            <ul className="list-disc pl-5 space-y-2 text-sm max-h-40 overflow-y-auto">
+              {employee.printHistory.map((entry, i) => 
+                <li key={i} className="font-semibold text-muted-foreground">
+                  {format(entry.printDate, 'dd MMM, yyyy HH:mm:ss')}
+                  <span className="text-xs font-normal ml-2 text-muted-foreground/80">(by: {entry.printedBy})</span>
+                </li>
+              )}
+            </ul>
+          </CardContent>
         </Card>
       )}
     </div>

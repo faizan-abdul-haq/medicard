@@ -293,9 +293,12 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
             <CardDescription className="font-semibold">This card was generated for printing on the following dates:</CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground max-h-32 overflow-y-auto">
-              {student.printHistory.map((printDate, index) => (
-                <li key={index} className="font-semibold">{isValid(printDate) ? format(printDate, 'dd MMM, yyyy HH:mm:ss') : 'Invalid Date'}</li>
+            <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground max-h-40 overflow-y-auto">
+              {student.printHistory.map((entry, index) => (
+                <li key={index} className="font-semibold">
+                  {isValid(entry.printDate) ? format(entry.printDate, 'dd MMM, yyyy HH:mm:ss') : 'Invalid Date'}
+                  <span className="text-xs font-normal ml-2 text-muted-foreground/80">(by: {entry.printedBy})</span>
+                </li>
               ))}
             </ul>
           </CardContent>

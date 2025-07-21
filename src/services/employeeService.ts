@@ -2,7 +2,7 @@
 'use server';
 
 import { db, storage } from '@/lib/firebase';
-import type { EmployeeData, EmployeeType } from '@/lib/types';
+import type { EmployeeData, EmployeeType, PrintHistoryEntry } from '@/lib/types';
 import { 
   collection, 
   addDoc, 
@@ -25,7 +25,7 @@ const EMPLOYEES_COLLECTION = 'employees';
 const mapFirestoreDocToEmployeeData = (docData: any, id: string): EmployeeData => {
   const data = docData as Omit<EmployeeData, 'id' | 'registrationDate' | 'printHistory' | 'dateOfBirth'> & {
     registrationDate: Timestamp | Date | string;
-    printHistory?: Array<Timestamp | Date | string>;
+    printHistory?: Array<{ printDate: Timestamp | Date | string, printedBy: string }>;
     dateOfBirth?: Timestamp | Date | string;
   };
   
@@ -44,6 +44,22 @@ const mapFirestoreDocToEmployeeData = (docData: any, id: string): EmployeeData =
     return parsed.getFullYear() === 1900 ? undefined : parsed;
   };
 
+  let printHistory: PrintHistoryEntry[] | undefined = undefined;
+  if (data.printHistory && Array.isArray(data.printHistory)) {
+    printHistory = data.printHistory.map(entry => {
+      let printDate: Date;
+      if (entry.printDate instanceof Timestamp) {
+        printDate = entry.printDate.toDate();
+      } else if (entry.printDate instanceof Date) {
+        printDate = entry.printDate;
+      } else {
+        const parsed = new Date(entry.printDate);
+        printDate = isNaN(parsed.getTime()) ? new Date() : parsed;
+      }
+      return { printDate, printedBy: entry.printedBy || 'Unknown' };
+    }).sort((a,b) => b.printDate.getTime() - a.printDate.getTime());
+  }
+
   return {
     id,
     fullName: data.fullName,
@@ -57,7 +73,7 @@ const mapFirestoreDocToEmployeeData = (docData: any, id: string): EmployeeData =
     registrationDate: parseDate(data.registrationDate),
     bloodGroup: data.bloodGroup || undefined,
     photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
-    printHistory: data.printHistory?.map(parseDate).sort((a,b) => b.getTime() - a.getTime()),
+    printHistory: printHistory,
     cardHolderSignature: data.cardHolderSignature,
     isOrganDonor: data.isOrganDonor || false,
   };
@@ -251,5 +267,22 @@ export async function bulkRegisterEmployees(employeesData: Partial<EmployeeData>
     console.error("Error committing bulk employee registration: ", error);
     errors.push(`Batch commit failed: ${error instanceof Error ? error.message : String(error)}`);
     return { successCount: 0, errors };
+  }
+}
+
+export async function recordEmployeeCardPrint(employeeId: string, printedBy: string): Promise<void> {
+  try {
+    const employeeDocRef = doc(db, EMPLOYEES_COLLECTION, employeeId);
+    
+    const newPrintEntry = {
+      printDate: Timestamp.now(),
+      printedBy: printedBy || 'System'
+    };
+
+    await updateDoc(employeeDocRef, {
+      printHistory: arrayUnion(newPrintEntry)
+    });
+  } catch (error) {
+    console.error(`Error recording card print for employee ID ${employeeId}: `, error);
   }
 }

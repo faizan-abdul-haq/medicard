@@ -2,7 +2,7 @@
 'use server';
 
 import { db, storage } from '@/lib/firebase'; // Added storage
-import type { StudentData } from '@/lib/types';
+import type { StudentData, PrintHistoryEntry } from '@/lib/types';
 import { 
   collection, 
   addDoc, 
@@ -27,7 +27,7 @@ const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => 
   const data = docData as Omit<StudentData, 'id' | 'dateOfBirth' | 'registrationDate' | 'printHistory'> & {
     dateOfBirth: Timestamp | Date | string; 
     registrationDate: Timestamp | Date | string;
-    printHistory?: Array<Timestamp | Date | string>;
+    printHistory?: Array<{ printDate: Timestamp | Date | string, printedBy: string }>;
   };
   
   let dob: Date;
@@ -50,14 +50,20 @@ const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => 
     regDate = isNaN(parsed.getTime()) ? new Date() : parsed;
   }
 
-  let printHistoryDates: Date[] | undefined = undefined;
+  let printHistory: PrintHistoryEntry[] | undefined = undefined;
   if (data.printHistory && Array.isArray(data.printHistory)) {
-    printHistoryDates = data.printHistory.map(ph => {
-      if (ph instanceof Timestamp) return ph.toDate();
-      if (ph instanceof Date) return ph;
-      const parsed = new Date(ph);
-      return isNaN(parsed.getTime()) ? new Date() : parsed;
-    }).sort((a,b) => b.getTime() - a.getTime()); 
+    printHistory = data.printHistory.map(entry => {
+      let printDate: Date;
+      if (entry.printDate instanceof Timestamp) {
+        printDate = entry.printDate.toDate();
+      } else if (entry.printDate instanceof Date) {
+        printDate = entry.printDate;
+      } else {
+        const parsed = new Date(entry.printDate);
+        printDate = isNaN(parsed.getTime()) ? new Date() : parsed;
+      }
+      return { printDate, printedBy: entry.printedBy || 'Unknown' };
+    }).sort((a,b) => b.printDate.getTime() - a.printDate.getTime()); 
   }
 
   return {
@@ -73,7 +79,7 @@ const mapFirestoreDocToStudentData = (docData: any, id: string): StudentData => 
     registrationDate: regDate,
     bloodGroup: data.bloodGroup || undefined,
     photographUrl: data.photographUrl || "https://placehold.co/80x100.png",
-    printHistory: printHistoryDates,
+    printHistory: printHistory,
     cardHolderSignature: data.cardHolderSignature
   };
 };
@@ -113,7 +119,7 @@ export async function getStudentById(id: string): Promise<StudentData | null> {
 }
 
 
-export async function recordCardPrint(studentPrn: string): Promise<void> {
+export async function recordCardPrint(studentPrn: string, printedBy: string): Promise<void> {
   try {
     const q = query(collection(db, STUDENTS_COLLECTION), where("prnNumber", "==", studentPrn));
     const querySnapshot = await getDocs(q);
@@ -126,8 +132,13 @@ export async function recordCardPrint(studentPrn: string): Promise<void> {
     const studentDoc = querySnapshot.docs[0];
     const studentDocRef = doc(db, STUDENTS_COLLECTION, studentDoc.id);
 
+    const newPrintEntry = {
+      printDate: Timestamp.now(),
+      printedBy: printedBy || 'System'
+    };
+
     await updateDoc(studentDocRef, {
-      printHistory: arrayUnion(Timestamp.now()) 
+      printHistory: arrayUnion(newPrintEntry) 
     });
   } catch (error) {
     console.error(`Error recording card print for PRN ${studentPrn}: `, error);
@@ -427,4 +438,3 @@ export async function bulkRegisterStudents(studentsDataInput: StudentData[]): Pr
     return { successCount: 0, newStudents: [], errors }; 
   }
 }
-

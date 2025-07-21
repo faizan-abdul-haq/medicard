@@ -8,7 +8,7 @@ import EmployeeIdCard from '@/components/EmployeeIdCard';
 import type { StudentData, EmployeeData, CardSettingsData } from '@/lib/types';
 import { DEFAULT_CARD_SETTINGS } from '@/lib/types';
 import { getStudentById, recordCardPrint } from '@/services/studentService';
-import { getEmployeeById } from '@/services/employeeService'; // Assuming no print recording for employees yet
+import { getEmployeeById, recordEmployeeCardPrint } from '@/services/employeeService';
 import { getCardSettings } from '@/services/cardSettingsService';
 import { Button } from '@/components/ui/button';
 import { Printer, Loader2, AlertTriangle } from 'lucide-react';
@@ -30,7 +30,7 @@ function PrintPreviewContent() {
   const [itemsToPrint, setItemsToPrint] = useState<PrintableItem[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { isAuthenticated, isLoading: authIsLoading } = useAuth();
+  const { isAuthenticated, isLoading: authIsLoading, currentUser } = useAuth();
 
   useEffect(() => {
     if (authIsLoading) return;
@@ -46,6 +46,7 @@ function PrintPreviewContent() {
       setError(null);
       const fetchedItems: PrintableItem[] = [];
       const errorsAcc: string[] = [];
+      const printedBy = currentUser?.email || 'Unknown';
 
       try {
         if (studentIdsParam) {
@@ -58,7 +59,7 @@ function PrintPreviewContent() {
               const student = await getStudentById(id.trim());
               if (student) {
                 fetchedItems.push({ type: 'student', data: student, settings: studentSettings });
-                printRecordingPromises.push(recordCardPrint(student.prnNumber));
+                printRecordingPromises.push(recordCardPrint(student.prnNumber, printedBy));
               } else {
                 errorsAcc.push(`Student with PRN ${id} not found.`);
               }
@@ -73,6 +74,7 @@ function PrintPreviewContent() {
            const facultySettings = await getCardSettings('faculty');
            const staffSettings = await getCardSettings('staff');
            const ids = employeeIdsParam.split(',').map(id => id.trim());
+           const printRecordingPromises: Promise<void>[] = [];
 
            for (const id of ids) {
               try {
@@ -80,6 +82,7 @@ function PrintPreviewContent() {
                 if (employee) {
                   const settings = employee.employeeType === 'FACULTY' ? facultySettings : staffSettings;
                   fetchedItems.push({ type: 'employee', data: employee, settings });
+                  printRecordingPromises.push(recordEmployeeCardPrint(employee.id, printedBy));
                 } else {
                   errorsAcc.push(`Employee with ID ${id} not found.`);
                 }
@@ -87,6 +90,7 @@ function PrintPreviewContent() {
                  errorsAcc.push(`Failed to load data for employee ID ${id}.`);
               }
            }
+           await Promise.all(printRecordingPromises);
         }
 
       } catch (settingsError) {
@@ -101,7 +105,7 @@ function PrintPreviewContent() {
     }
 
     loadInitialData();
-  }, [studentIdsParam, employeeIdsParam, isAuthenticated, authIsLoading, toast]);
+  }, [studentIdsParam, employeeIdsParam, isAuthenticated, authIsLoading, toast, currentUser]);
 
   const handlePrint = () => {
     setTimeout(() => { window.print(); }, 200);

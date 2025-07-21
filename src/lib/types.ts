@@ -1,4 +1,10 @@
 
+
+export interface PrintHistoryEntry {
+  printDate: Date;
+  printedBy: string; // User's email or ID
+}
+
 export interface StudentData {
   id: string; // Firestore document ID
   photograph?: File | null; // For upload form, not stored in Firestore directly
@@ -13,7 +19,7 @@ export interface StudentData {
   courseName: string;
   bloodGroup?: string;
   registrationDate: Date; // Always ensure this is a JS Date object in the application
-  printHistory?: Date[]; // Array of timestamps when the card was printed
+  printHistory?: PrintHistoryEntry[]; // Array of print history objects
   cardHolderSignature?: string;
 }
 
@@ -33,7 +39,7 @@ export interface EmployeeData {
   dateOfBirth?: Date;
   bloodGroup?: string;
   registrationDate: Date; // Timestamp of record creation
-  printHistory?: Date[];
+  printHistory?: PrintHistoryEntry[]; // Array of print history objects
   cardHolderSignature?: string;
   isOrganDonor?: boolean;
   department?: string; // No longer used, but might exist on old records
