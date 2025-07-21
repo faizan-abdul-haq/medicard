@@ -120,9 +120,11 @@ export default function StaffIdCard({
         )}
         
         {employee.isOrganDonor && (
-          <div className="absolute top-0 right-0 h-full w-[12px] bg-red-600 flex items-center justify-center z-20">
-            <p className="text-white font-bold text-[9px] transform -rotate-90 origin-center whitespace-nowrap">I am an Organ Donor</p>
-          </div>
+        <div className="absolute top-0 right-0 h-full w-[14px] bg-red-600 z-20">
+          <p className="absolute left-1/2 top-1/2 text-white font-bold text-[9px] transform -translate-x-1/2 -translate-y-1/2 -rotate-90 origin-center whitespace-nowrap">
+            I am an Organ Donor
+          </p>
+        </div>
         )}
 
         <div style={headerBackgroundColorStyle} className="pt-2 pr-2 pl-2 flex flex-col items-center justify-center text-center leading-tight print:pt-2">
@@ -177,7 +179,7 @@ export default function StaffIdCard({
             )}
             <p className="font-bold text-black mt-0.5">{'अधिष्ठाता'}</p>
           </div>          
-          <div className="text-right print:pr-2">
+          <div className="text-right print:pr-3">
             <div className="w-30 h-6 text-black mb-0.5 flex justify-end">
               {employee.cardHolderSignature && (
                 <Image src={employee.cardHolderSignature} alt="" width={70} height={40} className="object-contain h-auto max-h-[24px]" unoptimized />
@@ -205,13 +207,13 @@ export default function StaffIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <CardContent className="p-2 print:pt-2 space-y-1 leading-snug">
+        <CardContent className="p-2 print:pt-2 leading-snug">
           <div className='print:pl-2 print:pr-2 print:pb-4 flex justify-between items-start mb-1' style={backDetailsStyle}>
             <p style={importantInfoStyle} className="font-bold text-black p-0.5 rounded-sm inline-block text-center">{'ओळखपत्र क्रमांक:'}<br/> <span>{employee.employeeId || 'N/A'}</span></p>
             <p style={importantInfoStyle} className="font-bold text-black p-0.5 rounded-sm inline-block text-center">{'सेवार्थ नंबर:'}<br/>{employee.sevarthNo || 'N/A'}</p>
           </div>
           
-          <div className="flex justify-end items-start mb-1">
+          <div className="flex justify-end items-start print:pt-1">
             {qrCodeUrl ? (
               <Image src={qrCodeUrl} alt="QR Code" width={50} height={50} data-ai-hint="qr code" unoptimized className=" print:pr-2 print:pt-6 border border-gray-300" />
             ) : (
@@ -221,9 +223,9 @@ export default function StaffIdCard({
             )}
           </div>
           
-          <div className='print:pl-2 print:pr-2 print:pb-2 print:pt-6'>
+          <div className='print:pl-2 print:pr-2 print:pb-2 print:pt-2'>
             <p style={{...importantInfoStyle,...addressStyle}} className="font-bold text-black p-0.5 rounded-sm inline-block print:pb-2">{'कायमचा रहिवासी पत्ता'}</p>
-            <p className="font-bold text-black mt-0.5 max-w-[200px] print:pb-2" style={addressStyle}>{employee.address || 'N/A'}</p>
+            <p className="font-bold text-black mt-0.5 max-w-[220px] print:pb-2" style={addressStyle}>{employee.address || 'N/A'}</p>
             <Separator className="my-1 print:pb-2 print:pt-2" />
           </div>
           <div className="print:pl-2 print:pr-2 print:pt-2 mt-1 text-black" style={instructionsStyle}>

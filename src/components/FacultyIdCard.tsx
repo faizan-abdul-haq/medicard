@@ -114,9 +114,11 @@ export default function FacultyIdCard({
           </Button>
         )}
         {employee.isOrganDonor && (
-          <div className="absolute top-0 right-0 h-full w-[12px] bg-red-600 flex items-center justify-center z-20">
-            <p className="text-white font-bold text-[9px] transform -rotate-90 origin-center whitespace-nowrap">I am an Organ Donor</p>
-          </div>
+        <div className="absolute top-0 right-0 h-full w-[14px] bg-red-600 z-20">
+          <p className="absolute left-1/2 top-1/2 text-white font-bold text-[9px] transform -translate-x-1/2 -translate-y-1/2 -rotate-90 origin-center whitespace-nowrap">
+            I am an Organ Donor
+          </p>
+        </div>
         )}
         <div style={headerBackgroundColorStyle} className="pt-2 pr-2 pl-2 flex items-center print:pt-2">
           <div className="w-1/5 flex justify-center items-center print:pl-2">
@@ -215,7 +217,7 @@ export default function FacultyIdCard({
           
           <div className='print:pl-2 print:pr-2'>
             <p style={{...importantInfoStyle,...addressStyle}} className="font-bold text-black rounded-sm inline-block">{'Residential Address:'}</p>
-            <p className="font-bold text-black leading-tight mt-0.5 max-w-[180px]" style={addressStyle}>{employee.address || 'N/A'}</p>
+            <p className="font-bold text-black leading-tight mt-0.5 max-w-[220px]" style={addressStyle}>{employee.address || 'N/A'}</p>
             <Separator className="my-1 bg-gray-400 print:pt-2 print:pb-2" />
           </div>
           <ul className="list-decimal list-inside space-y-0.5 mt-1 leading-tight print:pl-2 print:pr-2 print:pt-2" style={instructionsStyle}>

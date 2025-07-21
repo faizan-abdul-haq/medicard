@@ -126,7 +126,7 @@ export default function StudentIdCard({
             <Repeat size={16} />
           </Button>
         )}
-        <div style={headerBackgroundColorStyle} className="pt-2 pr-2 pl-2 flex items-center print:pt-2 print:pr-2 print:pl-2">
+        <div style={headerBackgroundColorStyle} className="pt-2 pr-2 pl-2 flex items-center print:pt-1 print:pr-1 print:pl-1 print:pb-2">
           <div className="w-1/5 flex justify-center items-center print:pl-2">
             <Image 
               src={finalLogoUrl} 
@@ -144,8 +144,8 @@ export default function StudentIdCard({
           </div>
         </div>
 
-        <CardContent className="p-2 flex flex-row gap-4 print:pl-2">
-          <div className="h-[21mm] w-[21mm] flex-shrink-0 mt-1">
+        <CardContent className="p-2 flex flex-row gap-4 print:pl-2 print:pt-2">
+          <div className="h-[23mm] w-[23mm] flex-shrink-0 mt-1">
             <div className="w-full h-full relative">
               <Image
                   src={
@@ -160,7 +160,7 @@ export default function StudentIdCard({
               />
             </div>
           </div>
-          <div className="flex-grow space-y-0.5" style={frontDetailsStyle}>
+          <div className="flex-grow space-y-0.5 text-left" style={frontDetailsStyle}>
             <div style={{...importantInfoStyle}} className="rounded-sm mb-1 bg-primary/10">
               <p style={personNameStyle} className="uppercase font-bold text-[#004AAD]">{student.fullName}</p>
             </div>
@@ -225,7 +225,7 @@ export default function StudentIdCard({
 
             <div
               style={importantInfoStyle}
-              className="text-black rounded-sm inline-block uppercase"
+              className="text-left text-black rounded-sm inline-block uppercase"
             >
               <p className="font-bold">
                 <span className="font-bold">DOB:</span> {student.dateOfBirth && isValid(new Date(student.dateOfBirth)) ? format(new Date(student.dateOfBirth), 'dd/MM/yyyy') : 'N/A'}
@@ -280,18 +280,18 @@ export default function StudentIdCard({
         </div>
 
 
-          <div className='print:pl-2 print:pr-2'>
-            <p style={{ ...importantInfoStyle, ...addressStyle }} className="font-bold text-black p-0.5 rounded-sm inline-block">Residential Address:</p>
+          <div className='text-left print:pl-2 print:pr-2'>
+            <p style={{ ...importantInfoStyle, ...addressStyle }} className="font-bold text-black rounded-sm inline-block">Residential Address:</p>
             <p className="text-black font-bold leading-tight mt-0.5" style={addressStyle}>{student.address || 'N/A'}</p>
           </div>
 
-          <ol className="text-black list-decimal list-inside space-y-0.5 mt-1 text-[0.9em] leading-tight print:pl-2 print:pr-2" style={instructionsStyle}>
+          <ol className="text-left text-black list-decimal list-inside space-y-0.5 mt-1 text-[0.9em] leading-tight print:pl-2 print:pr-2 print:pt-2" style={instructionsStyle}>
             {[settings.instructionLine1, settings.instructionLine2, settings.instructionLine3, settings.instructionLine4].map((inst, idx) => (
               inst && <li key={idx} className="font-bold text-black">{inst}</li>
             ))}
           </ol>
 
-          <div className="border-t text-black mt-auto pt-1 flex justify-between items-center text-[0.9em] absolute bottom-2 left-2 right-2" style={footerStyle}>
+          <div className="border-t text-black mt-auto pt-1 flex justify-between items-center text-[0.9em] absolute bottom-2 left-2 right-2 print:pt-2" style={footerStyle}>
             <p className="font-bold text-black"><span className="font-bold">Mob:</span> {student.mobileNumber || 'N/A'}</p>
             <p className="font-bold text-black"><span className="font-bold">Office:</span> {settings.officePhoneNumber}</p>
           </div>
