@@ -52,13 +52,12 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
     try {
       const [studentData, settingsData] = await Promise.all([
         getStudentById(studentId),
-        getCardSettings()
+        getCardSettings('student')
       ]);
 
       if (studentData) {
         setStudent({
           ...studentData,
-          // Ensure dates are Date objects, already handled by mapFirestoreDocToStudentData
         });
       } else {
         setError(`Student with identifier ${studentId} not found.`);
@@ -294,7 +293,7 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
           </CardHeader>
           <CardContent>
             <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground max-h-40 overflow-y-auto">
-              {student.printHistory.map((entry, index) => (
+              {[...student.printHistory].sort((a, b) => b.printDate.getTime() - a.printDate.getTime()).map((entry, index) => (
                 <li key={index} className="font-semibold">
                   {isValid(entry.printDate) ? format(entry.printDate, 'dd MMM, yyyy HH:mm:ss') : 'Invalid Date'}
                   <span className="text-xs font-normal ml-2 text-muted-foreground/80">(by: {entry.printedBy})</span>
