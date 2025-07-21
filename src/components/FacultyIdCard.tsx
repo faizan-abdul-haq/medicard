@@ -214,7 +214,7 @@ export default function FacultyIdCard({
           </div>
           
           <div className='print:pl-2 print:pr-2'>
-            <p style={importantInfoStyle} className="font-bold text-black rounded-sm inline-block">{'Residential Address:'}</p>
+            <p style={{...importantInfoStyle,...addressStyle}} className="font-bold text-black rounded-sm inline-block">{'Residential Address:'}</p>
             <p className="font-bold text-black leading-tight mt-0.5 max-w-[180px]" style={addressStyle}>{employee.address || 'N/A'}</p>
             <Separator className="my-1 bg-gray-400 print:pt-2 print:pb-2" />
           </div>

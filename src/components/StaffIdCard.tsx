@@ -222,7 +222,7 @@ export default function StaffIdCard({
           </div>
           
           <div className='print:pl-2 print:pr-2 print:pb-2 print:pt-6'>
-            <p style={importantInfoStyle} className="font-bold text-black p-0.5 rounded-sm inline-block print:pb-2">{'कायमचा रहिवासी पत्ता'}</p>
+            <p style={{...importantInfoStyle,...addressStyle}} className="font-bold text-black p-0.5 rounded-sm inline-block print:pb-2">{'कायमचा रहिवासी पत्ता'}</p>
             <p className="font-bold text-black mt-0.5 max-w-[200px] print:pb-2" style={addressStyle}>{employee.address || 'N/A'}</p>
             <Separator className="my-1 print:pb-2 print:pt-2" />
           </div>

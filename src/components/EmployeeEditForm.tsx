@@ -96,11 +96,13 @@ export default function EmployeeEditForm({ employeeToEdit, onUpdateSuccess, onCa
   
 
   const handleSelectChange = (name: string, value: string) => {
-    if (name === 'employeeType') {
-        setFormData(prev => ({ ...prev, [name]: value as EmployeeType }));
-    } else if (value !== '') {
-        setFormData(prev => ({ ...prev, [name]: value }));
-    }  
+    if (value !== ''){
+      if (name === 'employeeType') {
+          setFormData(prev => ({ ...prev, [name]: value as EmployeeType }));
+      } else if (value !== '') {
+          setFormData(prev => ({ ...prev, [name]: value }));
+      }  
+    }
   };
 
   const handleNewPhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
