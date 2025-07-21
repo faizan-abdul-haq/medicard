@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import StudentIdCard from '@/components/StudentIdCard';
 import EmployeeIdCard from '@/components/EmployeeIdCard';
@@ -31,8 +31,11 @@ function PrintPreviewContent() {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated, isLoading: authIsLoading, currentUser } = useAuth();
+  const hasRecordedPrint = useRef(false);
 
   useEffect(() => {
+    let isCancelled = false;
+    
     if (authIsLoading) return;
 
     if (!isAuthenticated) {
@@ -41,20 +44,32 @@ function PrintPreviewContent() {
       return;
     }
 
+    if (hasRecordedPrint.current) return;
+
     async function loadInitialData() {
       setIsLoadingData(true);
       setError(null);
+      
+      const studentIds = studentIdsParam ? studentIdsParam.split(',').map(id => id.trim()) : [];
+      const employeeIds = employeeIdsParam ? employeeIdsParam.split(',').map(id => id.trim()) : [];
+      
+      if (studentIds.length === 0 && employeeIds.length === 0) {
+        setIsLoadingData(false);
+        return;
+      }
+      
+      hasRecordedPrint.current = true;
+      const printedBy = currentUser?.email || 'Unknown';
+      
       const fetchedItems: PrintableItem[] = [];
       const errorsAcc: string[] = [];
-      const printedBy = currentUser?.email || 'Unknown';
 
       try {
-        if (studentIdsParam) {
+        if (studentIds.length > 0) {
           const studentSettings = await getCardSettings('student');
-          const ids = studentIdsParam.split(',').map(id => id.trim());
           const printRecordingPromises: Promise<void>[] = [];
 
-          for (const id of ids) {
+          for (const id of studentIds) {
             try {
               const student = await getStudentById(id.trim());
               if (student) {
@@ -70,13 +85,12 @@ function PrintPreviewContent() {
           await Promise.all(printRecordingPromises);
         }
         
-        if (employeeIdsParam) {
+        if (employeeIds.length > 0) {
            const facultySettings = await getCardSettings('faculty');
            const staffSettings = await getCardSettings('staff');
-           const ids = employeeIdsParam.split(',').map(id => id.trim());
            const printRecordingPromises: Promise<void>[] = [];
 
-           for (const id of ids) {
+           for (const id of employeeIds) {
               try {
                 const employee = await getEmployeeById(id);
                 if (employee) {
@@ -96,6 +110,7 @@ function PrintPreviewContent() {
       } catch (settingsError) {
         toast({ title: "Error Loading Settings", description: "Failed to fetch card settings. Using defaults.", variant: "destructive" });
       } finally {
+        if (isCancelled) return;
         if (errorsAcc.length > 0) {
           setError(errorsAcc.join(' '));
         }
@@ -105,6 +120,10 @@ function PrintPreviewContent() {
     }
 
     loadInitialData();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [studentIdsParam, employeeIdsParam, isAuthenticated, authIsLoading, toast, currentUser]);
 
   const handlePrint = () => {
