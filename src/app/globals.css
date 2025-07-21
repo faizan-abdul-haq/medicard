@@ -179,7 +179,7 @@ body {
   body, html, .print-preview-container {
     margin: 0 !important;
     padding: 0 !important;
-    /* background: white !important; */
+    background: white !important;
   }
 
   /* Prevent content from breaking across pages */
