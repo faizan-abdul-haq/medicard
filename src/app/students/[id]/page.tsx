@@ -293,9 +293,9 @@ function StudentProfileContent({ studentId }: { studentId: string }) {
           </CardHeader>
           <CardContent>
             <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground max-h-40 overflow-y-auto">
-              {[...student.printHistory].sort((a, b) => b.printDate.getTime() - a.printDate.getTime()).map((entry, index) => (
+              {[...student.printHistory].sort((a, b) => new Date(b.printDate).getTime() - new Date(a.printDate).getTime()).map((entry, index) => (
                 <li key={index} className="font-semibold">
-                  {isValid(entry.printDate) ? format(entry.printDate, 'dd MMM, yyyy HH:mm:ss') : 'Invalid Date'}
+                  {isValid(new Date(entry.printDate)) ? format(new Date(entry.printDate), 'dd MMM, yyyy HH:mm:ss') : 'Invalid Date'}
                   <span className="text-xs font-normal ml-2 text-muted-foreground/80">(by: {entry.printedBy})</span>
                 </li>
               ))}
