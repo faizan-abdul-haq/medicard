@@ -31,33 +31,64 @@ function PrintPreviewContent() {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated, isLoading: authIsLoading, currentUser } = useAuth();
-  const hasRecordedPrint = useRef(false);
-
+  
+  // Effect for ONE-TIME print recording
   useEffect(() => {
-    if (hasRecordedPrint.current) return;
-    
-    if (authIsLoading) return;
+    // This effect runs only once on mount.
+    const recordPrintHistory = async () => {
+        if (!currentUser?.email) return;
 
-    if (!isAuthenticated) {
-      setError("Authentication required to view print preview.");
-      setIsLoadingData(false);
-      return;
-    }
+        const studentIds = studentIdsParam ? studentIdsParam.split(',').filter(id => id.trim()) : [];
+        const employeeIds = employeeIdsParam ? employeeIdsParam.split(',').filter(id => id.trim()) : [];
+
+        const printedBy = currentUser.email;
+
+        // Create an array of promises for all recording tasks
+        const recordingPromises: Promise<void>[] = [];
+
+        studentIds.forEach(id => {
+            recordingPromises.push(recordCardPrint(id, printedBy));
+        });
+
+        employeeIds.forEach(id => {
+            recordingPromises.push(recordEmployeeCardPrint(id, printedBy));
+        });
+
+        try {
+            await Promise.all(recordingPromises);
+        } catch (e) {
+            console.error("Failed to record one or more print events:", e);
+            // We don't toast here as it might confuse the user. Logging is sufficient.
+        }
+    };
     
-    async function loadInitialData() {
+    // We only run this if the user is authenticated.
+    if (isAuthenticated) {
+        recordPrintHistory();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, currentUser?.email]); // Dependencies ensure it runs once after auth is confirmed.
+
+  // Effect for fetching card data
+  useEffect(() => {
+    async function loadCardData() {
+      if (authIsLoading) return;
+      if (!isAuthenticated) {
+        setError("Authentication required to view print preview.");
+        setIsLoadingData(false);
+        return;
+      }
+      
       setIsLoadingData(true);
       setError(null);
       
-      const studentIds = studentIdsParam ? studentIdsParam.split(',').map(id => id.trim()) : [];
-      const employeeIds = employeeIdsParam ? employeeIdsParam.split(',').map(id => id.trim()) : [];
+      const studentIds = studentIdsParam ? studentIdsParam.split(',').filter(id => id.trim()) : [];
+      const employeeIds = employeeIdsParam ? employeeIdsParam.split(',').filter(id => id.trim()) : [];
       
       if (studentIds.length === 0 && employeeIds.length === 0) {
         setIsLoadingData(false);
         return;
       }
-      
-      hasRecordedPrint.current = true; // Set ref immediately to prevent re-runs
-      const printedBy = currentUser?.email || 'Unknown';
       
       const fetchedItems: PrintableItem[] = [];
       const errorsAcc: string[] = [];
@@ -65,14 +96,11 @@ function PrintPreviewContent() {
       try {
         if (studentIds.length > 0) {
           const studentSettings = await getCardSettings('student');
-          const printRecordingPromises: Promise<void>[] = [];
-
           for (const id of studentIds) {
             try {
               const student = await getStudentById(id.trim());
               if (student) {
                 fetchedItems.push({ type: 'student', data: student, settings: studentSettings });
-                printRecordingPromises.push(recordCardPrint(student.prnNumber, printedBy));
               } else {
                 errorsAcc.push(`Student with PRN ${id} not found.`);
               }
@@ -80,21 +108,17 @@ function PrintPreviewContent() {
               errorsAcc.push(`Failed to load data for student PRN ${id}.`);
             }
           }
-          await Promise.all(printRecordingPromises);
         }
         
         if (employeeIds.length > 0) {
            const facultySettings = await getCardSettings('faculty');
            const staffSettings = await getCardSettings('staff');
-           const printRecordingPromises: Promise<void>[] = [];
-
            for (const id of employeeIds) {
               try {
                 const employee = await getEmployeeById(id);
                 if (employee) {
                   const settings = employee.employeeType === 'FACULTY' ? facultySettings : staffSettings;
                   fetchedItems.push({ type: 'employee', data: employee, settings });
-                  printRecordingPromises.push(recordEmployeeCardPrint(employee.id, printedBy));
                 } else {
                   errorsAcc.push(`Employee with ID ${id} not found.`);
                 }
@@ -102,7 +126,6 @@ function PrintPreviewContent() {
                  errorsAcc.push(`Failed to load data for employee ID ${id}.`);
               }
            }
-           await Promise.all(printRecordingPromises);
         }
 
       } catch (settingsError) {
@@ -116,9 +139,9 @@ function PrintPreviewContent() {
       }
     }
 
-    loadInitialData();
+    loadCardData();
 
-  }, [studentIdsParam, employeeIdsParam, isAuthenticated, authIsLoading, toast, currentUser]);
+  }, [studentIdsParam, employeeIdsParam, isAuthenticated, authIsLoading, toast]);
 
   const handlePrint = () => {
     setTimeout(() => { window.print(); }, 200);
