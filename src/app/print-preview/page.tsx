@@ -34,7 +34,7 @@ function PrintPreviewContent() {
   const hasRecordedPrint = useRef(false);
 
   useEffect(() => {
-    let isCancelled = false;
+    if (hasRecordedPrint.current) return;
     
     if (authIsLoading) return;
 
@@ -43,9 +43,7 @@ function PrintPreviewContent() {
       setIsLoadingData(false);
       return;
     }
-
-    if (hasRecordedPrint.current) return;
-
+    
     async function loadInitialData() {
       setIsLoadingData(true);
       setError(null);
@@ -58,7 +56,7 @@ function PrintPreviewContent() {
         return;
       }
       
-      hasRecordedPrint.current = true;
+      hasRecordedPrint.current = true; // Set ref immediately to prevent re-runs
       const printedBy = currentUser?.email || 'Unknown';
       
       const fetchedItems: PrintableItem[] = [];
@@ -110,7 +108,6 @@ function PrintPreviewContent() {
       } catch (settingsError) {
         toast({ title: "Error Loading Settings", description: "Failed to fetch card settings. Using defaults.", variant: "destructive" });
       } finally {
-        if (isCancelled) return;
         if (errorsAcc.length > 0) {
           setError(errorsAcc.join(' '));
         }
@@ -121,9 +118,6 @@ function PrintPreviewContent() {
 
     loadInitialData();
 
-    return () => {
-      isCancelled = true;
-    };
   }, [studentIdsParam, employeeIdsParam, isAuthenticated, authIsLoading, toast, currentUser]);
 
   const handlePrint = () => {
