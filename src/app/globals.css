@@ -107,13 +107,11 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box !important;
-    /* background-color: white !important; */
-    /* border: none !important; */
     box-shadow: none !important;
     transform: scale(1) !important;
     overflow: hidden !important;
     position: relative !important;
-    display: block !important; /* Remove flex to avoid centering issues */
+    display: block !important;
   }
 
   /* Prevent page break after the last card */

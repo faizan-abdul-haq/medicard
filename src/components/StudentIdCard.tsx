@@ -67,7 +67,7 @@ export default function StudentIdCard({
     }
   };
 
-  const cardBaseClasses = `w-[85.6mm] h-[53.98mm] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-300 relative print:shadow-none print:border-gray-400`;
+  const cardBaseClasses = `w-[85.6mm] h-[53.98mm] mx-auto shadow-xl rounded-lg overflow-hidden bg-white border border-gray-400 relative print:shadow-none print:border-0`;
   
   const headerBackgroundColorStyle: React.CSSProperties = {
     backgroundColor: settings.headerBackgroundColor,
