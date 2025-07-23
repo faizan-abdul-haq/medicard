@@ -225,8 +225,8 @@ export default function StaffIdCard({
           
           <div className='print:pl-2 print:pr-2 print:pb-2 print:pt-2'>
             <p style={{...importantInfoStyle,...addressStyle}} className="font-bold text-black p-0.5 rounded-sm inline-block print:pb-2">{'कायमचा रहिवासी पत्ता'}</p>
-            <p className="font-bold text-black mt-0.5 max-w-[220px] print:pb-2" style={addressStyle}>{employee.address || 'N/A'}</p>
-            <Separator className="my-1 print:pb-2 print:pt-2" />
+            <p className="font-bold text-black max-w-[220px] print:pb-2" style={addressStyle}>{employee.address || 'N/A'}</p>
+            <Separator className="my-1 bg-black print:pb-2 print:pt-2" />
           </div>
           <div className="print:pl-2 print:pr-2 print:pt-2 mt-1 text-black" style={instructionsStyle}>
             {instructions.map((inst, idx) => (
@@ -237,6 +237,10 @@ export default function StaffIdCard({
                 </span>
               )
             ))}
+          </div>
+          <Separator className="my-1 bg-black print:pb-2 print:pt-2" />
+          <div className="text-black mt-auto pt-1 flex justify-end items-center absolute  bottom-0 right-2">
+            <p className="font-bold text-[9px] text-black">{'Office'}: {settings.officePhoneNumber}</p>
           </div>
         </CardContent>
       </Card>
