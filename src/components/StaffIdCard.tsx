@@ -238,9 +238,9 @@ export default function StaffIdCard({
               )
             ))}
           </div>
-          <Separator className="my-1 bg-black print:pb-2 print:pt-2" />
+          {/* <Separator className="my-1 bg-black print:pb-2 print:pt-2" /> */}
           <div className="text-black mt-auto pt-1 flex justify-end items-center absolute  bottom-0 right-2">
-            <p className="font-bold text-[9px] text-black">{'Office'}: {settings.officePhoneNumber}</p>
+            <p className="font-bold text-[8px] text-black">{'Office'}: {settings.officePhoneNumber}</p>
           </div>
         </CardContent>
       </Card>
